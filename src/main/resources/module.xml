@@ -1,0 +1,99 @@
+
+
+<module>
+    <manifestVersion>1.0.0</manifestVersion>
+    <symbolicName>metop-sounder-tools</symbolicName>
+    <version>0.5-SNAPSHOT</version>
+    <name>METOP Sounder Tools</name>
+
+    <description>METOP Sounder Tools</description>
+
+    <vendor>Brockmann Consult GmbH</vendor>
+    <contactAddress>Max Planck Str.2, 21502 Geesthacht (Germany)</contactAddress>
+    <copyright>(C) 2007 by Brockmann Consult GmbH</copyright>
+    <url>http://eumetsat.int/</url>
+    <licenseUrl>http://www.gnu.org/licenses/gpl.html</licenseUrl>
+
+
+    <dependency>
+        <module>beam-core</module>
+    </dependency>
+    <dependency>
+        <module>beam-gpf</module>
+    </dependency>
+    <dependency>
+        <module>beam-visat</module>
+    </dependency>
+    <dependency>
+        <module>beam-shapefile-reader</module>
+    </dependency>
+
+    <categories>VISAT,IAVISA,IASI</categories>
+
+    <extension point="beam-ui:toolViews">
+        <toolView>
+            <id>org.eumetsat.iasi.visat.IasiInfoView</id>
+            <class>org.eumetsat.iasi.visat.IasiInfoView</class>
+            <title>IASI - Info</title>
+            <mnemonic>I</mnemonic>
+            <accelerator>ctrl alt I</accelerator>
+            <description>Inspect selected IASI footprint.</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo24.gif</largeIcon>
+            <helpId>IasiInfoView</helpId>
+            <initState>HIDDEN</initState>
+            <initSide>SOUTH</initSide>
+            <initIndex>0</initIndex>
+        </toolView>
+        <toolView>
+            <id>org.eumetsat.iasi.visat.IfovColorView</id>
+            <class>org.eumetsat.iasi.visat.IfovColorView</class>
+            <title>IASI - IfovColorView</title>
+            <mnemonic>I</mnemonic>
+            <accelerator>ctrl alt I</accelerator>
+            <description>Inspect selected IASI footprint.</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo24.gif</largeIcon>
+            <helpId>IasiInfoView</helpId>
+            <initState>HIDDEN</initState>
+            <initSide>SOUTH</initSide>
+            <initIndex>0</initIndex>
+        </toolView>
+    </extension>
+    
+    <extension point="beam-ui:actions">
+    <!-- 
+        <action>
+            <id>showIasiOverlay</id>
+            <class>org.eumetsat.iasi.visat.ShowIasiOverlayAction</class>
+            <parent>view</parent>
+            <mnemonic>I</mnemonic>
+            <text>Show IASI Footprint Overlay</text>
+            <toggle>true</toggle>
+            <placeAfter>showPinOverlay</placeAfter>
+            <shortDescr>Show IASI overlay</shortDescr>
+            <description>Show IASI footprint overlay for the selected image</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay24.gif</largeIcon>
+            <context>image</context>
+            <helpId>IasiFootprintOverlay</helpId>
+            <selected>false</selected>
+        </action>
+         -->
+        <action>
+            <id>addMetopOverlay</id>
+            <class>org.eumetsat.iasi.visat.AddSounderOverlayAction</class>
+            <parent>view</parent>
+            <mnemonic>I</mnemonic>
+            <text>Add METOP Footprint Overlay</text>
+            <placeAfter>showPinOverlay</placeAfter>
+            <shortDescr>Add METOP overlay</shortDescr>
+            <description>Add METOP footprint overlay for the selected image</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay24.gif</largeIcon>
+            <context>image</context>
+            <helpId>IasiFootprintOverlay</helpId>
+        </action>
+        
+    </extension>
+</module>
