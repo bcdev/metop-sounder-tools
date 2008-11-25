@@ -16,7 +16,6 @@
  */
 package org.eumetsat.metop.binio;
 
-import org.esa.beam.visat.actions.ComputeRoiAreaAction;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Document;
@@ -25,11 +24,9 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -180,9 +177,9 @@ public class EpsXml {
     
     private void parseParameters(Element element) {
         Element parameters = element.getChild("parameters");
-        List children = parameters.getChildren();
+        List<Element> children = parameters.getChildren();
         for (int i = 0; i < children.size(); i++) {
-            Element elem = (Element) children.get(i);
+            Element elem = children.get(i);
             String name = elem.getAttributeValue("name");
             String value = elem.getAttributeValue("value");
             parameterMap.put(name, value.trim());
@@ -191,9 +188,9 @@ public class EpsXml {
     
     private void parseProduct(Element element) throws DataConversionException {
         Element product = element.getChild("product");
-        List records = product.getChildren();
+        List<Element> records = product.getChildren();
         for (int i = 0; i < records.size(); i++) {
-            Element record = (Element) records.get(i);
+            Element record = records.get(i);
             String recordName = record.getName();
             Type recordType;
             if (recordName.equals("mphr") || recordName.equals("sphr")) {
@@ -207,9 +204,9 @@ public class EpsXml {
     
     private Type parseAsciiRecord(Element element) throws DataConversionException {
         List<Member> memberList = new ArrayList<Member>(100);
-        List fields = element.getChildren("field");
+        List<Element> fields = element.getChildren("field");
         for (int i = 0; i < fields.size(); i++) {
-            Element elem = (Element) fields.get(i);
+            Element elem = fields.get(i);
             Type type = createAsciiField(elem);
             memberList.add(new CompoundType.Member(type.getName(), type));
         }
@@ -219,9 +216,9 @@ public class EpsXml {
     private Type parseBinaryRecord(Element element) throws DataConversionException {
         List<Member> memberList = new ArrayList<Member>(100);
         String name = element.getName();
-        List fields = element.getChildren();
+        List<Element> fields = element.getChildren();
         for (int i = 0; i < fields.size(); i++) {
-            Element part = (Element) fields.get(i);
+            Element part = fields.get(i);
             Type type = createBinaryType(part);
             if (type != null) {
                 String elementName = getElementName(part);
@@ -257,11 +254,11 @@ public class EpsXml {
     
     private Type createArray(Element element) throws DataConversionException {
         int length = getElementLength(element);
-        List children = element.getChildren();
+        List<Element> children = element.getChildren();
         if (children.size() != 1 ) {
             throw new IllegalStateException("array could only contain one element");
         }
-        Element child = (Element) children.get(0);
+        Element child = children.get(0);
         Type elemType = createBinaryType(child);
         return new SequenceType(elemType, length);
     }
