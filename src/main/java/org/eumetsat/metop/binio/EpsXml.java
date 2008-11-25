@@ -163,7 +163,7 @@ public class EpsXml {
                 }
                 String string = new String(data).trim();
                 Integer value = Integer.valueOf(string);
-                return value;
+                return value+1; // to also read by UMARF corrupted products
             }
         };
         format.addSequenceTypeMapper(iprs, iprsCountResolver);
