@@ -19,6 +19,12 @@ package org.eumetsat.metop.binio;
 import java.net.URI;
 import java.net.URL;
 
+import com.bc.ceres.binio.CompoundType;
+import com.bc.ceres.binio.SequenceType;
+import com.bc.ceres.binio.SimpleType;
+import com.bc.ceres.binio.Type;
+import com.bc.ceres.binio.CompoundType.Member;
+
 import junit.framework.TestCase;
 
 public class EpsXmlTest extends TestCase {
@@ -41,5 +47,54 @@ public class EpsXmlTest extends TestCase {
         assertEquals("100", epsXml.getParameter("AMCO"));
         assertEquals("8700", epsXml.getParameter("SS"));
         assertEquals("1", epsXml.getParameter("VP"));
+    }
+    
+    public void testMphr() throws Exception {
+        Type mphr = epsXml.getEpsRecordType("mphr");
+        assertNotNull(mphr);
+        assertTrue(mphr.isCompoundType());
+        CompoundType compoundType = (CompoundType) mphr;
+        int memberCount = compoundType.getMemberCount();
+        assertEquals(72, memberCount);
+    }
+    
+    public void testMdr() throws Exception {
+        Type mdr = epsXml.getEpsRecordType("mdr");
+        assertNotNull(mdr);
+        assertTrue(mdr.isCompoundType());
+        CompoundType compoundType = (CompoundType) mdr;
+        int memberCount = compoundType.getMemberCount();
+        assertEquals(53, memberCount);
+        assertEquals(27, compoundType.getMemberIndex("GGeoSondLoc"));
+        Member member = compoundType.getMember(27);
+        assertNotNull(member);
+        assertEquals("GGeoSondLoc", member.getName());
+        
+        Type memberType = member.getType();
+        assertNotNull(memberType);
+        assertTrue(memberType.isSequenceType());
+        assertEquals("int[2][4][30]", memberType.getName());
+        SequenceType sequenceType = (SequenceType) memberType;
+        assertEquals(30, sequenceType.getElementCount());
+        
+        Type elementType = sequenceType.getElementType();
+        assertNotNull(elementType);
+        assertTrue(elementType.isSequenceType());
+        assertEquals("int[2][4]", elementType.getName());
+        sequenceType = (SequenceType) elementType;
+        assertEquals(4, sequenceType.getElementCount());
+        
+        elementType = sequenceType.getElementType();
+        assertNotNull(elementType);
+        assertTrue(elementType.isSequenceType());
+        assertEquals("int[2]", elementType.getName());
+        sequenceType = (SequenceType) elementType;
+        assertEquals(2, sequenceType.getElementCount());
+        
+        elementType = sequenceType.getElementType();
+        assertNotNull(elementType);
+        assertTrue(elementType.isSimpleType());
+        assertEquals("int", elementType.getName());
+        assertSame(SimpleType.INT, elementType);
     }
 }
