@@ -33,15 +33,14 @@ import java.util.Map;
 
 import com.bc.ceres.binio.CollectionData;
 import com.bc.ceres.binio.CompoundType;
-import com.bc.ceres.binio.Format;
+import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.binio.SequenceType;
-import com.bc.ceres.binio.SequenceTypeMapper;
 import com.bc.ceres.binio.SimpleType;
 import com.bc.ceres.binio.Type;
 import com.bc.ceres.binio.CompoundMember;
-import com.bc.ceres.binio.util.SequenceElementCountResolver;
-import static com.bc.ceres.binio.util.TypeBuilder.*;
+import com.bc.ceres.binio.internal.VarElementCountSequenceType;
+
+import static com.bc.ceres.binio.TypeBuilder.*;
 
 /**
  *
@@ -56,7 +55,7 @@ public class EpsXml {
     private final Map<String, Type> epsRecordTypes;
     private final static Map<String, Type> typedefs = epsTypes();
     private String formatDescription;
-    private Format format;
+    private DataFormat format;
 
     public EpsXml(URI uri) throws IOException, DataConversionException {
         this.uri = uri;
@@ -92,12 +91,12 @@ public class EpsXml {
         map.put("vinteger8", createVType("vbyte", SimpleType.LONG));
         map.put("vuinteger8", createVType("vbyte", SimpleType.LONG));
         
-        map.put("time", SEQ(SimpleType.BYTE, 6));
+        map.put("time", SEQUENCE(SimpleType.BYTE, 6));
         return map;
     }
     
     private static Type createVType(String name, SimpleType type) {
-        return COMP(name, MEMBER("scale", SimpleType.BYTE), MEMBER("value", type));
+        return COMPOUND(name, MEMBER("scale", SimpleType.BYTE), MEMBER("value", type));
     }
 
     public URI getUri() {
@@ -108,7 +107,7 @@ public class EpsXml {
         return formatDescription;
     }
     
-    public Format getFormat() {
+    public DataFormat getFormat() {
         return format;
     }
     
@@ -142,29 +141,34 @@ public class EpsXml {
             Type sphr = epsRecordTypes.get("sphr");
             memberList.add(MEMBER("sphr", createRecord("sphr", sphr)));
         }
-        SequenceType sequenceType = SEQ(createRecord("ipr", MetopFormats.POINTER));
-        CompoundMember iprs = MEMBER("iprs", sequenceType);
+        CompoundType recordType = createRecord("ipr", MetopFormats.POINTER);
+        CompoundMember iprs = MEMBER("iprs", new MyVarElementCountSequenceType(recordType));
         memberList.add(iprs);
         
         //TODO add remaining records
         
         CompoundMember[] allRecords = memberList.toArray(new CompoundMember[memberList.size()]);
-        format = new Format(COMP("all", allRecords));
-        final SequenceTypeMapper iprsCountResolver = new SequenceElementCountResolver() {
-                
-            @Override
-            public int getElementCount(CollectionData collectionData, SequenceType sequenceType) throws IOException {
-                SequenceData sequence = collectionData.getCompound(0).getCompound(1).getCompound("TOTAL_IPR").getSequence("value");
-                byte[] data = new byte[(int) sequence.getSize()];
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = sequence.getByte(i);
-                }
-                String string = new String(data).trim();
-                Integer value = Integer.valueOf(string);
-                return value+1; // to also read by UMARF corrupted products
-            }
-        };
-        format.addSequenceTypeMapper(iprs, iprsCountResolver);
+        format = new DataFormat(COMPOUND("all", allRecords));
+    }
+    
+    private static class MyVarElementCountSequenceType extends VarElementCountSequenceType {
+
+        protected MyVarElementCountSequenceType(Type elementType) {
+            super(elementType);
+        }
+
+        @Override
+        protected int resolveElementCount(CollectionData parentData) throws IOException {
+            SequenceData sequence = parentData.getCompound(0).getCompound(1).getCompound("TOTAL_IPR").getSequence("value");
+          byte[] data = new byte[(int) sequence.getSize()];
+          for (int i = 0; i < data.length; i++) {
+              data[i] = sequence.getByte(i);
+          }
+          String string = new String(data).trim();
+          Integer value = Integer.valueOf(string);
+          return value+1; // to also read by UMARF corrupted products
+        }
+        
     }
 
     private void parseDescription(Element element) {
@@ -243,7 +247,7 @@ public class EpsXml {
         if (type == null) {
             if (typeName.equals("bitfield")) {
                 int length = getElementLength(element);
-                type = SEQ(SimpleType.BYTE, length/8);
+                type = SEQUENCE(SimpleType.BYTE, length/8);
             } else {
                 throw new IllegalStateException("unsupported type: "+typeName);
             }
@@ -259,24 +263,24 @@ public class EpsXml {
         }
         Element child = children.get(0);
         Type elemType = createBinaryType(child);
-        return SEQ(elemType, length);
+        return SEQUENCE(elemType, length);
     }
 
     private Type createCompoundType(String name, List<CompoundMember> memberList) {
         CompoundMember[] allMembers = memberList.toArray(new CompoundMember[memberList.size()]);
-        return COMP(name, allMembers);
+        return COMPOUND(name, allMembers);
     }
     
     private CompoundType createRecord(String name, Type bodytype) {
-        return COMP(name, MEMBER("header", MetopFormats.REC_HEAD), MEMBER("body", bodytype));
+        return COMPOUND(name, MEMBER("header", MetopFormats.REC_HEAD), MEMBER("body", bodytype));
     }
     
     private Type createAsciiField(Element elem) throws DataConversionException {
         String name = getElementName(elem);
         int length = getElementLength(elem);
-        return COMP(name, 
-                    MEMBER("name", SEQ(SimpleType.BYTE, 32)), 
-                    MEMBER("value", SEQ(SimpleType.BYTE, length)),
+        return COMPOUND(name, 
+                    MEMBER("name", SEQUENCE(SimpleType.BYTE, 32)), 
+                    MEMBER("value", SEQUENCE(SimpleType.BYTE, length)),
                     MEMBER("cr", SimpleType.BYTE));
     }
     

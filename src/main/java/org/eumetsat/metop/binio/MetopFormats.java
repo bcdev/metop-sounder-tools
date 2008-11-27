@@ -16,23 +16,17 @@
  */
 package org.eumetsat.metop.binio;
 
-import static com.bc.ceres.binio.util.TypeBuilder.BYTE;
-import static com.bc.ceres.binio.util.TypeBuilder.COMP;
-import static com.bc.ceres.binio.util.TypeBuilder.MEMBER;
-import static com.bc.ceres.binio.util.TypeBuilder.SEQ;
-import static com.bc.ceres.binio.util.TypeBuilder.UBYTE;
-import static com.bc.ceres.binio.util.TypeBuilder.UINT;
-import static com.bc.ceres.binio.util.TypeBuilder.USHORT;
+import static com.bc.ceres.binio.TypeBuilder.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 import com.bc.ceres.binio.CollectionData;
 import com.bc.ceres.binio.CompoundType;
-import com.bc.ceres.binio.Format;
+import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceType;
-import com.bc.ceres.binio.SequenceTypeMapper;
-import com.bc.ceres.binio.util.SequenceElementCountResolver;
+import com.bc.ceres.binio.Type;
+import com.bc.ceres.binio.internal.VarElementCountSequenceType;
 
 /**
  * Defines the formats of all supported METOP product types.
@@ -42,13 +36,13 @@ import com.bc.ceres.binio.util.SequenceElementCountResolver;
  */
 public class MetopFormats {
     public static final CompoundType SHORT_CDS_TIME = 
-        COMP("Short_CDS_Time",
+        COMPOUND("Short_CDS_Time",
              MEMBER("Day", USHORT),
              MEMBER("Millisec_In_Day", UINT)
         );
     
     public static final CompoundType REC_HEAD =
-        COMP("Generic_Record_Header",
+        COMPOUND("Generic_Record_Header",
              MEMBER("Record_Class", UBYTE),
              MEMBER("Instrument_Group", UBYTE),
              MEMBER("Record_Subclass", UBYTE),
@@ -59,7 +53,7 @@ public class MetopFormats {
         );
     
     public static final CompoundType POINTER =
-        COMP("Generic_Record_Pointer",
+        COMPOUND("Generic_Record_Pointer",
              MEMBER("Target_Record_Class", UBYTE),
              MEMBER("Target_Instrument_Group", UBYTE),
              MEMBER("Target_Record_Subclass", UBYTE),
@@ -67,33 +61,47 @@ public class MetopFormats {
         );
     
     public static final CompoundType PRODUCT_DETAILS =
-        COMP("Product_Details",
-             MEMBER("Product_Name", SEQ(BYTE, 100)),
-             MEMBER("Parent_Product_Name1", SEQ(BYTE, 100)),
-             MEMBER("Parent_Product_Name2", SEQ(BYTE, 100)),
-             MEMBER("Parent_Product_Name4", SEQ(BYTE, 100)),
-             MEMBER("Instrument_ID", SEQ(BYTE, 37)),
-             MEMBER("Instrument_Model", SEQ(BYTE, 36)),
-             MEMBER("Product_Type", SEQ(BYTE, 36)),
-             MEMBER("Processing_Level", SEQ(BYTE, 35)),
-             MEMBER("Spacecraft_ID", SEQ(BYTE, 36))
+        COMPOUND("Product_Details",
+             MEMBER("Product_Name", SEQUENCE(BYTE, 100)),
+             MEMBER("Parent_Product_Name1", SEQUENCE(BYTE, 100)),
+             MEMBER("Parent_Product_Name2", SEQUENCE(BYTE, 100)),
+             MEMBER("Parent_Product_Name4", SEQUENCE(BYTE, 100)),
+             MEMBER("Instrument_ID", SEQUENCE(BYTE, 37)),
+             MEMBER("Instrument_Model", SEQUENCE(BYTE, 36)),
+             MEMBER("Product_Type", SEQUENCE(BYTE, 36)),
+             MEMBER("Processing_Level", SEQUENCE(BYTE, 35)),
+             MEMBER("Spacecraft_ID", SEQUENCE(BYTE, 36))
         );
     
     
     public static final CompoundType MPHR =
-        COMP("Main_Product_Header_Record",
+        COMPOUND("Main_Product_Header_Record",
              MEMBER("GRH", REC_HEAD),
              MEMBER("Product_Details", PRODUCT_DETAILS)
         );
     
     public static final CompoundType METOP_RECORD =
-        COMP("MR",
+        COMPOUND("MR",
              MEMBER("GRH", REC_HEAD),
-             MEMBER("recordData", SEQ(BYTE))
+             MEMBER("recordData", new MyVarElementCountSequenceType(BYTE))
         );
+
+    private static class MyVarElementCountSequenceType extends VarElementCountSequenceType {
+
+        protected MyVarElementCountSequenceType(Type elementType) {
+            super(elementType);
+        }
+
+        @Override
+        protected int resolveElementCount(CollectionData parent) throws IOException {
+            final long size = parent.getCompound(0).getUInt(4);
+            return (int) (size - 20);
+        }
+        
+    }
     
     public static final CompoundType METOP_FILE = 
-        COMP("METOP_FILE", 
+        COMPOUND("METOP_FILE", 
 //             MEMBER("all", SEQ(METOP_RECORD))
 //             MEMBER("all", METOP_RECORD),
              MEMBER("record1", MPHR)
@@ -108,25 +116,15 @@ public class MetopFormats {
         return INSTANCE;
     }
     
-    public Format getFormat() {
+    public DataFormat getFormat() {
         return formatMap.get("FOO");
     }
     private static final MetopFormats INSTANCE = new MetopFormats();
-    private HashMap<String, Format> formatMap;
+    private HashMap<String, DataFormat> formatMap;
     
     private MetopFormats() {
-        formatMap = new HashMap<String, Format>(17);
-        
-        Format metopFormat = new Format(MetopFormats.METOP_FILE);
-        final SequenceTypeMapper elementCountResolver = new SequenceElementCountResolver() {
-            
-            @Override
-            public int getElementCount(CollectionData collectionData, SequenceType sequenceType) throws IOException {
-                final long size = collectionData.getCompound(0).getUInt(4);
-                return (int) (size - 20);
-            }
-        };
-        metopFormat.addSequenceTypeMapper(MetopFormats.METOP_RECORD.getMember(1), elementCountResolver);
+        formatMap = new HashMap<String, DataFormat>(17);
+        DataFormat metopFormat = new DataFormat(MetopFormats.METOP_FILE);
         formatMap.put("FOO", metopFormat);
     }
 }

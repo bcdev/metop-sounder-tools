@@ -21,33 +21,18 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import com.bc.ceres.binio.CompoundData;
-import com.bc.ceres.binio.Format;
-import com.bc.ceres.binio.IOContext;
-import com.bc.ceres.binio.IOHandler;
+import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.util.DataPrinter;
-import com.bc.ceres.binio.util.RandomAccessFileIOHandler;
 
-/**
- * todo - add API doc
- *
- * @author Marco Zuehlke
- * @version $Revision$ $Date$
- * @since BEAM 4.2
- */
+
 public class MetopFile {
 
-    private final File file;
-    private final Format format;
-    private final RandomAccessFile raf;
+    private final DataFormat format;
     private CompoundData metopData;
 
-    public MetopFile(File file, Format format) throws IOException {
-        this.file = file;
+    public MetopFile(File file, DataFormat format) throws IOException {
         this.format = format;
-        this.raf = new RandomAccessFile(file, "r");
-        final IOHandler handler = new RandomAccessFileIOHandler(raf);
-        final IOContext context = new IOContext(format, handler);
-        metopData = context.getData();
+        metopData = format.createContext(file, "r").getData();
     }
     
     public CompoundData getMetopData() {
@@ -55,7 +40,7 @@ public class MetopFile {
     }
     
     public static void main(String[] args) throws IOException {
-        Format metopFormat = MetopFormats.getInstance().getFormat();
+        DataFormat metopFormat = MetopFormats.getInstance().getFormat();
         MetopFile metopFile = new MetopFile(new File(args[0]), metopFormat);
         DataPrinter printer = new DataPrinter();
         printer.print(metopFile.getMetopData());

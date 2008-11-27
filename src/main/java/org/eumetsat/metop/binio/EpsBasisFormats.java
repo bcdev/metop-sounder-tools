@@ -16,14 +16,10 @@
  */
 package org.eumetsat.metop.binio;
 
-import static com.bc.ceres.binio.util.TypeBuilder.COMP;
-import static com.bc.ceres.binio.util.TypeBuilder.MEMBER;
-import static com.bc.ceres.binio.util.TypeBuilder.UBYTE;
-import static com.bc.ceres.binio.util.TypeBuilder.UINT;
-import static com.bc.ceres.binio.util.TypeBuilder.USHORT;
+import static com.bc.ceres.binio.TypeBuilder.*;
 
 import com.bc.ceres.binio.CompoundType;
-import com.bc.ceres.binio.Format;
+import com.bc.ceres.binio.DataFormat;
 
 /**
  * Defines the formats of all supported METOP product types.
@@ -34,13 +30,13 @@ import com.bc.ceres.binio.Format;
 public class EpsBasisFormats {
     
     public static final CompoundType SHORT_CDS_TIME = 
-        COMP("Short_CDS_Time",
+        COMPOUND("Short_CDS_Time",
              MEMBER("Day", USHORT),
              MEMBER("Millisec_In_Day", UINT)
         );
     
     public static final CompoundType GRH =
-        COMP("Generic_Record_Header",
+        COMPOUND("Generic_Record_Header",
              MEMBER("Record_Class", UBYTE),
              MEMBER("Instrument_Group", UBYTE),
              MEMBER("Record_Subclass", UBYTE),
@@ -51,7 +47,7 @@ public class EpsBasisFormats {
         );
     
     public static final CompoundType POINTER =
-        COMP("Generic_Record_Pointer",
+        COMPOUND("Generic_Record_Pointer",
              MEMBER("Target_Record_Class", UBYTE),
              MEMBER("Target_Instrument_Group", UBYTE),
              MEMBER("Target_Record_Subclass", UBYTE),
@@ -62,14 +58,14 @@ public class EpsBasisFormats {
         return INSTANCE;
     }
     
-    public Format getFormat() {
+    public DataFormat getFormat() {
         return format;
     }
     private static final EpsBasisFormats INSTANCE = new EpsBasisFormats();
-    private Format format;
+    private DataFormat format;
     
     private EpsBasisFormats() {
-        format = new Format();
+        format = new DataFormat();
         format.setName("EPS Basis Types");
         format.addTypeDef("short_cds_time", SHORT_CDS_TIME);
         format.addTypeDef("time", SHORT_CDS_TIME);
