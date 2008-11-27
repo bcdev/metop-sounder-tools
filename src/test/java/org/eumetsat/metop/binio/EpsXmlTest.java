@@ -19,11 +19,11 @@ package org.eumetsat.metop.binio;
 import java.net.URI;
 import java.net.URL;
 
+import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceType;
 import com.bc.ceres.binio.SimpleType;
 import com.bc.ceres.binio.Type;
-import com.bc.ceres.binio.CompoundType.Member;
 
 import junit.framework.TestCase;
 
@@ -40,7 +40,7 @@ public class EpsXmlTest extends TestCase {
     }
     
     public void testDescription() throws Exception {
-        assertEquals("EPS IASI Level 1C Format", epsXml.getDescription());
+        assertEquals("EPS IASI Level 1C Format", epsXml.getFormatDescription());
     }
     
     public void testParameters() throws Exception {
@@ -58,6 +58,19 @@ public class EpsXmlTest extends TestCase {
         assertEquals(72, memberCount);
     }
     
+    public void testMphrMetadata() throws Exception {
+        Type mphr = epsXml.getEpsRecordType("mphr");
+        CompoundType compoundType = (CompoundType) mphr;
+        CompoundMember member0 = compoundType.getMember(0);
+        
+        assertEquals("PRODUCT_NAME", member0.getName());
+        Object metadata = member0.getMetadata();
+        assertNotNull(metadata);
+        assertTrue(metadata instanceof EpsAsciiMetatData);
+        EpsAsciiMetatData epsMetatData = (EpsAsciiMetatData) metadata;
+        assertEquals("Complete name of the product", epsMetatData.getDescription());
+    }
+    
     public void testMdr() throws Exception {
         Type mdr = epsXml.getEpsRecordType("mdr");
         assertNotNull(mdr);
@@ -66,7 +79,7 @@ public class EpsXmlTest extends TestCase {
         int memberCount = compoundType.getMemberCount();
         assertEquals(53, memberCount);
         assertEquals(27, compoundType.getMemberIndex("GGeoSondLoc"));
-        Member member = compoundType.getMember(27);
+        CompoundMember member = compoundType.getMember(27);
         assertNotNull(member);
         assertEquals("GGeoSondLoc", member.getName());
         

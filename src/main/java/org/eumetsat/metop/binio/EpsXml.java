@@ -39,8 +39,9 @@ import com.bc.ceres.binio.SequenceType;
 import com.bc.ceres.binio.SequenceTypeMapper;
 import com.bc.ceres.binio.SimpleType;
 import com.bc.ceres.binio.Type;
-import com.bc.ceres.binio.CompoundType.Member;
+import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.util.SequenceElementCountResolver;
+import static com.bc.ceres.binio.util.TypeBuilder.*;
 
 /**
  *
@@ -54,7 +55,7 @@ public class EpsXml {
     private final Map<String, String> parameterMap;
     private final Map<String, Type> epsRecordTypes;
     private final static Map<String, Type> typedefs = epsTypes();
-    private String description;
+    private String formatDescription;
     private Format format;
 
     public EpsXml(URI uri) throws IOException, DataConversionException {
@@ -78,7 +79,7 @@ public class EpsXml {
         map.put("integer4", SimpleType.INT);
         map.put("uinteger4", SimpleType.UINT);
         map.put("integer8", SimpleType.LONG);
-        map.put("uinteger8", SimpleType.LONG); // TODO how handle this ? (mz, 25.11.2008)
+        map.put("uinteger8", SimpleType.ULONG);
 
         map.put("vbyte", createVType("vbyte", SimpleType.BYTE));
         map.put("vubyte", createVType("vbyte", SimpleType.UBYTE));
@@ -89,25 +90,22 @@ public class EpsXml {
         map.put("vinteger4", createVType("vbyte", SimpleType.INT));
         map.put("vuinteger4", createVType("vbyte", SimpleType.UINT));
         map.put("vinteger8", createVType("vbyte", SimpleType.LONG));
-        map.put("vuinteger8", createVType("vbyte", SimpleType.LONG)); // TODO how handle this ? (mz, 25.11.2008)
+        map.put("vuinteger8", createVType("vbyte", SimpleType.LONG));
         
-        map.put("time", new SequenceType(SimpleType.BYTE, 6));
+        map.put("time", SEQ(SimpleType.BYTE, 6));
         return map;
     }
     
     private static Type createVType(String name, SimpleType type) {
-        Member[] members = new Member[2];
-        members[0] = new CompoundType.Member("scale", SimpleType.BYTE);
-        members[1] = new CompoundType.Member("value", type);
-        return new CompoundType(name, members);
+        return COMP(name, MEMBER("scale", SimpleType.BYTE), MEMBER("value", type));
     }
 
     public URI getUri() {
         return uri;
     }
     
-    public String getDescription() {
-        return description;
+    public String getFormatDescription() {
+        return formatDescription;
     }
     
     public Format getFormat() {
@@ -137,23 +135,23 @@ public class EpsXml {
     }
     
     private void createFormat() {
-        List<Member> memberList = new ArrayList<Member>(100);
+        List<CompoundMember> memberList = new ArrayList<CompoundMember>(100);
         Type mphr = epsRecordTypes.get("mphr");
-        memberList.add(new CompoundType.Member("mphr", createRecord("mphr", mphr)));
+        memberList.add(MEMBER("mphr", createRecord("mphr", mphr)));
         if (epsRecordTypes.containsKey("sphr")) {
             Type sphr = epsRecordTypes.get("sphr");
-            memberList.add(new CompoundType.Member("sphr", createRecord("sphr", sphr)));
+            memberList.add(MEMBER("sphr", createRecord("sphr", sphr)));
         }
-        SequenceType sequenceType = new SequenceType(createRecord("ipr", MetopFormats.POINTER));
-        Member iprs = new CompoundType.Member("iprs", sequenceType);
+        SequenceType sequenceType = SEQ(createRecord("ipr", MetopFormats.POINTER));
+        CompoundMember iprs = MEMBER("iprs", sequenceType);
         memberList.add(iprs);
         
         //TODO add remaining records
         
-        Member[] allRecords = memberList.toArray(new Member[memberList.size()]);
-        format = new Format(new CompoundType("all", allRecords));
+        CompoundMember[] allRecords = memberList.toArray(new CompoundMember[memberList.size()]);
+        format = new Format(COMP("all", allRecords));
         final SequenceTypeMapper iprsCountResolver = new SequenceElementCountResolver() {
-            
+                
             @Override
             public int getElementCount(CollectionData collectionData, SequenceType sequenceType) throws IOException {
                 SequenceData sequence = collectionData.getCompound(0).getCompound(1).getCompound("TOTAL_IPR").getSequence("value");
@@ -169,10 +167,9 @@ public class EpsXml {
         format.addSequenceTypeMapper(iprs, iprsCountResolver);
     }
 
-
     private void parseDescription(Element element) {
         Element child = element.getChild("brief-description");
-        description = child.getValue();
+        formatDescription = child.getValue();
     }
     
     private void parseParameters(Element element) {
@@ -202,19 +199,21 @@ public class EpsXml {
         }
     }
     
-    private Type parseAsciiRecord(Element element) throws DataConversionException {
-        List<Member> memberList = new ArrayList<Member>(100);
-        List<Element> fields = element.getChildren("field");
+    private Type parseAsciiRecord(Element recordElement) throws DataConversionException {
+        List<CompoundMember> memberList = new ArrayList<CompoundMember>(100);
+        List<Element> fields = recordElement.getChildren("field");
         for (int i = 0; i < fields.size(); i++) {
-            Element elem = fields.get(i);
-            Type type = createAsciiField(elem);
-            memberList.add(new CompoundType.Member(type.getName(), type));
+            Element fieldElement = fields.get(i);
+            Type type = createAsciiField(fieldElement);
+            CompoundMember member = MEMBER(type.getName(), type);
+            member.setMetadata(getAsciiMetadata(fieldElement));
+            memberList.add(member);
         }
-        return createCompoundType(element.getName(), memberList);
+        return createCompoundType(recordElement.getName(), memberList);
     }
     
     private Type parseBinaryRecord(Element element) throws DataConversionException {
-        List<Member> memberList = new ArrayList<Member>(100);
+        List<CompoundMember> memberList = new ArrayList<CompoundMember>(100);
         String name = element.getName();
         List<Element> fields = element.getChildren();
         for (int i = 0; i < fields.size(); i++) {
@@ -222,7 +221,7 @@ public class EpsXml {
             Type type = createBinaryType(part);
             if (type != null) {
                 String elementName = getElementName(part);
-                memberList.add(new CompoundType.Member(elementName, type));
+                memberList.add(MEMBER(elementName, type));
             }
         }
         return createCompoundType(name, memberList);
@@ -244,7 +243,7 @@ public class EpsXml {
         if (type == null) {
             if (typeName.equals("bitfield")) {
                 int length = getElementLength(element);
-                type = new SequenceType(SimpleType.BYTE, length/8);
+                type = SEQ(SimpleType.BYTE, length/8);
             } else {
                 throw new IllegalStateException("unsupported type: "+typeName);
             }
@@ -260,29 +259,55 @@ public class EpsXml {
         }
         Element child = children.get(0);
         Type elemType = createBinaryType(child);
-        return new SequenceType(elemType, length);
+        return SEQ(elemType, length);
     }
 
-    private Type createCompoundType(String name, List<Member> memberList) {
-        Member[] allMembers = memberList.toArray(new Member[memberList.size()]);
-        return new CompoundType(name, allMembers);
+    private Type createCompoundType(String name, List<CompoundMember> memberList) {
+        CompoundMember[] allMembers = memberList.toArray(new CompoundMember[memberList.size()]);
+        return COMP(name, allMembers);
     }
     
     private CompoundType createRecord(String name, Type bodytype) {
-        Member[] members = new Member[2];
-        members[0] = new CompoundType.Member("header", MetopFormats.REC_HEAD);
-        members[1] = new CompoundType.Member("body", bodytype);
-        return new CompoundType(name, members);
+        return COMP(name, MEMBER("header", MetopFormats.REC_HEAD), MEMBER("body", bodytype));
     }
     
     private Type createAsciiField(Element elem) throws DataConversionException {
         String name = getElementName(elem);
         int length = getElementLength(elem);
-        Member[] members = new Member[3];
-        members[0] = new Member("name", new SequenceType(SimpleType.BYTE, 32)); 
-        members[1] = new Member("value", new SequenceType(SimpleType.BYTE, length)); 
-        members[2] = new Member("cr", SimpleType.BYTE); 
-        return new CompoundType(name, members);
+        return COMP(name, 
+                    MEMBER("name", SEQ(SimpleType.BYTE, 32)), 
+                    MEMBER("value", SEQ(SimpleType.BYTE, length)),
+                    MEMBER("cr", SimpleType.BYTE));
+    }
+    
+    private EpsAsciiMetatData getAsciiMetadata(Element element) {
+        EpsAsciiMetatData metaData = new EpsAsciiMetatData();
+        Attribute type = element.getAttribute("type");
+        String typeString = type.getValue();
+        metaData.setType(typeString);
+        Attribute description = element.getAttribute("description");
+        if (description != null) {
+            metaData.setDescription(description.getValue());
+        }
+        Attribute units = element.getAttribute("units"); // opt
+        if (units != null) {
+            metaData.setUnits(units.getValue());
+        }
+        Attribute scalingFactor = element.getAttribute("scaling-factor"); //opt
+        if (scalingFactor != null) {
+            metaData.setScalingFactor(scalingFactor.getValue());
+        }
+        if (type.equals("enumerated")) {
+            List<Element> items = element.getChildren("item");
+            Map<String, String> itemMap = new HashMap<String, String>(items.size());
+            for (Element elem : items) {
+                String key = elem.getAttribute("value").getValue();
+                String desc = elem.getAttribute("description").getValue();
+                itemMap.put(key, desc);
+            }
+            metaData.setItems(itemMap);
+        }
+        return metaData;
     }
     
     private int getElementLength(Element element) throws DataConversionException{
@@ -300,6 +325,4 @@ public class EpsXml {
         Attribute nameAttribute = element.getAttribute("name");
         return nameAttribute.getValue();
     }
-
-
 }
