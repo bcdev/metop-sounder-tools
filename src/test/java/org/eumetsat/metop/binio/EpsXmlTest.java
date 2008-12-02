@@ -50,7 +50,7 @@ public class EpsXmlTest extends TestCase {
     }
     
     public void testMphr() throws Exception {
-        Type mphr = epsXml.getEpsRecordType("mphr");
+        Type mphr = epsXml.getFormat().getTypeDef("mphr");
         assertNotNull(mphr);
         assertTrue(mphr.isCompoundType());
         CompoundType compoundType = (CompoundType) mphr;
@@ -59,7 +59,7 @@ public class EpsXmlTest extends TestCase {
     }
     
     public void testMphrMetadata() throws Exception {
-        Type mphr = epsXml.getEpsRecordType("mphr");
+        Type mphr = epsXml.getFormat().getTypeDef("mphr");
         CompoundType compoundType = (CompoundType) mphr;
         CompoundMember member0 = compoundType.getMember(0);
         
@@ -72,7 +72,7 @@ public class EpsXmlTest extends TestCase {
     }
     
     public void testMdr() throws Exception {
-        Type mdr = epsXml.getEpsRecordType("mdr");
+        Type mdr = epsXml.getFormat().getTypeDef("mdr:iasi:2");
         assertNotNull(mdr);
         assertTrue(mdr.isCompoundType());
         CompoundType compoundType = (CompoundType) mdr;

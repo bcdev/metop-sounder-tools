@@ -19,18 +19,21 @@ package org.eumetsat.metop.binio;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.util.DataPrinter;
 
 
-public class MetopFile {
+public class EpsFile {
 
     private final DataFormat format;
     private CompoundData metopData;
 
-    public MetopFile(File file, DataFormat format) throws IOException {
+    public EpsFile(File file, DataFormat format) throws IOException {
         this.format = format;
         metopData = format.createContext(file, "r").getData();
     }
@@ -39,10 +42,14 @@ public class MetopFile {
         return metopData;
     }
     
-    public static void main(String[] args) throws IOException {
-        DataFormat metopFormat = MetopFormats.getInstance().getFormat();
-        MetopFile metopFile = new MetopFile(new File(args[0]), metopFormat);
+    public static void main(String[] args) throws IOException, Exception {
+        URL resource = EpsFile.class.getResource("eps_avhrrl1b_6.5.xml");
+        File file = new File(args[0]);
+        URI uri = resource.toURI();
+        EpsXml epsXml = new EpsXml(uri);
+        DataFormat format = epsXml.getFormat();
+        EpsFile epsFile = new EpsFile(file, format);
         DataPrinter printer = new DataPrinter();
-        printer.print(metopFile.getMetopData());
+        printer.print(epsFile.getMetopData());
     }
 }

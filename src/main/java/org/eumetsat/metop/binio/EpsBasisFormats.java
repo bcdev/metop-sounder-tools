@@ -20,22 +20,25 @@ import static com.bc.ceres.binio.TypeBuilder.*;
 
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.binio.SimpleType;
+import com.bc.ceres.binio.Type;
+import com.bc.ceres.core.Assert;
 
 /**
- * Defines the formats of all supported METOP product types.
+ * Defines the formats for all METOP product types in EPS format.
  *
  * @author Marco Zuehlke
  * @version $Revision$ $Date$
  */
 public class EpsBasisFormats {
     
-    public static final CompoundType SHORT_CDS_TIME = 
+    private static final CompoundType SHORT_CDS_TIME = 
         COMPOUND("Short_CDS_Time",
              MEMBER("Day", USHORT),
              MEMBER("Millisec_In_Day", UINT)
         );
     
-    public static final CompoundType GRH =
+    private static final CompoundType GRH =
         COMPOUND("Generic_Record_Header",
              MEMBER("Record_Class", UBYTE),
              MEMBER("Instrument_Group", UBYTE),
@@ -46,13 +49,19 @@ public class EpsBasisFormats {
              MEMBER("Record_End_Time", SHORT_CDS_TIME)
         );
     
-    public static final CompoundType POINTER =
+    private static final CompoundType POINTER =
         COMPOUND("Generic_Record_Pointer",
              MEMBER("Target_Record_Class", UBYTE),
              MEMBER("Target_Instrument_Group", UBYTE),
              MEMBER("Target_Record_Subclass", UBYTE),
              MEMBER("Taregt_Record_Offset", UINT)
         );
+    
+    private static final CompoundType EADR = 
+        COMPOUND("External_Auxiliary_Data_Record", MEMBER("Aux_Data_Pointer", SEQUENCE(BYTE, 100)));
+
+    private static final EpsBasisFormats INSTANCE = new EpsBasisFormats();
+    private DataFormat format;
     
     public static EpsBasisFormats getInstance() {
         return INSTANCE;
@@ -61,16 +70,62 @@ public class EpsBasisFormats {
     public DataFormat getFormat() {
         return format;
     }
-    private static final EpsBasisFormats INSTANCE = new EpsBasisFormats();
-    private DataFormat format;
+    
+    public static String buildTypeName(RecordClass recordClass, InstrumentGroup instrumentGroup, int subClass) {
+        Assert.notNull(recordClass, "recordClass");
+        Assert.notNull(instrumentGroup, "instrumentGroup");
+        return buildTypeName(recordClass.toString(), instrumentGroup.toString(), Integer.toString(subClass));
+    }
+    
+    public static String buildTypeName(String recordClass, String instrumentGroup, String subClass) {
+        Assert.notNull(recordClass, "recordClass");
+        Assert.notNull(instrumentGroup, "instrumentGroup");
+        Assert.notNull(subClass, "subClass");
+        StringBuilder sb = new StringBuilder(recordClass.toLowerCase());
+        sb.append(":");
+        sb.append(instrumentGroup.toLowerCase());
+        sb.append(":");
+        sb.append(subClass);
+        return sb.toString();
+    }
     
     private EpsBasisFormats() {
         format = new DataFormat();
         format.setName("EPS Basis Types");
+        format.addTypeDef("byte", SimpleType.BYTE);
+        format.addTypeDef("ubyte", SimpleType.UBYTE);
+        format.addTypeDef("enumerated", SimpleType.UBYTE);
+        format.addTypeDef("boolean", SimpleType.BYTE);
+        format.addTypeDef("integer1", SimpleType.BYTE);
+        format.addTypeDef("uinteger1", SimpleType.UBYTE);
+        format.addTypeDef("integer2", SimpleType.SHORT);
+        format.addTypeDef("uinteger2", SimpleType.USHORT);
+        format.addTypeDef("integer4", SimpleType.INT);
+        format.addTypeDef("uinteger4", SimpleType.UINT);
+        format.addTypeDef("integer8", SimpleType.LONG);
+        format.addTypeDef("uinteger8", SimpleType.ULONG);
+
+        format.addTypeDef("vbyte", createVType("vbyte", SimpleType.BYTE));
+        format.addTypeDef("vubyte", createVType("vbyte", SimpleType.UBYTE));
+        format.addTypeDef("vinteger1", createVType("vbyte", SimpleType.BYTE));
+        format.addTypeDef("vuinteger1", createVType("vbyte", SimpleType.UBYTE));
+        format.addTypeDef("vinteger2", createVType("vbyte", SimpleType.SHORT));
+        format.addTypeDef("vuinteger2", createVType("vbyte", SimpleType.USHORT));
+        format.addTypeDef("vinteger4", createVType("vbyte", SimpleType.INT));
+        format.addTypeDef("vuinteger4", createVType("vbyte", SimpleType.UINT));
+        format.addTypeDef("vinteger8", createVType("vbyte", SimpleType.LONG));
+        format.addTypeDef("vuinteger8", createVType("vbyte", SimpleType.LONG));
+        
         format.addTypeDef("short_cds_time", SHORT_CDS_TIME);
         format.addTypeDef("time", SHORT_CDS_TIME);
         format.addTypeDef("grh", GRH);
         format.addTypeDef("pointer", POINTER);
+        format.addTypeDef("geadr", EADR);
+        format.addTypeDef("veadr", EADR);
         
+    }
+    
+    private static Type createVType(String name, SimpleType type) {
+        return COMPOUND(name, MEMBER("scale", SimpleType.BYTE), MEMBER("value", type));
     }
 }
