@@ -30,7 +30,7 @@ import com.bc.ceres.core.Assert;
  * @author Marco Zuehlke
  * @version $Revision$ $Date$
  */
-public class EpsBasisFormats {
+public class EpsBasisTypes {
     
     private static final CompoundType SHORT_CDS_TIME = 
         COMPOUND("Short_CDS_Time",
@@ -60,10 +60,10 @@ public class EpsBasisFormats {
     private static final CompoundType EADR = 
         COMPOUND("External_Auxiliary_Data_Record", MEMBER("Aux_Data_Pointer", SEQUENCE(BYTE, 100)));
 
-    private static final EpsBasisFormats INSTANCE = new EpsBasisFormats();
+    private static final EpsBasisTypes INSTANCE = new EpsBasisTypes();
     private DataFormat format;
     
-    public static EpsBasisFormats getInstance() {
+    public static EpsBasisTypes getInstance() {
         return INSTANCE;
     }
     
@@ -89,7 +89,7 @@ public class EpsBasisFormats {
         return sb.toString();
     }
     
-    private EpsBasisFormats() {
+    private EpsBasisTypes() {
         format = new DataFormat();
         format.setName("EPS Basis Types");
         format.addTypeDef("byte", SimpleType.BYTE);

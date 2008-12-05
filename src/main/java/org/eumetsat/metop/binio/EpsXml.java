@@ -42,15 +42,20 @@ import static com.bc.ceres.binio.TypeBuilder.*;
 public class EpsXml {
     private final Map<String, String> parameterMap;
     private final DataFormat format;
-    private String formatDescription;
+    private String formatDescription = "";
+    private String productName;
 
     public EpsXml(URI uri) throws IOException, DataConversionException {
         parameterMap = new HashMap<String, String>(42);
         format = new DataFormat();
-        format.setBasisFormat(EpsBasisFormats.getInstance().getFormat());
+        format.setBasisFormat(EpsBasisTypes.getInstance().getFormat());
         parseDocument(uri);
         EpsTypeBuilder epsTypeBuilder = new EpsTypeBuilder("EPS-METOP-Format", format);
-        format.setType(epsTypeBuilder.build());
+        if (productName.equals("MPHR")) {
+            format.setType(epsTypeBuilder.buildMPHR());
+        } else {
+            format.setType(epsTypeBuilder.buildProduct());
+        }
     }
 
     public String getFormatDescription() {
@@ -81,22 +86,27 @@ public class EpsXml {
     
     private void parseDescription(Element element) {
         Element child = element.getChild("brief-description");
-        formatDescription = child.getValue();
+        if (child != null) {
+            formatDescription = child.getValue();
+        }
     }
     
     private void parseParameters(Element element) {
         Element parameters = element.getChild("parameters");
-        List<Element> children = parameters.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            Element elem = children.get(i);
-            String name = elem.getAttributeValue("name");
-            String value = elem.getAttributeValue("value");
-            parameterMap.put(name, value.trim());
+        if (parameters != null) {
+            List<Element> children = parameters.getChildren();
+            for (int i = 0; i < children.size(); i++) {
+                Element elem = children.get(i);
+                String name = elem.getAttributeValue("name");
+                String value = elem.getAttributeValue("value");
+                parameterMap.put(name, value.trim());
+            }
         }
     }
     
     private void parseProduct(Element element) throws DataConversionException {
         Element product = element.getChild("product");
+        productName = product.getAttribute("name").getValue();
         List<Element> records = product.getChildren();
         for (int i = 0; i < records.size(); i++) {
             Element record = records.get(i);
@@ -113,7 +123,7 @@ public class EpsXml {
                     instrument = instrumentAttribute.getValue();
                 }
                 String subclass = record.getAttribute("subclass").getValue();
-                recordName = EpsBasisFormats.buildTypeName(recordName, instrument, subclass);
+                recordName = EpsBasisTypes.buildTypeName(recordName, instrument, subclass);
                 format.addTypeDef(recordName, recordType);
             }
         }

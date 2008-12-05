@@ -48,11 +48,15 @@ public class EpsTypeBuilder {
         this.format = format;
     }
     
-    public CompoundType build() {
+    public CompoundType buildProduct() {
         return COMPOUND(name, 
                         MEMBER("Header", createHeaderType()), 
                         MEMBER("Pointer", createPointerType()),
                         MEMBER("Body", createBodyType()));
+    }
+    
+    public CompoundType buildMPHR() {
+        return createRecord("MPHR", format.getTypeDef("mphr"));
     }
 
     private Type createHeaderType() {
@@ -159,7 +163,7 @@ public class EpsTypeBuilder {
                 long end;
                 int count = 0;
                 Type type = null;
-                String typeName = EpsBasisFormats.buildTypeName(ipr.getRecordClass(), ipr.getInstrumentGroup(), ipr.getRecordSubclass());
+                String typeName = EpsBasisTypes.buildTypeName(ipr.getRecordClass(), ipr.getInstrumentGroup(), ipr.getRecordSubclass());
                 if (format.isTypeDef(typeName)) {
                     type = format.getTypeDef(typeName);
                 } else {

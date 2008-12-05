@@ -27,14 +27,14 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.util.DataPrinter;
 
+import org.jdom.DataConversionException;
+
 
 public class EpsFile {
 
-    private final DataFormat format;
     private CompoundData metopData;
 
-    public EpsFile(File file, DataFormat format) throws IOException {
-        this.format = format;
+    private EpsFile(File file, DataFormat format) throws IOException {
         metopData = format.createContext(file, "r").getData();
     }
     
@@ -42,14 +42,46 @@ public class EpsFile {
         return metopData;
     }
     
+    public static EpsFile openFile(File file) throws IOException, DataConversionException, URISyntaxException {
+        DataFormat mphrFormat = EpsFormats.getInstance().getMPHRformat();
+        EpsFile epsFile = new EpsFile(file, mphrFormat);
+        CompoundData epsData = epsFile.getMetopData();
+        EpsAsciiRecord mphrRecord = new EpsAsciiRecord(epsData.getCompound(1));
+        String instrumentId = mphrRecord.getString(mphrRecord.getMemberIndex("INSTRUMENT_ID"));
+        String processingLevel = mphrRecord.getString(mphrRecord.getMemberIndex("PROCESSING_LEVEL"));
+        int formatMajor = mphrRecord.getInt(mphrRecord.getMemberIndex("FORMAT_MAJOR_VERSION"));
+        DataFormat dataFormat = EpsFormats.getInstance().getDataFormat(instrumentId, processingLevel, formatMajor);
+        return new EpsFile(file, dataFormat);
+    }
+    
+    public static boolean canOpenFile(File file) throws IOException, DataConversionException, URISyntaxException {
+        DataFormat mphrFormat = EpsFormats.getInstance().getMPHRformat();
+        EpsFile epsFile = new EpsFile(file, mphrFormat);
+        CompoundData epsData = epsFile.getMetopData();
+        EpsAsciiRecord mphrRecord = new EpsAsciiRecord(epsData.getCompound(1));
+        String instrumentId = mphrRecord.getString(mphrRecord.getMemberIndex("INSTRUMENT_ID"));
+        String processingLevel = mphrRecord.getString(mphrRecord.getMemberIndex("PROCESSING_LEVEL"));
+        int formatMajor = mphrRecord.getInt(mphrRecord.getMemberIndex("FORMAT_MAJOR_VERSION"));
+        return EpsFormats.getInstance().isSupported(instrumentId, processingLevel, formatMajor);
+    }
+
+    private static void printValue(EpsAsciiRecord mphrRecord, String memberName) throws IOException {
+        int memberIndex = mphrRecord.getMemberIndex(memberName);
+        String description = mphrRecord.getDescription(memberIndex);
+        System.out.println("description: "+description);
+        System.out.println("units: "+mphrRecord.getUnits(memberIndex));
+        System.out.println("value: "+mphrRecord.getRawString(memberIndex));
+    }
+    
+    
     public static void main(String[] args) throws IOException, Exception {
-        URL resource = EpsFile.class.getResource("eps_avhrrl1b_6.5.xml");
         File file = new File(args[0]);
-        URI uri = resource.toURI();
-        EpsXml epsXml = new EpsXml(uri);
-        DataFormat format = epsXml.getFormat();
-        EpsFile epsFile = new EpsFile(file, format);
-        DataPrinter printer = new DataPrinter();
-        printer.print(epsFile.getMetopData());
+        boolean canOpenFile = EpsFile.canOpenFile(file);
+        System.out.println("canOpenFile="+canOpenFile);
+        if (canOpenFile) {
+            EpsFile epsFile = EpsFile.openFile(file);
+        }
+//        DataPrinter printer = new DataPrinter();
+//        printer.print(epsFile.getMetopData());
     }
 }
