@@ -75,7 +75,7 @@ public class EpsAsciiRecord {
 //        } else if (type.equals("longtime")) {
 //            return "converted_long_time";            
         } else if (type.equals("uinteger") || type.equals("integer")) {
-            int intValue = Integer.parseInt(scalingFactor);
+            int intValue = Integer.parseInt(value);
             if (scalingFactor != null && !scalingFactor.isEmpty()) {
                 int powerIndex = scalingFactor.indexOf('^');
                 String scaling = scalingFactor.substring(powerIndex+1);
@@ -97,6 +97,13 @@ public class EpsAsciiRecord {
             data[i] = valueSequence.getByte(i);
         }
         return new String(data);
+    }
+    
+    void printMemberNames() {
+        CompoundMember[] members = recordData.getCompoundType().getMembers();
+        for (CompoundMember compoundMember : members) {
+            System.out.println(compoundMember.getName());
+        }
     }
     
     private EpsAsciiMetatData getMetaData(int memberIndex) {

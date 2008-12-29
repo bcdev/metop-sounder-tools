@@ -16,57 +16,99 @@
  */
 package org.eumetsat.metop.binio;
 
-import com.bc.ceres.binio.DataFormat;
-
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import com.bc.ceres.binio.DataFormat;
 
 
 
 public class EpsFormats {
     
-    private static class FormatDescriptor {
+    static class FormatDescriptor {
 
         private final String instrument;
         private final String processingLevel;
-        private final int formatVersion;
-        private final String epsXmlName;
+        private final int majorVersion;
+        private final int minorVersion;
 
-        public FormatDescriptor(String instrument, String processingLevel, int formatVersion, String epsXmlName) {
+        public FormatDescriptor(String instrument, String processingLevel, int majorVersion, int minorVersion) {
             this.instrument = instrument;
             this.processingLevel = processingLevel;
-            this.formatVersion = formatVersion;
-            this.epsXmlName = epsXmlName;
+            this.majorVersion = majorVersion;
+            this.minorVersion = minorVersion;
         }
         
+        
+        
+        @Override
+        public String toString() {
+            return instrument + "-" + processingLevel + "_" + majorVersion + "." + minorVersion;
+        }
+
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((instrument == null) ? 0 : instrument.hashCode());
+            result = prime * result + ((processingLevel == null) ? 0 : processingLevel.hashCode());
+            result = prime * result + majorVersion;
+            result = prime * result + minorVersion;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            FormatDescriptor other = (FormatDescriptor) obj;
+            if (instrument == null) {
+                if (other.instrument != null)
+                    return false;
+            } else if (!instrument.equals(other.instrument))
+                return false;
+            if (majorVersion != other.majorVersion)
+                return false;
+            if (minorVersion != other.minorVersion)
+                return false;
+            if (processingLevel == null) {
+                if (other.processingLevel != null)
+                    return false;
+            } else if (!processingLevel.equals(other.processingLevel))
+                return false;
+            return true;
+        }
     }
     
-    private final List<FormatDescriptor> formatDescriptors; 
+    private final Map<FormatDescriptor, String> formatDescriptors; 
     private final Map<String, DataFormat> formats; 
     private DataFormat mphrFormat; 
     private static final EpsFormats INSTANCE = new EpsFormats();
     
     private EpsFormats() {
-        formatDescriptors = new ArrayList<FormatDescriptor>(12);
-        formatDescriptors.add(new FormatDescriptor("AVHR", "1B", 4, "eps_avhrrl1b_6.5.xml"));
-        formatDescriptors.add(new FormatDescriptor("AVHR", "1B", 10, "eps_avhrrl1b_6.5.xml"));
-        formatDescriptors.add(new FormatDescriptor("IASI", "1C", 3, "eps_iasil1c_6.6.xml"));
+        formatDescriptors = new HashMap<FormatDescriptor, String>(12);
+        formatDescriptors.put(new FormatDescriptor("AVHR", "1B", 4, 0), "eps_avhrrl1b_6.5.xml");
+        formatDescriptors.put(new FormatDescriptor("AVHR", "1B", 10, 0), "eps_avhrrl1b_6.5.xml");
+        formatDescriptors.put(new FormatDescriptor("IASI", "1C", 10, 0), "eps_iasil1c_6.6.xml");
         formats = new HashMap<String, DataFormat>(42);
     }
     public static EpsFormats getInstance() {
         return INSTANCE;
     }
     
-    public DataFormat getDataFormat(String instrument, String processingLevel, int formatVersion) {
-        FormatDescriptor fd = getFormatDescriptor(instrument, processingLevel, formatVersion);
-        if (formats.containsKey(fd.epsXmlName)) {
-            return formats.get(fd.epsXmlName);
+    public DataFormat getDataFormat(FormatDescriptor descriptor) {
+        String epsXmlName = formatDescriptors.get(descriptor);
+        if (formats.containsKey(epsXmlName)) {
+            return formats.get(epsXmlName);
         }
-        DataFormat dataFormat = createFormat(fd.epsXmlName);
-        formats.put(fd.epsXmlName, dataFormat);
+        DataFormat dataFormat = createFormat(epsXmlName);
+        formats.put(epsXmlName, dataFormat);
         return dataFormat;
     }
     
@@ -77,9 +119,8 @@ public class EpsFormats {
         return mphrFormat;
     }
     
-    public boolean isSupported(String instrument, String processingLevel, int formatVersion) {
-        FormatDescriptor fd = getFormatDescriptor(instrument, processingLevel, formatVersion);
-        return fd != null; 
+    public boolean isSupported(FormatDescriptor descriptor) {
+        return formatDescriptors.containsKey(descriptor);
     }
     
     private DataFormat createFormat(String epsXmlName) {
@@ -91,16 +132,5 @@ public class EpsFormats {
             throw new IllegalArgumentException("Problems creating format for " + epsXmlName);
         }
         return epsXml.getFormat();
-    }
-    
-    private FormatDescriptor getFormatDescriptor(String instrument, String processingLevel, int formatVersion) {
-        for (FormatDescriptor fd : formatDescriptors) {
-            if (fd.instrument.equals(instrument) &&
-                fd.processingLevel.equals(processingLevel) &&
-                fd.formatVersion == formatVersion ) {
-            return fd;
-            }
-        }
-        return null;
     }
 }
