@@ -16,6 +16,8 @@
  */
 package org.eumetsat.metop.binio;
 
+import org.esa.beam.framework.datamodel.MetadataAttribute;
+import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.ProductData;
 
 import java.io.IOException;
@@ -62,34 +64,53 @@ public class EpsAsciiRecord {
     }
     
     public ProductData getProductData(int memberIndex) throws IOException {
-        String value = getRawString(memberIndex).trim();
+        String valueAsString = getRawString(memberIndex).trim();
         EpsAsciiMetatData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
         if (type.equals("string")) {
-            return ProductData.createInstance(value);
+            return ProductData.createInstance(valueAsString);
         } else if (type.equals("enumerated")) {
-            return ProductData.createInstance(metaData.getItems().get(value));
-//        } else if (type.equals("time")) {
-//            return ProductData.UTC("converted_time");
-//        } else if (type.equals("longtime")) {
-//            return "converted_long_time";            
-        } else if (type.equals("uinteger") || type.equals("integer")) {
-            int intValue = Integer.parseInt(value);
+            return ProductData.createInstance(metaData.getItems().get(valueAsString));
+        } else if (type.equals("time")) {
+            return ProductData.createInstance("converted_time");
+        } else if (type.equals("longtime")) {
+            return ProductData.createInstance("converted_long_time");            
+        } else if (type.equals("integer") || type.equals("uinteger")) {
+            long longValue = Long.parseLong(valueAsString);
             if (scalingFactor != null && !scalingFactor.isEmpty()) {
                 int powerIndex = scalingFactor.indexOf('^');
                 String scaling = scalingFactor.substring(powerIndex+1);
                 int intScale = Integer.parseInt(scaling);
-                double doubleValue = intValue / Math.pow(10, intScale);
+                double doubleValue = longValue / Math.pow(10, intScale);
                 return ProductData.createInstance(new double[]{doubleValue});
             } else {
-                return ProductData.createInstance(new int[]{intValue});
+                return ProductData.createInstance(new long[]{longValue});
             }                
         }
-        return null;
+        return ProductData.createInstance(valueAsString);
     }
     
-    public String getRawString(int memberIndex) throws IOException {
+    public MetadataElement getAsMetaDataElement() throws IOException {
+        CompoundType type = recordData.getCompoundType();
+        final int memberCount = type.getMemberCount();
+        MetadataElement metadataElement = new MetadataElement(getRecordName());
+        for (int i = 0; i < memberCount; i++) {
+            String name = type.getMemberName(i);
+            ProductData data = getProductData(i);
+            MetadataAttribute attribute = new MetadataAttribute(name, data, true);
+            attribute.setDescription(getDescription(i));
+            attribute.setUnit(getUnits(i));
+            metadataElement.addAttribute(attribute);
+        }
+        return metadataElement;
+    }
+    
+    private String getRecordName() {
+        return recordData.getCompoundType().getName();
+    }
+
+    private String getRawString(int memberIndex) throws IOException {
         CompoundData fieldData = recordData.getCompound(memberIndex);
         SequenceData valueSequence = fieldData.getSequence("value");
         byte[] data = new byte[valueSequence.getElementCount()];
@@ -99,6 +120,7 @@ public class EpsAsciiRecord {
         return new String(data);
     }
     
+    // debug
     void printMemberNames() {
         CompoundMember[] members = recordData.getCompoundType().getMembers();
         for (CompoundMember compoundMember : members) {

@@ -222,12 +222,23 @@ public class EpsXml {
         if (scalingFactor != null) {
             metaData.setScalingFactor(scalingFactor.getValue());
         }
-        if (type.equals("enumerated")) {
+        if (typeString.equals("enumerated")) {
             List<Element> items = element.getChildren("item");
             Map<String, String> itemMap = new HashMap<String, String>(items.size());
             for (Element elem : items) {
                 String key = elem.getAttribute("value").getValue();
-                String desc = elem.getAttribute("description").getValue();
+                Attribute nameAttribute = elem.getAttribute("name");
+                Attribute descAtribute = elem.getAttribute("description");
+                String desc;
+                if (nameAttribute != null && descAtribute != null) {
+                    desc = nameAttribute.getValue() + " (" + descAtribute.getValue() + ")";
+                } else if (nameAttribute != null) {
+                    desc = nameAttribute.getValue();
+                } else if (descAtribute != null) {
+                    desc = descAtribute.getValue();
+                } else {
+                    desc = "";
+                }
                 itemMap.put(key, desc);
             }
             metaData.setItems(itemMap);

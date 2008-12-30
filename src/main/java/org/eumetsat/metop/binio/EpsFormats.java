@@ -126,7 +126,7 @@ public class EpsFormats {
         try {
             epsXml = new EpsXml(resource.toURI());
         } catch (Exception e) {
-            throw new IllegalArgumentException("Problems creating format for " + epsXmlName);
+            throw new IllegalArgumentException("Problems creating format for " + epsXmlName, e);
         }
         return epsXml.getFormat();
     }

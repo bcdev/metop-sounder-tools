@@ -23,6 +23,8 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.util.DataPrinter;
 
+import org.esa.beam.framework.datamodel.MetadataAttribute;
+import org.esa.beam.framework.datamodel.MetadataElement;
 import org.eumetsat.metop.binio.EpsFormats.FormatDescriptor;
 
 
@@ -36,6 +38,10 @@ public class EpsFile {
     
     public CompoundData getMetopData() {
         return metopData;
+    }
+    
+    public CompoundData getMphrData() throws IOException {
+        return metopData.getCompound(0).getCompound(0).getCompound(1);
     }
     
     public static EpsFile openFile(File file) throws IOException {
@@ -63,19 +69,29 @@ public class EpsFile {
 
     
     public static void main(String[] args) throws IOException, Exception {
-        File file = new File(args[0]);
-        File[] listFiles = file.listFiles();
-        for (File epsFile : listFiles) {
-            System.out.print("file="+epsFile.getName()+", ");
-            boolean canOpenFile = EpsFile.canOpenFile(epsFile);
+        File dir = new File(args[0]);
+        File[] listFiles = dir.listFiles();
+        for (File file : listFiles) {
+            System.out.print("file="+file.getName()+", ");
+            boolean canOpenFile = EpsFile.canOpenFile(file);
             System.out.print("canOpen="+canOpenFile+", ");
-            FormatDescriptor formatDescriptor = readFormatDescriptor(epsFile);
+            FormatDescriptor formatDescriptor = readFormatDescriptor(file);
             System.out.println(formatDescriptor);
             if (canOpenFile) {
-//                EpsFile epsFile = EpsFile.openFile(file);
+                EpsFile epsFile = EpsFile.openFile(file);
+
+//                DataPrinter printer = new DataPrinter();
+//                printer.print(epsFile.getMphrData());
+                
+                EpsAsciiRecord mphr = new EpsAsciiRecord(epsFile.getMphrData());
+                MetadataElement metaDataElement = mphr.getAsMetaDataElement();
+                System.out.println(metaDataElement.getName());
+                for (MetadataAttribute attribute : metaDataElement.getAttributes()) {
+                    System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
+                                        + attribute.getUnit()+ "] "+ attribute.getDescription());
+                }
             }
+            System.exit(1);
         }
-//        DataPrinter printer = new DataPrinter();
-//        printer.print(epsFile.getMetopData());
     }
 }
