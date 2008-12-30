@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.core.Assert;
 
 
 
@@ -34,26 +35,25 @@ public class EpsFormats {
         private final int minorVersion;
 
         public FormatDescriptor(String instrument, String processingLevel, int majorVersion, int minorVersion) {
+            Assert.notNull(instrument, "instrument");
+            Assert.notNull(processingLevel, "processingLevel");
             this.instrument = instrument;
             this.processingLevel = processingLevel;
             this.majorVersion = majorVersion;
             this.minorVersion = minorVersion;
         }
         
-        
-        
         @Override
         public String toString() {
             return instrument + "-" + processingLevel + "_" + majorVersion + "." + minorVersion;
         }
 
-
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((instrument == null) ? 0 : instrument.hashCode());
-            result = prime * result + ((processingLevel == null) ? 0 : processingLevel.hashCode());
+            result = prime * result + instrument.hashCode();
+            result = prime * result + processingLevel.hashCode();
             result = prime * result + majorVersion;
             result = prime * result + minorVersion;
             return result;
@@ -61,27 +61,19 @@ public class EpsFormats {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null || getClass() != obj.getClass()) {
                 return false;
-            if (getClass() != obj.getClass())
-                return false;
+            }
             FormatDescriptor other = (FormatDescriptor) obj;
-            if (instrument == null) {
-                if (other.instrument != null)
-                    return false;
-            } else if (!instrument.equals(other.instrument))
+            if (!instrument.equals(other.instrument) || 
+                    !processingLevel.equals(other.processingLevel) ||
+                    majorVersion != other.majorVersion ||
+                    minorVersion != other.minorVersion) {
                 return false;
-            if (majorVersion != other.majorVersion)
-                return false;
-            if (minorVersion != other.minorVersion)
-                return false;
-            if (processingLevel == null) {
-                if (other.processingLevel != null)
-                    return false;
-            } else if (!processingLevel.equals(other.processingLevel))
-                return false;
+            }
             return true;
         }
     }
@@ -95,7 +87,12 @@ public class EpsFormats {
         formatDescriptors = new HashMap<FormatDescriptor, String>(12);
         formatDescriptors.put(new FormatDescriptor("AVHR", "1B", 4, 0), "eps_avhrrl1b_6.5.xml");
         formatDescriptors.put(new FormatDescriptor("AVHR", "1B", 10, 0), "eps_avhrrl1b_6.5.xml");
+        formatDescriptors.put(new FormatDescriptor("IASI", "1C", 3, 0), "eps_iasil1c_6.6.xml");
         formatDescriptors.put(new FormatDescriptor("IASI", "1C", 10, 0), "eps_iasil1c_6.6.xml");
+        formatDescriptors.put(new FormatDescriptor("MHSx", "1B", 3, 0), "eps_mhsl1b_6.5.xml");
+        formatDescriptors.put(new FormatDescriptor("MHSx", "1B", 10, 0), "eps_mhsl1b_6.5.xml");
+        formatDescriptors.put(new FormatDescriptor("AMSA", "1B", 3, 0), "eps_amsual1b_6.4.xml");
+        formatDescriptors.put(new FormatDescriptor("AMSA", "1B", 10, 0), "eps_amsual1b_6.4.xml");
         formats = new HashMap<String, DataFormat>(42);
     }
     public static EpsFormats getInstance() {

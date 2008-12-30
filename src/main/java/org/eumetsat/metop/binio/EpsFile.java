@@ -18,17 +18,12 @@ package org.eumetsat.metop.binio;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.util.DataPrinter;
 
 import org.eumetsat.metop.binio.EpsFormats.FormatDescriptor;
-import org.jdom.DataConversionException;
 
 
 public class EpsFile {
@@ -71,8 +66,9 @@ public class EpsFile {
         File file = new File(args[0]);
         File[] listFiles = file.listFiles();
         for (File epsFile : listFiles) {
+            System.out.print("file="+epsFile.getName()+", ");
             boolean canOpenFile = EpsFile.canOpenFile(epsFile);
-            System.out.print("canOpenFile="+canOpenFile+"  ::  ");
+            System.out.print("canOpen="+canOpenFile+", ");
             FormatDescriptor formatDescriptor = readFormatDescriptor(epsFile);
             System.out.println(formatDescriptor);
             if (canOpenFile) {
