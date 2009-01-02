@@ -153,12 +153,12 @@ public class EpsTypeBuilder {
             int iprCount = iprData.getElementCount();
             CompoundMember[] members = new CompoundMember[iprCount];
             InternalPointerRecord[] allIPRs = new InternalPointerRecord[iprCount];
-            for (int i = 0; i < members.length; i++) {
-                CompoundData pointerRecord = iprData.getCompound(i).getCompound(1);
-                allIPRs[i] = new InternalPointerRecord(pointerRecord);
+            for (int pointerIndex = 0; pointerIndex < members.length; pointerIndex++) {
+                CompoundData pointerRecord = iprData.getCompound(pointerIndex).getCompound(1);
+                allIPRs[pointerIndex] = new InternalPointerRecord(pointerRecord);
             }
-            for (int i = 0; i < members.length; i++) {
-                InternalPointerRecord ipr = allIPRs[i];
+            for (int pointerIndex = 0; pointerIndex < members.length; pointerIndex++) {
+                InternalPointerRecord ipr = allIPRs[pointerIndex];
                 long start = ipr.getRecordOffset();
                 long end;
                 int count = 0;
@@ -172,20 +172,21 @@ public class EpsTypeBuilder {
                         type = format.getTypeDef(typeName);
                     }
                 }
-                if (isLastPointer(members.length, i)) {
+                if (isLastPointer(members.length, pointerIndex)) {
                     //count = 1;
                     end = start + type.getSize() + 20;
                     //IOHandler handler = iprData.getContext().getHandler();
                     //end = handler.getMaxPosition();
                 } else {
-                    end = allIPRs[i+1].getRecordOffset();
+                    end = allIPRs[pointerIndex+1].getRecordOffset();
                 }
                 long size = (end - start);
                 if (type == null) {
                     type = SEQUENCE(BYTE, (int)size-20);
+                    typeName = "dummy";
                 }
                 count = (int) (size /(type.getSize() + 20));
-                members[i] = MEMBER(typeName, createRecord(typeName, SEQUENCE(type, count)));
+                members[pointerIndex] = MEMBER(typeName, SEQUENCE(createRecord(typeName, type), count));
             }
             return COMPOUND("BODY_TYPE", members);
         }

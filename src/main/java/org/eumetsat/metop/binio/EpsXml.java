@@ -151,7 +151,9 @@ public class EpsXml {
             Type type = createBinaryType(part);
             if (type != null) {
                 String elementName = getElementName(part);
-                memberList.add(MEMBER(elementName, type));
+                CompoundMember member = MEMBER(elementName, type);
+                member.setMetadata(getAsciiMetadata(part));
+                memberList.add(member);
             }
         }
         return createCompoundType(name, memberList);
@@ -206,6 +208,11 @@ public class EpsXml {
     }
     
     private EpsAsciiMetatData getAsciiMetadata(Element element) {
+        if (element.getName().equals("array")) {
+            List<Element> children = element.getChildren();
+            Element childElement = children.get(0);
+            return getAsciiMetadata(childElement);
+        }
         EpsAsciiMetatData metaData = new EpsAsciiMetatData();
         Attribute type = element.getAttribute("type");
         String typeString = type.getValue();

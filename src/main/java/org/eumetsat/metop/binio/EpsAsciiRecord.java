@@ -30,9 +30,15 @@ import com.bc.ceres.binio.SequenceData;
 public class EpsAsciiRecord {
 
     private final CompoundData recordData;
+    private final boolean isAscii;
 
     public EpsAsciiRecord(CompoundData recordData) {
+        this(recordData, true);
+    }
+    
+    public EpsAsciiRecord(CompoundData recordData, boolean isAscii) {
         this.recordData = recordData;
+        this.isAscii = isAscii;
     }
     
     public int getMemberIndex(String memberName) {
@@ -64,6 +70,14 @@ public class EpsAsciiRecord {
     }
     
     public ProductData getProductData(int memberIndex) throws IOException {
+        if (isAscii) {
+            return getProductDataAscii(memberIndex);
+        } else {
+            return getProductDataBinary(memberIndex);
+        }
+    }
+    
+    public ProductData getProductDataAscii(int memberIndex) throws IOException {
         String valueAsString = getRawString(memberIndex).trim();
         EpsAsciiMetatData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
@@ -89,6 +103,35 @@ public class EpsAsciiRecord {
             }                
         }
         return ProductData.createInstance(valueAsString);
+    }
+    
+    public ProductData getProductDataBinary(int memberIndex) throws IOException {
+//        String valueAsString = getRawString(memberIndex).trim();
+        EpsAsciiMetatData metaData = getMetaData(memberIndex);
+        String type = metaData.getType();
+        String scalingFactor = metaData.getScalingFactor();
+        if (type.equals("string")) {
+//            return ProductData.createInstance(valueAsString);
+        } else if (type.equals("enumerated")) {
+//            return ProductData.createInstance(metaData.getItems().get(valueAsString));
+        } else if (type.equals("time")) {
+            return ProductData.createInstance("converted_time");
+        } else if (type.equals("longtime")) {
+            return ProductData.createInstance("converted_long_time");            
+        } else if (type.startsWith("integer") || type.startsWith("uinteger")) {
+            int intValue = recordData.getInt(memberIndex);
+//            long longValue = Long.parseLong(valueAsString);
+            if (scalingFactor != null && !scalingFactor.isEmpty()) {
+                int powerIndex = scalingFactor.indexOf('^');
+                String scaling = scalingFactor.substring(powerIndex+1);
+                int intScale = Integer.parseInt(scaling);
+                double doubleValue = intValue / Math.pow(10, intScale);
+                return ProductData.createInstance(new double[]{doubleValue});
+            } else {
+                return ProductData.createInstance(new int[]{intValue});
+            }                
+        }
+        return ProductData.createInstance(new int[]{42});
     }
     
     public MetadataElement getAsMetaDataElement() throws IOException {

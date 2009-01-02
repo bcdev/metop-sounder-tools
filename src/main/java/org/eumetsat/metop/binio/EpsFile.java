@@ -18,9 +18,12 @@ package org.eumetsat.metop.binio;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.binio.util.DataPrinter;
 
 import org.esa.beam.framework.datamodel.MetadataAttribute;
@@ -42,6 +45,42 @@ public class EpsFile {
     
     public CompoundData getMphrData() throws IOException {
         return metopData.getCompound(0).getCompound(0).getCompound(1);
+    }
+    
+    public List<MetadataElement> getMetaData() throws IOException {
+        List<MetadataElement> metaDataList = new ArrayList<MetadataElement>(20);
+        
+        CompoundData header = metopData.getCompound(0);
+        final int headerCount = header.getMemberCount();
+        for (int i = 0; i < headerCount; i++) {
+            EpsAsciiRecord asciiRecord = new EpsAsciiRecord(header.getCompound(i).getCompound(1));
+            metaDataList.add(asciiRecord.getAsMetaDataElement());
+        }
+        CompoundData body = metopData.getSequence(2).getCompound(0);
+        int bodyCount = body.getMemberCount();
+        DataPrinter printer = new DataPrinter();
+        for (int i = 0; i < bodyCount; i++) {
+            SequenceData sequence = body.getSequence(i);
+            if (sequence.getCompound(0).getCompoundType().getName().equals("dummy")) {
+                // skip unkown types
+                continue;
+            }
+            int elementCount = sequence.getElementCount();
+            if (elementCount == 1 ) {
+                CompoundData compound = sequence.getCompound(0).getCompound(1);
+                EpsAsciiRecord binRecord = new EpsAsciiRecord(compound, false);
+                metaDataList.add(binRecord.getAsMetaDataElement());
+            } else {
+//                MetadataElement metadataElement = new MetadataElement();
+                System.out.println("FOOOOOOOOOOOOOOOOO");
+            }
+//            CompoundData binRecord = sequence.getCompound(1);
+//            System.out.println(binRecord.getCompoundType().getName());
+        }
+        
+//        printer.print(body);
+        
+        return metaDataList;
     }
     
     public static EpsFile openFile(File file) throws IOException {
@@ -81,15 +120,16 @@ public class EpsFile {
                 EpsFile epsFile = EpsFile.openFile(file);
 
 //                DataPrinter printer = new DataPrinter();
-//                printer.print(epsFile.getMphrData());
-                
-                EpsAsciiRecord mphr = new EpsAsciiRecord(epsFile.getMphrData());
-                MetadataElement metaDataElement = mphr.getAsMetaDataElement();
-                System.out.println(metaDataElement.getName());
-                for (MetadataAttribute attribute : metaDataElement.getAttributes()) {
-                    System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
-                                        + attribute.getUnit()+ "] "+ attribute.getDescription());
-                }
+//                printer.print(epsFile.getMetopData());
+                List<MetadataElement> metaData = epsFile.getMetaData();
+//                for (MetadataElement metadataElement : metaData) {
+//                    System.out.println(metadataElement.getName());
+//                    for (MetadataAttribute attribute : metadataElement.getAttributes()) {
+//                        System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
+//                                            + attribute.getUnit()+ "] "+ attribute.getDescription());
+//                    }
+//                }
+//                EpsAsciiRecord mphr = new EpsAsciiRecord(epsFile.getMphrData());
             }
             System.exit(1);
         }
