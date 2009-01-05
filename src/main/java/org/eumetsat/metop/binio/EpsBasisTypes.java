@@ -18,6 +18,7 @@ package org.eumetsat.metop.binio;
 
 import static com.bc.ceres.binio.TypeBuilder.*;
 
+import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SimpleType;
@@ -56,9 +57,6 @@ public class EpsBasisTypes {
              MEMBER("Target_Record_Subclass", UBYTE),
              MEMBER("Taregt_Record_Offset", UINT)
         );
-    
-    private static final CompoundType EADR = 
-        COMPOUND("External_Auxiliary_Data_Record", MEMBER("Aux_Data_Pointer", SEQUENCE(BYTE, 100)));
 
     private static final EpsBasisTypes INSTANCE = new EpsBasisTypes();
     private DataFormat format;
@@ -120,8 +118,13 @@ public class EpsBasisTypes {
         format.addTypeDef("time", SHORT_CDS_TIME);
         format.addTypeDef("grh", GRH);
         format.addTypeDef("pointer", POINTER);
-        format.addTypeDef("geadr", EADR);
-        format.addTypeDef("veadr", EADR);
+        
+        CompoundMember auxDataPointer = MEMBER("Aux_Data_Pointer", SEQUENCE(BYTE, 100));
+        EpsMetatData auxDataPointerMetatData = new EpsMetatData();
+        auxDataPointerMetatData.setType("string");
+        auxDataPointer.setMetadata(auxDataPointerMetatData);
+        format.addTypeDef("geadr", COMPOUND("geadr", auxDataPointer));
+        format.addTypeDef("veadr", COMPOUND("veadr", auxDataPointer));
         
     }
     

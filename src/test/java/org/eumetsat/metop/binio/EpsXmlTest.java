@@ -66,8 +66,8 @@ public class EpsXmlTest extends TestCase {
         assertEquals("PRODUCT_NAME", member0.getName());
         Object metadata = member0.getMetadata();
         assertNotNull(metadata);
-        assertTrue(metadata instanceof EpsAsciiMetatData);
-        EpsAsciiMetatData epsMetatData = (EpsAsciiMetatData) metadata;
+        assertTrue(metadata instanceof EpsMetatData);
+        EpsMetatData epsMetatData = (EpsMetatData) metadata;
         assertEquals("Complete name of the product", epsMetatData.getDescription());
     }
     

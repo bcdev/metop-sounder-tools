@@ -27,16 +27,12 @@ import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
 
-public class EpsAsciiRecord {
+public class EpsRecord {
 
     private final CompoundData recordData;
     private final boolean isAscii;
 
-    public EpsAsciiRecord(CompoundData recordData) {
-        this(recordData, true);
-    }
-    
-    public EpsAsciiRecord(CompoundData recordData, boolean isAscii) {
+    public EpsRecord(CompoundData recordData, boolean isAscii) {
         this.recordData = recordData;
         this.isAscii = isAscii;
     }
@@ -46,13 +42,13 @@ public class EpsAsciiRecord {
     }
     
     public String getDescription(int memberIndex) {
-        EpsAsciiMetatData metaData = getMetaData(memberIndex);
+        EpsMetatData metaData = getMetaData(memberIndex);
         String description = metaData.getDescription();
         return description != null ? description : "";
     }
      
     public String getUnits(int memberIndex) {
-        EpsAsciiMetatData metaData =  getMetaData(memberIndex);
+        EpsMetatData metaData =  getMetaData(memberIndex);
         String units = metaData.getUnits();
         return units != null ? units : "";
     }
@@ -79,7 +75,7 @@ public class EpsAsciiRecord {
     
     public ProductData getProductDataAscii(int memberIndex) throws IOException {
         String valueAsString = getRawString(memberIndex).trim();
-        EpsAsciiMetatData metaData = getMetaData(memberIndex);
+        EpsMetatData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
         if (type.equals("string")) {
@@ -107,11 +103,11 @@ public class EpsAsciiRecord {
     
     public ProductData getProductDataBinary(int memberIndex) throws IOException {
 //        String valueAsString = getRawString(memberIndex).trim();
-        EpsAsciiMetatData metaData = getMetaData(memberIndex);
+        EpsMetatData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
         if (type.equals("string")) {
-//            return ProductData.createInstance(valueAsString);
+            return ProductData.createInstance(getAsString(recordData.getSequence(memberIndex)));
         } else if (type.equals("enumerated")) {
 //            return ProductData.createInstance(metaData.getItems().get(valueAsString));
         } else if (type.equals("time")) {
@@ -121,7 +117,7 @@ public class EpsAsciiRecord {
         } else if (type.startsWith("integer") || type.startsWith("uinteger")) {
             int intValue = recordData.getInt(memberIndex);
 //            long longValue = Long.parseLong(valueAsString);
-            if (scalingFactor != null && !scalingFactor.isEmpty()) {
+            if (scalingFactor != null && !scalingFactor.isEmpty() && !scalingFactor.contains(",")) {
                 int powerIndex = scalingFactor.indexOf('^');
                 String scaling = scalingFactor.substring(powerIndex+1);
                 int intScale = Integer.parseInt(scaling);
@@ -131,7 +127,7 @@ public class EpsAsciiRecord {
                 return ProductData.createInstance(new int[]{intValue});
             }                
         }
-        return ProductData.createInstance(new int[]{42});
+        return ProductData.createInstance("TODO "+type);
     }
     
     public MetadataElement getAsMetaDataElement() throws IOException {
@@ -153,14 +149,17 @@ public class EpsAsciiRecord {
         return recordData.getCompoundType().getName();
     }
 
-    private String getRawString(int memberIndex) throws IOException {
-        CompoundData fieldData = recordData.getCompound(memberIndex);
-        SequenceData valueSequence = fieldData.getSequence("value");
+    private String getAsString(SequenceData valueSequence) throws IOException {
         byte[] data = new byte[valueSequence.getElementCount()];
         for (int i = 0; i < data.length; i++) {
             data[i] = valueSequence.getByte(i);
         }
-        return new String(data);
+        return new String(data).trim();
+    }
+    
+    private String getRawString(int memberIndex) throws IOException {
+        CompoundData fieldData = recordData.getCompound(memberIndex);
+        return getAsString(fieldData.getSequence("value"));
     }
     
     // debug
@@ -171,12 +170,12 @@ public class EpsAsciiRecord {
         }
     }
     
-    private EpsAsciiMetatData getMetaData(int memberIndex) {
+    private EpsMetatData getMetaData(int memberIndex) {
         CompoundType compoundType = recordData.getCompoundType();
         CompoundMember member = compoundType.getMember(memberIndex);
         Object object =  member.getMetadata();
-        if (object != null && object instanceof EpsAsciiMetatData) {
-            return (EpsAsciiMetatData) object;
+        if (object != null && object instanceof EpsMetatData) {
+            return (EpsMetatData) object;
         } else {
             return null;
         }   

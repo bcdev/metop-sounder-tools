@@ -142,10 +142,14 @@ public class EpsXml {
         return createCompoundType(recordElement.getName(), memberList);
     }
     
-    private Type parseBinaryRecord(Element element) throws DataConversionException {
+    private Type parseBinaryRecord(Element record) throws DataConversionException {
         List<CompoundMember> memberList = new ArrayList<CompoundMember>(100);
-        String name = element.getName();
-        List<Element> fields = element.getChildren();
+        String name = record.getName();
+        Attribute nameAttribute = record.getAttribute("name");
+        if (nameAttribute != null) {
+            name = nameAttribute.getValue();
+        }
+        List<Element> fields = record.getChildren();
         for (int i = 0; i < fields.size(); i++) {
             Element part = fields.get(i);
             Type type = createBinaryType(part);
@@ -207,13 +211,13 @@ public class EpsXml {
                     MEMBER("cr", SimpleType.BYTE));
     }
     
-    private EpsAsciiMetatData getAsciiMetadata(Element element) {
+    private EpsMetatData getAsciiMetadata(Element element) {
         if (element.getName().equals("array")) {
             List<Element> children = element.getChildren();
             Element childElement = children.get(0);
             return getAsciiMetadata(childElement);
         }
-        EpsAsciiMetatData metaData = new EpsAsciiMetatData();
+        EpsMetatData metaData = new EpsMetatData();
         Attribute type = element.getAttribute("type");
         String typeString = type.getValue();
         metaData.setType(typeString);

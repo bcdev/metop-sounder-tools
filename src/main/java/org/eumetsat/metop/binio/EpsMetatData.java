@@ -18,7 +18,7 @@ package org.eumetsat.metop.binio;
 
 import java.util.Map;
 
-public class EpsAsciiMetatData {
+public class EpsMetatData {
 
     private String type;
     private String description;

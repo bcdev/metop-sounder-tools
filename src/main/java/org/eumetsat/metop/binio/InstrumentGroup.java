@@ -5,7 +5,7 @@ package org.eumetsat.metop.binio;
 
 enum InstrumentGroup {
     GENERIC,
-    AMSU_A,
+    AMSUA,
     ASCAT,
     ATOVS,
     AVHRR,

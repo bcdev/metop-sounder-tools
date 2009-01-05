@@ -22,8 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bc.ceres.binio.CompoundData;
+import com.bc.ceres.binio.DataAccessException;
+import com.bc.ceres.binio.DataContext;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.binio.SequenceType;
 import com.bc.ceres.binio.util.DataPrinter;
 
 import org.esa.beam.framework.datamodel.MetadataAttribute;
@@ -33,10 +36,16 @@ import org.eumetsat.metop.binio.EpsFormats.FormatDescriptor;
 
 public class EpsFile {
 
-    private CompoundData metopData;
+    private final CompoundData metopData;
+    private final DataContext dataContext;
 
     private EpsFile(File file, DataFormat format) throws IOException {
-        metopData = format.createContext(file, "r").getData();
+        dataContext = format.createContext(file, "r");
+        metopData = dataContext.getData();
+    }
+    
+    public void close() {
+        dataContext.dispose();
     }
     
     public CompoundData getMetopData() {
@@ -53,33 +62,35 @@ public class EpsFile {
         CompoundData header = metopData.getCompound(0);
         final int headerCount = header.getMemberCount();
         for (int i = 0; i < headerCount; i++) {
-            EpsAsciiRecord asciiRecord = new EpsAsciiRecord(header.getCompound(i).getCompound(1));
-            metaDataList.add(asciiRecord.getAsMetaDataElement());
+            EpsRecord epsRecord = new EpsRecord(header.getCompound(i).getCompound(1), true);
+            metaDataList.add(epsRecord.getAsMetaDataElement());
         }
         CompoundData body = metopData.getSequence(2).getCompound(0);
-        int bodyCount = body.getMemberCount();
+        int numBodyElems = body.getMemberCount();
         DataPrinter printer = new DataPrinter();
-        for (int i = 0; i < bodyCount; i++) {
+        printer.print(body);
+        for (int i = 0; i < numBodyElems; i++) {
             SequenceData sequence = body.getSequence(i);
-            if (sequence.getCompound(0).getCompoundType().getName().equals("dummy")) {
+            String recordType = sequence.getCompound(0).getCompoundType().getName();
+            if (recordType.equals("dummy")) {
                 // skip unkown types
                 continue;
+            }
+            if (recordType.startsWith("mdr")) {
+                // measurement data is not metadata
+                break;
             }
             int elementCount = sequence.getElementCount();
             if (elementCount == 1 ) {
                 CompoundData compound = sequence.getCompound(0).getCompound(1);
-                EpsAsciiRecord binRecord = new EpsAsciiRecord(compound, false);
+                EpsRecord binRecord = new EpsRecord(compound, false);
                 metaDataList.add(binRecord.getAsMetaDataElement());
             } else {
+                System.out.println("elemcount "+elementCount);
+                System.out.println("Not implemented yet");
 //                MetadataElement metadataElement = new MetadataElement();
-                System.out.println("FOOOOOOOOOOOOOOOOO");
             }
-//            CompoundData binRecord = sequence.getCompound(1);
-//            System.out.println(binRecord.getCompoundType().getName());
         }
-        
-//        printer.print(body);
-        
         return metaDataList;
     }
     
@@ -98,7 +109,7 @@ public class EpsFile {
         DataFormat mphrFormat = EpsFormats.getInstance().getMPHRformat();
         EpsFile epsFile = new EpsFile(file, mphrFormat);
         CompoundData epsData = epsFile.getMetopData();
-        EpsAsciiRecord mphrRecord = new EpsAsciiRecord(epsData.getCompound(1));
+        EpsRecord mphrRecord = new EpsRecord(epsData.getCompound(1), true);
         String instrumentId = mphrRecord.getString(mphrRecord.getMemberIndex("INSTRUMENT_ID"));
         String processingLevel = mphrRecord.getString(mphrRecord.getMemberIndex("PROCESSING_LEVEL"));
         int majorVersion = mphrRecord.getInt(mphrRecord.getMemberIndex("FORMAT_MAJOR_VERSION"));
@@ -107,10 +118,19 @@ public class EpsFile {
     }
 
     
-    public static void main(String[] args) throws IOException, Exception {
+    public static void main(String[] args) throws Exception {
         File dir = new File(args[0]);
-        File[] listFiles = dir.listFiles();
-        for (File file : listFiles) {
+        if (dir.isDirectory()) {
+            File[] listFiles = dir.listFiles();
+            for (File file : listFiles) {
+                handleFile(file);
+            }
+        } else {
+            handleFile(dir);
+        }
+    }
+    
+    public static void handleFile(File file) throws Exception {
             System.out.print("file="+file.getName()+", ");
             boolean canOpenFile = EpsFile.canOpenFile(file);
             System.out.print("canOpen="+canOpenFile+", ");
@@ -122,16 +142,14 @@ public class EpsFile {
 //                DataPrinter printer = new DataPrinter();
 //                printer.print(epsFile.getMetopData());
                 List<MetadataElement> metaData = epsFile.getMetaData();
-//                for (MetadataElement metadataElement : metaData) {
-//                    System.out.println(metadataElement.getName());
-//                    for (MetadataAttribute attribute : metadataElement.getAttributes()) {
-//                        System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
-//                                            + attribute.getUnit()+ "] "+ attribute.getDescription());
-//                    }
-//                }
-//                EpsAsciiRecord mphr = new EpsAsciiRecord(epsFile.getMphrData());
+                for (MetadataElement metadataElement : metaData) {
+                    System.out.println(metadataElement.getName());
+                    for (MetadataAttribute attribute : metadataElement.getAttributes()) {
+                        System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
+                                            + attribute.getUnit()+ "] "+ attribute.getDescription());
+                    }
+                }
+                epsFile.close();
             }
-            System.exit(1);
         }
-    }
 }
