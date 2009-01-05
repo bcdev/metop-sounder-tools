@@ -103,11 +103,12 @@ public class EpsTypeBuilder {
             boolean done = false;
             int count = 0;
             while (!done) {
-                CompoundData data = context.getData(pointerRecordType, offset);
-                byte recordClass = data.getCompound("header").getByte("Record_Class");
-                if (recordClass == RecordClass.IPR.ordinal()) {
+                CompoundData iprData = context.getData(pointerRecordType, offset);
+                byte recordClassValue = iprData.getCompound("header").getByte("Record_Class");
+                RecordClass recordClass = RecordClass.createRecordClass(recordClassValue);
+                if (recordClass == RecordClass.IPR) {
                     count++;
-                    offset += data.getSize();
+                    offset += iprData.getSize();
                 } else {
                     done = true;
                 }
