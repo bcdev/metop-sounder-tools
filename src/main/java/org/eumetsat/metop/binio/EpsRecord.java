@@ -102,10 +102,14 @@ public class EpsRecord {
     }
     
     public ProductData getProductDataBinary(int memberIndex) throws IOException {
-//        String valueAsString = getRawString(memberIndex).trim();
+        
         EpsMetatData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
+        if (recordData.getCompoundType().getMemberType(memberIndex).isSequenceType() &&
+                !type.equals("string")) { 
+            return ProductData.createInstance("TODO array_type");
+        }
         if (type.equals("string")) {
             return ProductData.createInstance(getAsString(recordData.getSequence(memberIndex)));
         } else if (type.equals("enumerated")) {

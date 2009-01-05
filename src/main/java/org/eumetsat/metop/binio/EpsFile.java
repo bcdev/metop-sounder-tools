@@ -67,8 +67,6 @@ public class EpsFile {
         }
         CompoundData body = metopData.getSequence(2).getCompound(0);
         int numBodyElems = body.getMemberCount();
-        DataPrinter printer = new DataPrinter();
-        printer.print(body);
         for (int i = 0; i < numBodyElems; i++) {
             SequenceData sequence = body.getSequence(i);
             String recordType = sequence.getCompound(0).getCompoundType().getName();
