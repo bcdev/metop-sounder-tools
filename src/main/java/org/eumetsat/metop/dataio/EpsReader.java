@@ -39,6 +39,8 @@ import java.util.List;
  */
 public class EpsReader extends AbstractProductReader {
 
+    private EpsFile epsFile;
+
     public EpsReader(ProductReaderPlugIn metopReaderPlugIn) {
         super(metopReaderPlugIn);
     }
@@ -55,13 +57,12 @@ public class EpsReader extends AbstractProductReader {
      * @throws java.io.IOException if an I/O error occurs
      */
     @Override
-    protected Product readProductNodesImpl() throws IOException,
-            IllegalFileFormatException {
+    protected Product readProductNodesImpl() throws IOException {
         final File file = EpsReaderPlugIn.getInputFile(getInput());
 
         Product product;
         try {
-            EpsFile epsFile = EpsFile.openFile(file);
+            epsFile = EpsFile.openFile(file);
             product = new Product(file.getName(), "EPS", 1, 1);
             MetadataElement metadataRoot = product.getMetadataRoot();
             List<MetadataElement> metaData = epsFile.getMetaData();
@@ -78,8 +79,13 @@ public class EpsReader extends AbstractProductReader {
             throw e;
         }
         product.setFileLocation(file);
-
         return product;
+    }
+    
+    @Override
+    public void close() throws IOException {
+        epsFile.close();
+        super.close();
     }
     
     @Override
