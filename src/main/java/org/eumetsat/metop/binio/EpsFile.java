@@ -16,22 +16,19 @@
  */
 package org.eumetsat.metop.binio;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.bc.ceres.binio.CompoundData;
-import com.bc.ceres.binio.DataAccessException;
 import com.bc.ceres.binio.DataContext;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.binio.SequenceType;
-import com.bc.ceres.binio.util.DataPrinter;
 
 import org.esa.beam.framework.datamodel.MetadataAttribute;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.eumetsat.metop.binio.EpsFormats.FormatDescriptor;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class EpsFile {

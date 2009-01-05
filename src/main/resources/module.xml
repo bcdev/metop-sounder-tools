@@ -94,6 +94,15 @@
             <context>image</context>
             <helpId>IasiFootprintOverlay</helpId>
         </action>
-        
+        <action>
+            <id>importEpsProduct</id>
+            <class>org.esa.beam.visat.actions.ProductImportAction</class>
+            <formatName>EPS</formatName>
+            <useAllFileFilter>true</useAllFileFilter>
+            <text>Import EPS Product...</text>
+            <mnemonic/>
+            <shortDescr>Import a EPS data product or product subset.</shortDescr>
+            <description>Import a EPS data product or product subset.</description>
+        </action>
     </extension>
 </module>
