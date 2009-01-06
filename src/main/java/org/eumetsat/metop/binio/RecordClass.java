@@ -6,7 +6,7 @@ package org.eumetsat.metop.binio;
 import java.util.HashMap;
 import java.util.Map;
 
-enum RecordClass {
+public enum RecordClass {
     RESERVED(0, false),
     MPHR(1, true),
     SPHR(2, true),

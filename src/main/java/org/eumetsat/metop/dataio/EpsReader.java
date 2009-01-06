@@ -95,6 +95,10 @@ public class EpsReader extends AbstractProductReader {
                                           ProgressMonitor pm) throws IOException {
         // TODO Auto-generated method stub
     }
+    
+    public EpsFile getEpsFile() {
+        return epsFile;
+    }
 
     public static boolean canOpenFile(File file) {
         try {

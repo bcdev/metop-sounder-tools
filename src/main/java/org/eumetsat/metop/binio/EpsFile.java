@@ -23,12 +23,15 @@ import com.bc.ceres.binio.SequenceData;
 
 import org.esa.beam.framework.datamodel.MetadataAttribute;
 import org.esa.beam.framework.datamodel.MetadataElement;
+import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.binio.EpsFormats.FormatDescriptor;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.imageio.stream.ImageInputStream;
 
 
 public class EpsFile {
@@ -51,6 +54,32 @@ public class EpsFile {
     
     public CompoundData getMphrData() throws IOException {
         return metopData.getCompound(0).getCompound(0).getCompound(1);
+    }
+    
+    public CompoundData getAuxDataRecord(String name) throws IOException {
+        CompoundData body = metopData.getSequence(2).getCompound(0);
+        int numBodyElems = body.getMemberCount();
+        for (int i = 0; i < numBodyElems; i++) {
+            CompoundData compound = body.getSequence(i).getCompound(0);
+            String recordType = compound.getCompoundType().getName();
+            if (recordType.equals(name)) {
+                return compound;
+            }
+        }
+        return null;
+    }
+    
+    public SequenceData getMdrData() throws IOException {
+        CompoundData body = metopData.getSequence(2).getCompound(0);
+        int numBodyElems = body.getMemberCount();
+        for (int i = 0; i < numBodyElems; i++) {
+            SequenceData sequence = body.getSequence(i);
+            String recordType = sequence.getSequenceType().getName();
+            if (recordType.startsWith("mdr")) {
+                return sequence;
+            }
+        }
+        return null;
     }
     
     public List<MetadataElement> getMetaData() throws IOException {
@@ -87,6 +116,23 @@ public class EpsFile {
             }
         }
         return metaDataList;
+    }
+    
+    public static double readVInt4(CompoundData data) throws IOException {
+        final byte scaleFactor = data.getByte(0);
+        final int value = data.getInt(1);
+
+        return value / Math.pow(10.0, scaleFactor);
+    }
+    
+    public static ProductData.UTC readShortCdsTime(CompoundData data) throws IOException {
+        final int day = data.getUShort(0);
+        final long millis = data.getUInt(1);
+
+        final long seconds = millis / 1000;
+        final long micros = (millis - seconds * 1000) * 1000;
+        
+        return new ProductData.UTC(day, (int) seconds, (int) micros);
     }
     
     public static EpsFile openFile(File file) throws IOException {
@@ -137,13 +183,13 @@ public class EpsFile {
 //                DataPrinter printer = new DataPrinter();
 //                printer.print(epsFile.getMetopData());
                 List<MetadataElement> metaData = epsFile.getMetaData();
-                for (MetadataElement metadataElement : metaData) {
-                    System.out.println(metadataElement.getName());
-                    for (MetadataAttribute attribute : metadataElement.getAttributes()) {
-                        System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
-                                            + attribute.getUnit()+ "] "+ attribute.getDescription());
-                    }
-                }
+//                for (MetadataElement metadataElement : metaData) {
+//                    System.out.println(metadataElement.getName());
+//                    for (MetadataAttribute attribute : metadataElement.getAttributes()) {
+//                        System.out.println( "  "+attribute.getName()+ " : "+attribute.getData().toString()+ " ["
+//                                            + attribute.getUnit()+ "] "+ attribute.getDescription());
+//                    }
+//                }
                 epsFile.close();
             }
         }

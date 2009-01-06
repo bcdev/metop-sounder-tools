@@ -6,7 +6,7 @@ package org.eumetsat.metop.binio;
 import java.util.HashMap;
 import java.util.Map;
 
-enum InstrumentGroup {
+public enum InstrumentGroup {
     GENERIC(0),
     AMSUA(1),
     ASCAT(2),
