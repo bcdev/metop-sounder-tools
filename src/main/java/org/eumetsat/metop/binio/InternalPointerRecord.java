@@ -15,8 +15,8 @@ class InternalPointerRecord {
     private final long rRecordOffset;
 
     public InternalPointerRecord(CompoundData data) throws IOException {
-        this.recordClass = RecordClass.createRecordClass(data.getInt(0));
-        this.instrumentGroup = InstrumentGroup.createInstrumentGroup(data.getInt(1));
+        this.recordClass = RecordClass.fromInt(data.getInt(0));
+        this.instrumentGroup = InstrumentGroup.fromInt(data.getInt(1));
         this.recordSubclass = data.getByte(2);
         this.rRecordOffset = data.getLong(3);
     }

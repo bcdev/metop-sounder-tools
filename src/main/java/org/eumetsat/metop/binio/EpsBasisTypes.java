@@ -72,16 +72,9 @@ public class EpsBasisTypes {
     public static String buildTypeName(RecordClass recordClass, InstrumentGroup instrumentGroup, int subClass) {
         Assert.notNull(recordClass, "recordClass");
         Assert.notNull(instrumentGroup, "instrumentGroup");
-        return buildTypeName(recordClass.toString(), instrumentGroup.toString(), Integer.toString(subClass));
-    }
-    
-    public static String buildTypeName(String recordClass, String instrumentGroup, String subClass) {
-        Assert.notNull(recordClass, "recordClass");
-        Assert.notNull(instrumentGroup, "instrumentGroup");
-        Assert.notNull(subClass, "subClass");
-        StringBuilder sb = new StringBuilder(recordClass.toLowerCase());
+        StringBuilder sb = new StringBuilder(recordClass.toString());
         sb.append(":");
-        sb.append(instrumentGroup.toLowerCase());
+        sb.append(instrumentGroup.toString());
         sb.append(":");
         sb.append(subClass);
         return sb.toString();

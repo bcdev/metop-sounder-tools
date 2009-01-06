@@ -110,21 +110,21 @@ public class EpsXml {
         List<Element> records = product.getChildren();
         for (int i = 0; i < records.size(); i++) {
             Element record = records.get(i);
-            String recordName = record.getName();
+            RecordClass recordClass = RecordClass.fromString(record.getName());
             Type recordType;
-            if (recordName.startsWith("mphr") || recordName.startsWith("sphr")) {
+            if (recordClass.isAscii()) {
                 recordType = parseAsciiRecord(record);
-                format.addTypeDef(recordName, recordType);
+                format.addTypeDef(recordClass.toString(), recordType);
             } else {
                 recordType = parseBinaryRecord(record);
-                String instrument = InstrumentGroup.GENERIC.toString();
+                InstrumentGroup instrumentGroup = InstrumentGroup.GENERIC;
                 Attribute instrumentAttribute = record.getAttribute("instrument");
                 if (instrumentAttribute != null) {
-                    instrument = instrumentAttribute.getValue();
+                    instrumentGroup = InstrumentGroup.fromString(instrumentAttribute.getValue());
                 }
-                String subclass = record.getAttribute("subclass").getValue();
-                recordName = EpsBasisTypes.buildTypeName(recordName, instrument, subclass);
-                format.addTypeDef(recordName, recordType);
+                int subclass = record.getAttribute("subclass").getIntValue();
+                String recordTypeName = EpsBasisTypes.buildTypeName(recordClass, instrumentGroup, subclass);
+                format.addTypeDef(recordTypeName, recordType);
             }
         }
     }
