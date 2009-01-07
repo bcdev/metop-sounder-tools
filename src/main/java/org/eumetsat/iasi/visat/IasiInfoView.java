@@ -21,10 +21,10 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.dataio.IasiFile;
-import org.eumetsat.iasi.dataio.IasiFile.Geometry;
-import org.eumetsat.iasi.dataio.IasiFile.RadianceAnalysis;
-import org.eumetsat.iasi.dataio.Ifov;
+import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.iasi.IasiFile.Geometry;
+import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
+import org.eumetsat.metop.iasi.Ifov;
 import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModelListener;
@@ -106,7 +106,7 @@ public class IasiInfoView extends AbstractToolView {
             if (layer != null) {
                 modelListener = new IasiListener();
                 layer.getModel().addListener(modelListener);
-                iasiFile = layer.getModel().getIasiFile();
+                iasiFile = layer.getModel().getIasiAvhrrOverlay().getIasiFile();
             }
         }
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -354,7 +354,7 @@ public class IasiInfoView extends AbstractToolView {
                 if (layer != null) {
                     modelListener = new IasiListener();
                     layer.getModel().addListener(modelListener);
-                    iasiFile = layer.getModel().getIasiFile();
+                    iasiFile = layer.getModel().getIasiAvhrrOverlay().getIasiFile();
                 }
             }
         }

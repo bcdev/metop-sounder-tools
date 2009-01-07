@@ -11,11 +11,14 @@ import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.util.Debug;
 import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.dataio.IasiFile;
 import org.eumetsat.iasi.footprint.DefaultIasiFootprintLayerModel;
 import org.eumetsat.iasi.footprint.DefaultIasiFootprintLayerRenderer;
 import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.eps.EpsFormats;
+import org.eumetsat.metop.iasi.IasiAvhrrOverlay;
+import org.eumetsat.metop.iasi.IasiFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -148,28 +151,27 @@ public class AddSounderOverlayAction extends ExecCommand {
                 return iasiFootprintLayerModel;
             }
         }
-        final IasiFile iasiFile;
+        final IasiAvhrrOverlay overlay;
         try {
-            final int avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
-            final long avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
-            final long avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
-            final int avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
-            iasiFile = new IasiFile(file, avhrrStartMillis, avhrrEndMillis, avhrrRasterHeight,
-                                    avhrrTrimLeft);
+            IasiFile iasiFile = (IasiFile) EpsFormats.getInstance().openFile(file);
+            overlay = new IasiAvhrrOverlay(iasiFile, avhrrProduct);
+            
+//            final int avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
+//            final long avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
+//            final long avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
+//            final int avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
+//            iasiFile = new IasiFile(file, avhrrStartMillis, avhrrEndMillis, avhrrRasterHeight,
+//                                    avhrrTrimLeft);
         } catch (IOException e) {
             VisatApp.getApp().showErrorDialog("IASI Footprint Layer",
                                      "Not able to create IASI Footprint layer.");
             return null;
         }
-        IasiFootprintLayerModel newLayerModel = createLayerModel(avhrrProduct, iasiFile);
+        IasiFootprintLayerModel newLayerModel = new DefaultIasiFootprintLayerModel(overlay);
         modelMap.put(file, newLayerModel);
         return newLayerModel;
     }
     
-    private IasiFootprintLayerModel createLayerModel(Product avhrrProduct, IasiFile iasiFile) {
-        return new DefaultIasiFootprintLayerModel(iasiFile);
-    }
-
     private File showOpenFileDialog(String title, FileFilter fileFilter, File currentDir) {
         BeamFileChooser fileChooser = new BeamFileChooser();
         fileChooser.setCurrentDirectory(currentDir);

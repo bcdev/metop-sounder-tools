@@ -1,11 +1,11 @@
 package org.eumetsat.iasi.footprint;
 
-import org.eumetsat.iasi.dataio.IasiFile;
-import org.eumetsat.iasi.dataio.Efov;
-import org.eumetsat.iasi.dataio.Ifov;
+import org.eumetsat.metop.iasi.IasiAvhrrOverlay;
+import org.eumetsat.metop.iasi.Ifov;
+
 
 public interface IasiFootprintLayerModel {
-    IasiFile getIasiFile();
+    IasiAvhrrOverlay getIasiAvhrrOverlay();
 
     boolean isSelectedIfov(Ifov ifov);
 

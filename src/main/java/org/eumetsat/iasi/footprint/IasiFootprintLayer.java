@@ -13,8 +13,8 @@ import com.bc.ceres.grender.Viewport;
 
 import org.esa.beam.framework.ui.tool.AbstractTool;
 import org.esa.beam.framework.ui.tool.ToolInputEvent;
-import org.eumetsat.iasi.dataio.Efov;
-import org.eumetsat.iasi.dataio.Ifov;
+import org.eumetsat.metop.iasi.Efov;
+import org.eumetsat.metop.iasi.Ifov;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -45,7 +45,7 @@ public class IasiFootprintLayer extends Layer {
     
     @Override
     public String getName() {
-        return "IASI L1c ("+getModel().getIasiFile().getFile().getName()+")";
+        return "IASI L1c ("+getModel().getIasiAvhrrOverlay().getName()+")";
     }
     
     public IasiFootprintLayerModel getModel() {
@@ -71,7 +71,7 @@ public class IasiFootprintLayer extends Layer {
     }
 
     public Efov[] getEfovs() {
-        return getModel().getIasiFile().getEfovs();
+        return getModel().getIasiAvhrrOverlay().getEfovs();
     }
 
     public Ifov getIfovForLocation(int pixelX, int pixelY) {

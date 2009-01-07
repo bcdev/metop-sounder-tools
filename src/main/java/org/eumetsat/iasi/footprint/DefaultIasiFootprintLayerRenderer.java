@@ -3,9 +3,9 @@ package org.eumetsat.iasi.footprint;
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.util.math.MathUtils;
-import org.eumetsat.iasi.dataio.Efov;
-import org.eumetsat.iasi.dataio.IasiFile;
-import org.eumetsat.iasi.dataio.Ifov;
+import org.eumetsat.metop.iasi.Efov;
+import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.iasi.Ifov;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -60,7 +60,7 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
         final boolean efovBigEnough = scale * IasiFootprintLayer.EFOV_SIZE > 10;
         final boolean ifovBigEnough = scale * IasiFootprintLayer.IFOV_SIZE > 5;
 
-        final Efov[] efovs = layerModel.getIasiFile().getEfovs();
+        final Efov[] efovs = layerModel.getIasiAvhrrOverlay().getEfovs();
         
         if (allBts == null) {
             getData(layerModel);
@@ -98,7 +98,7 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
     
     private void getData(IasiFootprintLayerModel layerModel) {
         try {
-            allBts = layerModel.getIasiFile().readAllBts(42);
+            allBts = layerModel.getIasiAvhrrOverlay().getIasiFile().readAllBts(42);
         } catch (IOException e) {
             return;
         }

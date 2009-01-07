@@ -1,8 +1,9 @@
 package org.eumetsat.iasi.footprint;
 
-import org.eumetsat.iasi.dataio.Efov;
-import org.eumetsat.iasi.dataio.IasiFile;
-import org.eumetsat.iasi.dataio.Ifov;
+import org.eumetsat.metop.iasi.Efov;
+import org.eumetsat.metop.iasi.IasiAvhrrOverlay;
+import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.iasi.Ifov;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,21 +15,21 @@ import java.util.List;
 public class DefaultIasiFootprintLayerModel implements IasiFootprintLayerModel {
 
     private final ArrayList<Ifov> selectedIfovList;
-    private final IasiFile iasiFile;
     private final ArrayList<IasiFootprintLayerModelListener> modelListeners;
+    private final IasiAvhrrOverlay iasiAvhrrOverlay;
 
-    public DefaultIasiFootprintLayerModel(IasiFile iasiFile) {
-        this.iasiFile = iasiFile;
+    public DefaultIasiFootprintLayerModel(IasiAvhrrOverlay iasiAvhrrOverlay) {
+        this.iasiAvhrrOverlay = iasiAvhrrOverlay;
         selectedIfovList = new ArrayList<Ifov>(61);
         modelListeners = new ArrayList<IasiFootprintLayerModelListener>(3);
     }
 
-    public synchronized IasiFile getIasiFile() {
-        return iasiFile;
+    public synchronized IasiAvhrrOverlay getIasiAvhrrOverlay() {
+        return iasiAvhrrOverlay;
     }
 
     public synchronized Efov[] getEfovs() {
-        return iasiFile.getEfovs();
+        return iasiAvhrrOverlay.getEfovs();
     }
 
     public synchronized boolean isSelectedIfov(Ifov ifov) {
@@ -74,7 +75,7 @@ public class DefaultIasiFootprintLayerModel implements IasiFootprintLayerModel {
     }
 
     public synchronized void dispose() {
-        iasiFile.close();
+        iasiAvhrrOverlay.close();
         selectedIfovList.clear();
         modelListeners.clear();
     }
