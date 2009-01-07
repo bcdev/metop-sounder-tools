@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 
-public class AisiAvhrrOverlay {
+public class IasiAvhrrOverlay {
     
     // IASI record parameters
     private static final int AMCO = 100;
@@ -61,7 +61,7 @@ public class AisiAvhrrOverlay {
 
     private int mdrCount;
     
-    public AisiAvhrrOverlay(IasiFile iasiFile, Product avhrrProduct) {
+    public IasiAvhrrOverlay(IasiFile iasiFile, Product avhrrProduct) {
         this.iasiFile = iasiFile;
         this.avhrrProduct = avhrrProduct;
         avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
@@ -70,6 +70,10 @@ public class AisiAvhrrOverlay {
         this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();;
         avhrrTrimLeft = 42;
         mdrCount = iasiFile.getMdrCount();
+    }
+    
+    public String getName() {
+        return "TODO";
     }
     
     public synchronized Efov[] getEfovs() {
@@ -83,6 +87,14 @@ public class AisiAvhrrOverlay {
 
     public Ifov getIfov(int index) {
         return getEfovs()[index / PN].getIfovs()[computeIfovIndex(index)];
+    }
+    
+    public IasiFile getIasiFile() {
+        return iasiFile;
+    }
+    
+    public void close() {
+        iasiFile.close();
     }
     
     static int computeIfovId(int mdrIndex, int efovIndex, int ifovIndex) {
@@ -132,7 +144,7 @@ public class AisiAvhrrOverlay {
         final double[][][] iisLocs;
         final long[] millis;
         final boolean[][] anomalousFlags;
-        final int mode;
+        final byte mode;
         locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdrIndex);
         millis = iasiFile.readGEPSDatIasiMdr(mdrIndex);
         anomalousFlags = iasiFile.readGQisFlagQualMdr(mdrIndex);

@@ -4,14 +4,16 @@
 package org.eumetsat.metop.iasi;
 
 import com.bc.ceres.binio.CompoundData;
+import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
+import com.sun.org.apache.bcel.internal.util.ByteSequence;
 
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.ProductData.UTC;
-import org.eumetsat.metop.binio.EpsFile;
-import org.eumetsat.metop.binio.EpsRecord;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.eps.EpsRecord;
 
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
@@ -31,7 +33,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 
-public class IasiFile {
+public class IasiFile extends EpsFile {
 
     // IASI record parameters
     private static final int AMCO = 100;
@@ -70,23 +72,24 @@ public class IasiFile {
 
     private EpsRecord mainProductHeaderRecord;
     private GiadrScaleFactors giadrScaleFactors;
-
-    private long firstMdrOffset;
-
     private int mdrCount;
-    private long mdrSize;
     
-    private final EpsFile epsFile;
+//    private final EpsFile epsFile;
     private SequenceData mdrSequence;
 
-    public IasiFile(EpsFile epsFile) throws IOException {
-        this.epsFile = epsFile;
+//    public IasiFile(EpsFile epsFile) throws IOException {
+//        this.epsFile = epsFile;
+//        readHeader();
+//    }
+
+    public IasiFile(File file, DataFormat dataFormat) throws IOException {
+        super(file, dataFormat);
         readHeader();
     }
 
-    public EpsFile getFile() {
-        return epsFile;
-    }
+//    public EpsFile getEpsFile() {
+//        return epsFile;
+//    }
     
     public int getMdrCount() {
         return mdrCount;
@@ -108,19 +111,16 @@ public class IasiFile {
         return ifovId % PN;
     }
     
-    public void close() {
-        epsFile.close();
-    }
-
     private void readHeader() throws IOException {
-        CompoundData mphrData = epsFile.getMetopData().getCompound(0).getCompound(0).getCompound(1);
+        CompoundData mphrData = getMetopData().getCompound(0).getCompound(0).getCompound(1);
         mainProductHeaderRecord = new EpsRecord(mphrData, true);
 
-        CompoundData giadrScaleFactorsRecord = epsFile.getAuxDataRecord("giadr:iasi:1");
+        CompoundData giadrScaleFactorsRecord = getAuxDataRecord("giadr:iasi:1");
         giadrScaleFactors = new GiadrScaleFactors(giadrScaleFactorsRecord);
 //        determineMdrCount(iis);
         
-        mdrSequence = epsFile.getMdrData();
+        mdrSequence = getMdrData();
+        mdrCount = mdrSequence.getElementCount();
     }
 
 
@@ -300,8 +300,8 @@ public class IasiFile {
         return efovData.getByte(ifovIndex) != 0;
     }
 
-    public int[] readGEPSIasiMode() throws IOException {
-        final int[] modes = new int[mdrCount];
+    public byte[] readGEPSIasiMode() throws IOException {
+        final byte[] modes = new byte[mdrCount];
 
         for (int mdrIndex = 0; mdrIndex < mdrCount; mdrIndex++) {
             modes[mdrIndex] = readMdrGEPSIasiMode(mdrIndex);
@@ -310,9 +310,10 @@ public class IasiFile {
         return modes;
     }
 
-    int readMdrGEPSIasiMode(int mdrIndex) throws IOException {
+    byte readMdrGEPSIasiMode(int mdrIndex) throws IOException {
         CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        return mdrBody.getInt("GEPSIasiMode");
+        SequenceData bitfield4Bytes = mdrBody.getSequence("GEPSIasiMode");
+        return bitfield4Bytes.getByte(2);
     }
     
     public double[][][] readAllBts(int channelId) throws IOException {

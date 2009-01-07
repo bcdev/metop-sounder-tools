@@ -6,9 +6,9 @@ package org.eumetsat.metop.iasi;
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.SequenceData;
 
-import org.eumetsat.metop.binio.GenericRecordHeader;
-import org.eumetsat.metop.binio.InstrumentGroup;
-import org.eumetsat.metop.binio.RecordClass;
+import org.eumetsat.metop.eps.GenericRecordHeader;
+import org.eumetsat.metop.eps.InstrumentGroup;
+import org.eumetsat.metop.eps.RecordClass;
 
 import java.io.IOException;
 import java.util.Arrays;
