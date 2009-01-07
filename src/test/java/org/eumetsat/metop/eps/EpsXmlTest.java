@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.metop.binio;
+package org.eumetsat.metop.eps;
 
 import java.net.URI;
 import java.net.URL;
@@ -24,6 +24,9 @@ import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceType;
 import com.bc.ceres.binio.SimpleType;
 import com.bc.ceres.binio.Type;
+
+import org.eumetsat.metop.eps.EpsMetatData;
+import org.eumetsat.metop.eps.EpsXml;
 
 import junit.framework.TestCase;
 

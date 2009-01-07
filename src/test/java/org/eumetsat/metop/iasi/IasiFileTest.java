@@ -16,7 +16,8 @@ package org.eumetsat.metop.iasi;
 
 import junit.framework.TestCase;
 import org.esa.beam.framework.datamodel.ProductData;
-import org.eumetsat.metop.binio.EpsFile;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.eps.EpsFormats;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,11 +66,11 @@ public class IasiFileTest extends TestCase {
 
     public void testReadGEPSIasiMode() throws IOException {
         final IasiFile iasiFile = createIasiFile();
-        final int[] modes = iasiFile.readGEPSIasiMode();
+        final byte[] modes = iasiFile.readGEPSIasiMode();
 
         assertEquals(9, modes.length);
 
-        for (final int mode : modes) {
+        for (final byte mode : modes) {
             assertEquals(0, mode);
         }
 
@@ -172,8 +173,8 @@ public class IasiFileTest extends TestCase {
             final int avhrrRasterHeight = 361;
             final int avhrrTrimX = 4;
 
-            EpsFile epsFile = EpsFile.openFile(new File(IASI_FILEPATH));
-            return new IasiFile(epsFile);
+            EpsFile openFile = EpsFormats.getInstance().openFile(new File(IASI_FILEPATH));
+            return (IasiFile) openFile;
 //            return new IasiFile(, avhrrStartMillis, avhrrEndMillis, avhrrRasterHeight, avhrrTrimX);
         } catch (ParseException e) {
             e.printStackTrace();
