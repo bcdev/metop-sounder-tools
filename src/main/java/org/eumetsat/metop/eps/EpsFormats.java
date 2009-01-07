@@ -26,6 +26,7 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.core.Assert;
 
+import org.eumetsat.metop.amsu.AmsuFile;
 import org.eumetsat.metop.iasi.IasiFile;
 
 
@@ -92,6 +93,12 @@ public class EpsFormats {
         }
     }
     
+    private class AmsuFileFactory implements EpsFileFactory {
+        public EpsFile create(File file, DataFormat dataFormat) throws IOException {
+            return new AmsuFile(file, dataFormat);
+        }
+    }
+    
     private class DefaultFileFactory implements EpsFileFactory {
         public EpsFile create(File file, DataFormat dataFormat) throws IOException {
             return new EpsFile(file, dataFormat);
@@ -122,14 +129,14 @@ public class EpsFormats {
         fileFactories.put(formatDescriptor, defaultFileFactory);
         
         //IASI
-        EpsFileFactory iasifileFactory = new IasiFileFactory();
+        EpsFileFactory iasiFileFactory = new IasiFileFactory();
         formatDescriptor = new FormatDescriptor("IASI", "1C", 3, 0);
         formatDescriptors.put(formatDescriptor, "eps_iasil1c_6.6.xml");
-        fileFactories.put(formatDescriptor, iasifileFactory);
+        fileFactories.put(formatDescriptor, iasiFileFactory);
         
         formatDescriptor = new FormatDescriptor("IASI", "1C", 10, 0);
         formatDescriptors.put(formatDescriptor, "eps_iasil1c_6.6.xml");
-        fileFactories.put(formatDescriptor, iasifileFactory);
+        fileFactories.put(formatDescriptor, iasiFileFactory);
         
         //MHS
         formatDescriptor = new FormatDescriptor("MHSx", "1B", 3, 0);
@@ -140,14 +147,15 @@ public class EpsFormats {
         formatDescriptors.put(formatDescriptor, "eps_mhsl1b_6.5.xml");
         fileFactories.put(formatDescriptor, defaultFileFactory);
         
-        //AMSA
+        //AMSU
+        EpsFileFactory amsuFileFactory = new AmsuFileFactory();
         formatDescriptor = new FormatDescriptor("AMSA", "1B", 3, 0);
         formatDescriptors.put(formatDescriptor, "eps_amsual1b_6.4.xml");
-        fileFactories.put(formatDescriptor, defaultFileFactory);
+        fileFactories.put(formatDescriptor, amsuFileFactory);
         
         formatDescriptor = new FormatDescriptor("AMSA", "1B", 10, 0);
         formatDescriptors.put(formatDescriptor, "eps_amsual1b_6.4.xml");
-        fileFactories.put(formatDescriptor, defaultFileFactory);
+        fileFactories.put(formatDescriptor, amsuFileFactory);
     }
     
     public static EpsFormats getInstance() {

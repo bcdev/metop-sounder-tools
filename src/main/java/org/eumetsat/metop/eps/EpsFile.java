@@ -20,8 +20,11 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataContext;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.core.ProgressMonitor;
 
+import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
+import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 
 import java.io.File;
@@ -34,14 +37,62 @@ public class EpsFile {
 
     private final CompoundData metopData;
     private final DataContext dataContext;
+    private int mdrCount = -1;
+    private EpsRecord mphr;
 
     protected EpsFile(File file, DataFormat format) throws IOException {
         dataContext = format.createContext(file, "r");
         metopData = dataContext.getData();
     }
     
+    public Product createProduct() throws IOException {
+        Product product = new Product("Dummy", "EPS", 1, 1);
+        MetadataElement metadataRoot = product.getMetadataRoot();
+        List<MetadataElement> metaData = getMetaData();
+        for (MetadataElement metadataElement : metaData) {
+            metadataRoot.addElement(metadataElement);
+        }
+        return product;
+    }
+    
     public void close() {
         dataContext.dispose();
+    }
+    
+    public synchronized String getProductName() throws IOException {
+        if (mphr == null) {
+            mphr = new EpsRecord(getMphrData(), true);
+        }
+        return mphr.getString(0);
+    }
+    
+    public synchronized int getMdrCount() throws IOException {
+        if (mdrCount == -1) {
+            mdrCount = getMdrData().getElementCount();
+        }
+        return mdrCount;
+    }
+    
+    /**
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param band
+     * @param buffer
+     * @param pm
+     * @throws IOException 
+     */
+    public void readBandData(int x, int y, int width, int height, Band band, ProductData buffer, ProgressMonitor pm) throws IOException {
+    }
+
+    
+    protected void addMetaData(Product product) throws IOException {
+        MetadataElement metadataRoot = product.getMetadataRoot();
+        List<MetadataElement> metaData = getMetaData();
+        for (MetadataElement metadataElement : metaData) {
+            metadataRoot.addElement(metadataElement);
+        }
     }
     
     public CompoundData getMetopData() {
@@ -165,4 +216,6 @@ public class EpsFile {
                 epsFile.close();
             }
         }
+
+
 }

@@ -62,12 +62,7 @@ public class EpsReader extends AbstractProductReader {
         Product product;
         try {
             epsFile = EpsFormats.getInstance().openFile(file);
-            product = new Product(file.getName(), "EPS", 1, 1);
-            MetadataElement metadataRoot = product.getMetadataRoot();
-            List<MetadataElement> metaData = epsFile.getMetaData();
-            for (MetadataElement metadataElement : metaData) {
-                metadataRoot.addElement(metadataElement);
-            }
+            product = epsFile.createProduct();
         } catch (IOException e) {
             e.printStackTrace();
             try {
@@ -92,7 +87,7 @@ public class EpsReader extends AbstractProductReader {
                                           int sourceStepX, int sourceStepY, Band destBand, int destOffsetX,
                                           int destOffsetY, int destWidth, int destHeight, ProductData destBuffer,
                                           ProgressMonitor pm) throws IOException {
-        // TODO Auto-generated method stub
+        epsFile.readBandData(sourceOffsetX, sourceOffsetY, sourceWidth, sourceHeight, destBand, destBuffer, pm);
     }
     
     public EpsFile getEpsFile() {
