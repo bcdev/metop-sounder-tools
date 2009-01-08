@@ -21,6 +21,10 @@ import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.ProductData;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.CompoundMember;
@@ -83,9 +87,9 @@ public class EpsRecord {
         } else if (type.equals("enumerated")) {
             return ProductData.createInstance(metaData.getItems().get(valueAsString));
         } else if (type.equals("time")) {
-            return ProductData.createInstance("converted_time");
+            return convertStringToDate(valueAsString, "yyyyMMddHHmmss'Z'");
         } else if (type.equals("longtime")) {
-            return ProductData.createInstance("converted_long_time");            
+            return convertStringToDate(valueAsString, "yyyyMMddHHmmssSSS'Z'");
         } else if (type.equals("integer") || type.equals("uinteger")) {
             long longValue = Long.parseLong(valueAsString);
             if (scalingFactor != null && !scalingFactor.isEmpty()) {
@@ -101,6 +105,16 @@ public class EpsRecord {
         return ProductData.createInstance(valueAsString);
     }
     
+    private ProductData convertStringToDate(String dateString, String dateFormatString) {
+        DateFormat dateFormat = new SimpleDateFormat(dateFormatString);
+        try {
+            final Date date = dateFormat.parse(dateString);
+            return ProductData.UTC.create(date, 0);
+        } catch (ParseException e) {
+            return ProductData.createInstance(dateString);
+        }
+    }
+    
     public ProductData getProductDataBinary(int memberIndex) throws IOException {
         
         EpsMetatData metaData = getMetaData(memberIndex);
@@ -114,9 +128,8 @@ public class EpsRecord {
             return ProductData.createInstance(getAsString(recordData.getSequence(memberIndex)));
         } else if (type.equals("enumerated")) {
 //            return ProductData.createInstance(metaData.getItems().get(valueAsString));
-        } else if (type.equals("time")) {
-            return ProductData.createInstance("converted_time");
-        } else if (type.equals("longtime")) {
+        } else if (type.equals("time") || type.equals("short_cds_time")) {
+            EpsFile.readShortCdsTime(recordData.getCompound(memberIndex));
             return ProductData.createInstance("converted_long_time");            
         } else if (type.startsWith("integer") || type.startsWith("uinteger")) {
             int intValue = recordData.getInt(memberIndex);

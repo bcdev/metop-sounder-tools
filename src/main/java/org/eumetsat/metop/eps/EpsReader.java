@@ -62,7 +62,7 @@ public class EpsReader extends AbstractProductReader {
         Product product;
         try {
             epsFile = EpsFormats.getInstance().openFile(file);
-            product = epsFile.createProduct();
+            product = epsFile.createProduct(this);
         } catch (IOException e) {
             e.printStackTrace();
             try {

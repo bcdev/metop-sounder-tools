@@ -95,6 +95,20 @@
             <helpId>IasiFootprintOverlay</helpId>
         </action>
         <action>
+            <id>addMetopOverlay2</id>
+            <class>org.eumetsat.metop.visat.AddMetopOverlayAction</class>
+            <parent>view</parent>
+            <mnemonic>I</mnemonic>
+            <text>Add METOP Sounder Overlay</text>
+            <placeAfter>showPinOverlay</placeAfter>
+            <shortDescr>Add METOP overlay</shortDescr>
+            <description>Add METOP footprint overlay for the selected image</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay24.gif</largeIcon>
+            <context>image</context>
+            <helpId>IasiFootprintOverlay</helpId>
+        </action>
+        <action>
             <id>importEpsProduct</id>
             <class>org.esa.beam.visat.actions.ProductImportAction</class>
             <formatName>EPS</formatName>

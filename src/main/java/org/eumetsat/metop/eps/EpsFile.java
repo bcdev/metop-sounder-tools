@@ -22,6 +22,7 @@ import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.core.ProgressMonitor;
 
+import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
@@ -45,8 +46,8 @@ public class EpsFile {
         metopData = dataContext.getData();
     }
     
-    public Product createProduct() throws IOException {
-        Product product = new Product("Dummy", "EPS", 1, 1);
+    public Product createProduct(ProductReader productReader) throws IOException {
+        Product product = new Product("Dummy", "EPS", 1, 1, productReader);
         MetadataElement metadataRoot = product.getMetadataRoot();
         List<MetadataElement> metaData = getMetaData();
         for (MetadataElement metadataElement : metaData) {

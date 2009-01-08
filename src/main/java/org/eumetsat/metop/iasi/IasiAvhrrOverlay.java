@@ -66,9 +66,9 @@ public class IasiAvhrrOverlay {
         this.avhrrProduct = avhrrProduct;
         avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
         avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
-//        avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
+        avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
         this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();;
-        avhrrTrimLeft = 42;
+//        avhrrTrimLeft = 42;
         mdrCount = iasiFile.getMdrCount();
     }
     
@@ -190,6 +190,8 @@ public class IasiAvhrrOverlay {
         final float xEast = 0.5f * (ifovPos[2].x + ifovPos[3].x);
         final float scaleX = (xEast - xWest) / IFOV_DIST;
 
+        System.out.println(scaleY01);
+        
         final Shape[] ifovShapes = new Shape[PN];
         for (int i = 0; i < PN; i++) {
             final PixelPos pos = ifovPos[i];
