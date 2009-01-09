@@ -27,6 +27,7 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.eumetsat.metop.visat.AvhrrOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,20 +41,40 @@ public class EpsFile {
     private final DataContext dataContext;
     private int mdrCount = -1;
     private EpsRecord mphr;
+    private Product product;
 
     protected EpsFile(File file, DataFormat format) throws IOException {
         dataContext = format.createContext(file, "r");
         metopData = dataContext.getData();
     }
     
-    public Product createProduct(ProductReader productReader) throws IOException {
-        Product product = new Product("Dummy", "EPS", 1, 1, productReader);
-        MetadataElement metadataRoot = product.getMetadataRoot();
+    public synchronized Product createProduct(ProductReader reader) throws IOException {
+        if (product == null ) {
+            product = createProductImpl(reader);
+        }
+        return product;
+    }
+    
+    public Product getProduct() {
+        return product;
+    }
+    
+    protected Product createProductImpl(ProductReader reader) throws IOException {
+        Product newProduct = new Product("Dummy", "EPS", 1, 1, reader);
+        MetadataElement metadataRoot = newProduct.getMetadataRoot();
         List<MetadataElement> metaData = getMetaData();
         for (MetadataElement metadataElement : metaData) {
             metadataRoot.addElement(metadataElement);
         }
-        return product;
+        return newProduct;
+    }
+    
+    public boolean hasOverlayFor(Product avhrrProduct) {
+        return false;
+    }
+    
+    public AvhrrOverlay createOverlay(Product avhrrProduct) {
+        return null;
     }
     
     public void close() {
@@ -74,16 +95,6 @@ public class EpsFile {
         return mdrCount;
     }
     
-    /**
-     * @param x
-     * @param y
-     * @param width
-     * @param height
-     * @param band
-     * @param buffer
-     * @param pm
-     * @throws IOException 
-     */
     public void readBandData(int x, int y, int width, int height, Band band, ProductData buffer, ProgressMonitor pm) throws IOException {
     }
 

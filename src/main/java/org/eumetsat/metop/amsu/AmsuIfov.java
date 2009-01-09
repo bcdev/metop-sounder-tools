@@ -21,22 +21,13 @@ import java.awt.Shape;
 
 public class AmsuIfov {
 
-    final int mdrIndex;
-    final int ifovIndex;
-    final Shape shape;
-    int rawValue;
+    public final int mdrIndex;
+    public final int ifovIndex;
+    public final Shape shape;
     
     AmsuIfov(int mdrIndex, int ifovIndex, Shape shape) {
         this.mdrIndex = mdrIndex;
         this.ifovIndex = ifovIndex;
         this.shape = shape;
-    }
-    
-    public Shape getShape() {
-        return shape;
-    }
-    
-    public int getValue() {
-        return rawValue;
     }
 }

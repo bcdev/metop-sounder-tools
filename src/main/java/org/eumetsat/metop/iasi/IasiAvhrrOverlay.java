@@ -67,8 +67,7 @@ public class IasiAvhrrOverlay {
         avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
         avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
         avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
-        this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();;
-//        avhrrTrimLeft = 42;
+        this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
         mdrCount = iasiFile.getMdrCount();
     }
     

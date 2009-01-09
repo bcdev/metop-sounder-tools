@@ -16,30 +16,27 @@
  */
 package org.eumetsat.metop.amsu;
 
-import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.ColorPaletteDef;
+import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.Scaling;
-import org.esa.beam.util.math.MathUtils;
 import org.eumetsat.metop.visat.AvhrrOverlay;
+import org.eumetsat.metop.visat.MetopSounderLayer;
+import org.eumetsat.metop.visat.SounderOverlayModel;
 
-import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.Raster;
 
 
-public class AmsuAvhrrOverlay extends AvhrrOverlay {
+public class AmsuAvhrrOverlay implements AvhrrOverlay {
 
     private final Product avhrrProduct;
     private final Product amsuProduct;
     private final AmsuIfov[] ifovs;
     private String bandName;
-    private ColorPaletteDef paletteDef;
-    private Color[] colorPalette;
     
     public AmsuAvhrrOverlay(Product avhrrProduct, Product amsuProduct, String bandName) {
         this.avhrrProduct = avhrrProduct;
@@ -49,7 +46,6 @@ public class AmsuAvhrrOverlay extends AvhrrOverlay {
     }
     
     private AmsuIfov[] readIfovs() {
-        Raster values = amsuProduct.getBand(bandName).getSourceImage().getData();
         Raster latitudes = amsuProduct.getBand(BandInfo.LAT.name).getGeophysicalImage().getData();
         Raster longitudes = amsuProduct.getBand(BandInfo.LON.name).getGeophysicalImage().getData();
         GeoCoding geoCoding = avhrrProduct.getGeoCoding();
@@ -58,8 +54,6 @@ public class AmsuAvhrrOverlay extends AvhrrOverlay {
         final int height = amsuProduct.getSceneRasterHeight();
         AmsuIfov[] allIfovs = new AmsuIfov[width * height];
         
-        int valueMin = Integer.MAX_VALUE;
-        int valueMax = 0;
         int index = 0;
         GeoPos amsuGeoPos = new GeoPos();
         PixelPos avhrrPixelPos = new PixelPos();
@@ -72,16 +66,9 @@ public class AmsuAvhrrOverlay extends AvhrrOverlay {
                                                   avhrrPixelPos.y - 0.5f * 47,
                                                       47, 47);
                 allIfovs[index] = new AmsuIfov(y, x, shape);
-                final int value = values.getSample(x, y, 0);
-                allIfovs[index].rawValue = value;
-                valueMin = Math.min(valueMin, value);
-                valueMax = Math.max(valueMax, value);
                 index++;
             }
         }
-        paletteDef = new ColorPaletteDef(valueMin, valueMax);
-        colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
-        
         return allIfovs;
     }
     
@@ -89,12 +76,7 @@ public class AmsuAvhrrOverlay extends AvhrrOverlay {
         return ifovs;
     }
 
-    public Color getColor(double sample) {
-        int numColors = colorPalette.length;
-        double min = paletteDef.getMinDisplaySample();
-        double max = paletteDef.getMaxDisplaySample();
-        int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
-        return colorPalette[index];
+    public Layer createLayer() {
+        return new MetopSounderLayer(this, new SounderOverlayModel(amsuProduct.getBand(bandName)));
     }
-
 }

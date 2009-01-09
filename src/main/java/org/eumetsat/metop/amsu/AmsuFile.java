@@ -28,6 +28,7 @@ import org.esa.beam.framework.datamodel.PixelGeoCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.visat.AvhrrOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class AmsuFile extends EpsFile {
     }
     
     @Override
-    public Product createProduct(ProductReader productReader) throws IOException {
+    protected Product createProductImpl(ProductReader productReader) throws IOException {
         Product product = new Product(getProductName(), PRODUCT_TYPE, PRODUCT_WIDTH, getMdrCount(), productReader);
         addMetaData(product);
         BandInfo[] bandInfos = BandInfo.values();
@@ -78,5 +79,17 @@ public class AmsuFile extends EpsFile {
         } finally {
             pm.done();
         }
+    }
+    
+    @Override
+    public boolean hasOverlayFor(Product avhrrProduct) {
+        // TODO check for date
+        return true;
+    }
+    
+    @Override
+    public AvhrrOverlay createOverlay(Product avhrrProduct) {
+        // TODO check for date
+        return new AmsuAvhrrOverlay(avhrrProduct, getProduct(), BandInfo.RADIANCE01.name);
     }
 }

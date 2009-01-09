@@ -17,10 +17,10 @@
 package org.eumetsat.metop.visat;
 
 import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.glevel.MultiLevelSource;
 import com.bc.ceres.grender.Rendering;
 import com.bc.ceres.grender.Viewport;
 
-import org.eumetsat.metop.amsu.AmsuAvhrrOverlay;
 import org.eumetsat.metop.amsu.AmsuIfov;
 
 import java.awt.BasicStroke;
@@ -32,22 +32,25 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 
 
 public class MetopSounderLayer extends Layer {
 
-    private final AmsuAvhrrOverlay overlay;
+    private final AvhrrOverlay overlay;
+    private final SounderOverlayModel model;
     
     private final BasicStroke borderStroke;
-    private final Color efovColor;
     private final Color ifovSelectedColor;
     private final Color ifovNormalColor;
     private final Color ifovAnomalousColor;
 
-    public MetopSounderLayer(AmsuAvhrrOverlay overlay) {
+
+    public MetopSounderLayer(AvhrrOverlay overlay, SounderOverlayModel sounderOverlayModel) {
         this.overlay = overlay;
+        this.model = sounderOverlayModel;
+        
         borderStroke = new BasicStroke(0.0f);
-        efovColor = Color.WHITE;
         ifovSelectedColor = Color.GREEN;
         ifovNormalColor = Color.RED;
         ifovAnomalousColor = Color.WHITE;
@@ -80,21 +83,21 @@ public class MetopSounderLayer extends Layer {
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-            final Rectangle clip = g2d.getClipBounds();
-
+            Rectangle viewRect = getImageRegion(vp);
             
-            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
-            final boolean ifovBigEnough = scale * 47 > 5; // TODO
+//            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
+//            final boolean ifovBigEnough = scale * 47 > 5; // TODO
 
             final AmsuIfov[] ifovs = overlay.getIfovs();
-            
-            if (ifovBigEnough) {
+//            if (ifovBigEnough) {
                 for (AmsuIfov ifov : ifovs) {
-                    final Shape ifovShape = ifov.getShape();
-                    g2d.setPaint(overlay.getColor(ifov.getValue()));
-                    g2d.fill(ifovShape);
+                    final Shape ifovShape = ifov.shape;
+                    if (ifovShape.intersects(viewRect)) {
+                        g2d.setPaint(model.getColor(ifov.ifovIndex, ifov.mdrIndex));
+                        g2d.fill(ifovShape);
+                    }
                 }
-            }
+//            }
 
             g2d.setColor(oldColor);
             g2d.setPaint(oldPaint);
@@ -105,6 +108,11 @@ public class MetopSounderLayer extends Layer {
             g2d.setTransform(transformSave);
         }
     }
+    
+    private static Rectangle getImageRegion(Viewport vp) {
+        return vp.getViewToModelTransform().createTransformedShape(vp.getViewBounds()).getBounds();
+    }
+
     
 //    protected void renderIfov(IasiFootprintLayerModel layerModel, Graphics2D g2d, Ifov ifov, double bt) {
 //        final Shape ifovShape = ifov.getShape();
