@@ -20,11 +20,11 @@ import com.bc.ceres.glayer.Layer;
 
 import org.eumetsat.metop.amsu.AmsuIfov;
 
-import java.awt.Color;
-
 public interface AvhrrOverlay {
 
     AmsuIfov[] getIfovs();
 
-    Layer createLayer();
+    Layer createLayer(SounderOverlayModel model);
+
+    SounderOverlayModel createModel();
 }

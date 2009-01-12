@@ -20,31 +20,38 @@ import com.bc.ceres.glayer.Layer;
 
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductManager;
+import org.esa.beam.framework.datamodel.TiePointGrid;
 import org.esa.beam.framework.ui.ModalDialog;
 import org.esa.beam.framework.ui.command.CommandEvent;
 import org.esa.beam.framework.ui.command.ExecCommand;
 import org.esa.beam.framework.ui.product.ProductSceneView;
+import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.iasi.visat.MetopSounderSupport;
-import org.eumetsat.metop.amsu.AmsuAvhrrOverlay;
-import org.eumetsat.metop.amsu.AmsuFile;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 
 
 public class AddMetopOverlayAction extends ExecCommand {
 
+    private Map<Product, Map<EpsFile, AvhrrOverlay>> overlayMap;
+    private boolean handlerRegistered = false;
+    
+    public AddMetopOverlayAction() {
+        overlayMap = new WeakHashMap<Product, Map<EpsFile,AvhrrOverlay>>(8);
+    }
     
     @Override
     public void actionPerformed(CommandEvent event) {
@@ -66,17 +73,25 @@ public class AddMetopOverlayAction extends ExecCommand {
     }
     
     private synchronized void addFootprintLayer(ProductSceneView psv) {
-//        registerHandler(); TODO re-enable
+        registerHandler();
         Layer rootLayer = psv.getRootLayer();
         final Product avhrrProduct = psv.getProduct();
-        AvhrrOverlay overlay = getOverlay(avhrrProduct);
+        AvhrrOverlay overlay = selectOverlay(avhrrProduct);
         
         if (overlay != null && !hasLayer(rootLayer, overlay)) {
-            Layer layer = overlay.createLayer();
+            SounderOverlayModel model = overlay.createModel();
+            Layer layer = overlay.createLayer(model);
             rootLayer.getChildren().add(0, layer);
             // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
             layer.setVisible(false);
             layer.setVisible(true);
+        }
+    }
+    
+    private void registerHandler() {
+        if (!handlerRegistered) {
+            VisatApp.getApp().addProductTreeListener(new ProductTreeHandler());
+            handlerRegistered = true;
         }
     }
     
@@ -94,7 +109,7 @@ public class AddMetopOverlayAction extends ExecCommand {
         return false;
     }
     
-    private AvhrrOverlay getOverlay(Product avhrrProduct) {
+    private AvhrrOverlay selectOverlay(Product avhrrProduct) {
         ProductManager productManager = VisatApp.getApp().getProductManager();
         Product[] products = productManager.getProducts();
         DefaultListModel listModel = new DefaultListModel();
@@ -124,9 +139,45 @@ public class AddMetopOverlayAction extends ExecCommand {
             if (productReader instanceof EpsReader) {
                 EpsReader epsReader = (EpsReader) productReader;
                 EpsFile epsFile = epsReader.getEpsFile();
-                return epsFile.createOverlay(avhrrProduct);
+                return getOverlay(epsFile, avhrrProduct);
             }
         }
         return null;
+    }
+    
+    private AvhrrOverlay getOverlay(EpsFile epsFile, Product avhrrProduct) {
+        synchronized (overlayMap) {
+            if (!overlayMap.containsKey(avhrrProduct)) {
+                HashMap<EpsFile, AvhrrOverlay> hashMap = new HashMap<EpsFile, AvhrrOverlay>();
+                overlayMap.put(avhrrProduct, hashMap);
+            }
+            Map<EpsFile, AvhrrOverlay> overlays = overlayMap.get(avhrrProduct);
+            if (!overlays.containsKey(epsFile)) {
+                AvhrrOverlay avhrrOverlay = epsFile.createOverlay(avhrrProduct);
+                overlays.put(epsFile, avhrrOverlay);
+            }
+            return overlays.get(epsFile);
+        }
+    }
+    
+    private class ProductTreeHandler implements ProductTreeListener {
+        public void productAdded(Product product) {
+        }
+
+        public void productRemoved(Product avhrrProduct) {
+            overlayMap.remove(avhrrProduct);
+        }
+
+        public void productSelected(Product product, int clickCount) {
+        }
+
+        public void metadataElementSelected(MetadataElement group, int clickCount) {
+        }
+
+        public void tiePointGridSelected(TiePointGrid tiePointGrid, int clickCount) {
+        }
+
+        public void bandSelected(Band band, int clickCount) {
+        }
     }
 }

@@ -30,6 +30,9 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.Raster;
 
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+
 
 public class AmsuAvhrrOverlay implements AvhrrOverlay {
 
@@ -76,7 +79,17 @@ public class AmsuAvhrrOverlay implements AvhrrOverlay {
         return ifovs;
     }
 
-    public Layer createLayer() {
-        return new MetopSounderLayer(this, new SounderOverlayModel(amsuProduct.getBand(bandName)));
+    public Layer createLayer(SounderOverlayModel model) {
+        return new MetopSounderLayer(this, model);
+    }
+    
+    @Override
+    public SounderOverlayModel createModel() {
+        return new SounderOverlayModel(amsuProduct.getBand(bandName));
+    }
+    
+    public JComponent createInfoComponent() {
+        JLabel label = new JLabel("No info available!");
+        return label;
     }
 }
