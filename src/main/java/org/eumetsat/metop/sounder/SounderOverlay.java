@@ -14,13 +14,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.metop.amsu;
+package org.eumetsat.metop.sounder;
 
 import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -30,15 +29,21 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 
-public class AmsuSounderOverlay implements SounderOverlay {
+public class SounderOverlay {
 
     private final Product avhrrProduct;
     private final Product amsuProduct;
-    private final AmsuIfov[] ifovs;
+    private final SounderIfov[] ifovs;
+    private final String latBand;
+    private final String lonBand;
+    private final int ifovSize;
     
-    public AmsuSounderOverlay(Product avhrrProduct, Product amsuProduct) {
+    public SounderOverlay(Product avhrrProduct, Product amsuProduct, String latBand, String lonBand, int ifovSize) {
         this.avhrrProduct = avhrrProduct;
         this.amsuProduct = amsuProduct;
+        this.latBand = latBand;
+        this.lonBand = lonBand;
+        this.ifovSize = ifovSize;
         ifovs = readIfovs();
     }
     
@@ -50,14 +55,14 @@ public class AmsuSounderOverlay implements SounderOverlay {
         return amsuProduct;
     }
 
-    private AmsuIfov[] readIfovs() {
-        Raster latitudes = amsuProduct.getBand(AmsuBandInfo.LAT.getName()).getGeophysicalImage().getData();
-        Raster longitudes = amsuProduct.getBand(AmsuBandInfo.LON.getName()).getGeophysicalImage().getData();
+    private SounderIfov[] readIfovs() {
+        Raster latitudes = amsuProduct.getBand(latBand).getGeophysicalImage().getData();
+        Raster longitudes = amsuProduct.getBand(lonBand).getGeophysicalImage().getData();
         GeoCoding geoCoding = avhrrProduct.getGeoCoding();
         
         final int width = amsuProduct.getSceneRasterWidth();
         final int height = amsuProduct.getSceneRasterHeight();
-        AmsuIfov[] allIfovs = new AmsuIfov[width * height];
+        SounderIfov[] allIfovs = new SounderIfov[width * height];
         
         int index = 0;
         GeoPos amsuGeoPos = new GeoPos();
@@ -67,17 +72,17 @@ public class AmsuSounderOverlay implements SounderOverlay {
                 amsuGeoPos.lat = latitudes.getSampleFloat(x, y, 0);
                 amsuGeoPos.lon = longitudes.getSampleFloat(x, y, 0);
                 geoCoding.getPixelPos(amsuGeoPos, avhrrPixelPos);
-                Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * 47,
-                                                  avhrrPixelPos.y - 0.5f * 47,
-                                                      47, 47);
-                allIfovs[index] = new AmsuIfov(y, x, shape);
+                Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * ifovSize,
+                                                  avhrrPixelPos.y - 0.5f * ifovSize,
+                                                      ifovSize, ifovSize);
+                allIfovs[index] = new SounderIfov(y, x, shape);
                 index++;
             }
         }
         return allIfovs;
     }
     
-    public AmsuIfov[] getIfovs() {
+    public SounderIfov[] getIfovs() {
         return ifovs;
     }
 

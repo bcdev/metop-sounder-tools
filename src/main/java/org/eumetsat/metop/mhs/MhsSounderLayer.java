@@ -16,15 +16,17 @@
  */
 package org.eumetsat.metop.mhs;
 
+import org.eumetsat.metop.sounder.SounderOverlay;
+
 import com.bc.ceres.glayer.Layer;
 
 
 public class MhsSounderLayer extends Layer {
 
-    private final MhsSounderOverlay amsuSounderOverlay;
+    private final SounderOverlay sounderOverlay;
 
-    public MhsSounderLayer(MhsSounderOverlay amsuSounderOverlay) {
-        this.amsuSounderOverlay = amsuSounderOverlay;
+    public MhsSounderLayer(SounderOverlay sounderOverlay) {
+        this.sounderOverlay = sounderOverlay;
     }
 
 }

@@ -26,15 +26,17 @@ import java.io.IOException;
 
 public class RadianceReader implements MdrReader {
     
+    private final String name;
     private final int index;
     
-    public RadianceReader(int index) {
+    public RadianceReader(String name, int index) {
+        this.name = name;
         this.index = index;
     }
     
     @Override
     public int read(int x, int width, ProductData buffer, int bufferIndex, CompoundData mdr) throws IOException {
-        SequenceData radianceSequence = mdr.getSequence("SCENE_RADIANCE");
+        SequenceData radianceSequence = mdr.getSequence(name);
         for (int xi = x; xi < x + width; xi++) {
             buffer.setElemIntAt(bufferIndex, radianceSequence.getSequence(xi).getInt(index));
             bufferIndex++;

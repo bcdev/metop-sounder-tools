@@ -20,6 +20,8 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.util.math.MathUtils;
+import org.eumetsat.metop.sounder.SounderIfov;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -39,7 +41,7 @@ import com.bc.ceres.grender.Viewport;
 
 public class AmsuSounderLayer extends Layer {
 
-    private final AmsuSounderOverlay overlay;
+    private final SounderOverlay overlay;
     
     private Band band;
     private Raster rawData;
@@ -52,7 +54,7 @@ public class AmsuSounderLayer extends Layer {
     private final Color ifovAnomalousColor;
 
 
-    public AmsuSounderLayer(AmsuSounderOverlay overlay) {
+    public AmsuSounderLayer(SounderOverlay overlay) {
         this.overlay = overlay;
         
         borderStroke = new BasicStroke(0.0f);
@@ -73,7 +75,7 @@ public class AmsuSounderLayer extends Layer {
     public Band getBand() {
         return band;
     }
-    public AmsuSounderOverlay getOverlay() {
+    public SounderOverlay getOverlay() {
         return overlay;
     }
     
@@ -105,9 +107,9 @@ public class AmsuSounderLayer extends Layer {
 //            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
 //            final boolean ifovBigEnough = scale * 47 > 5; // TODO
 
-            final AmsuIfov[] ifovs = overlay.getIfovs();
+            final SounderIfov[] ifovs = overlay.getIfovs();
 //            if (ifovBigEnough) {
-                for (AmsuIfov ifov : ifovs) {
+                for (SounderIfov ifov : ifovs) {
                     final Shape ifovShape = ifov.shape;
                     if (ifovShape.intersects(viewRect)) {
                         g2d.setPaint(getColor(ifov.ifovIndex, ifov.mdrIndex));

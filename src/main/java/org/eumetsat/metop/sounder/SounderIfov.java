@@ -14,18 +14,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.metop.amsu;
+package org.eumetsat.metop.sounder;
 
 import java.awt.Shape;
 
 
-public class AmsuIfov {
+public class SounderIfov {
 
     public final int mdrIndex;
     public final int ifovIndex;
     public final Shape shape;
     
-    AmsuIfov(int mdrIndex, int ifovIndex, Shape shape) {
+    public SounderIfov(int mdrIndex, int ifovIndex, Shape shape) {
         this.mdrIndex = mdrIndex;
         this.ifovIndex = ifovIndex;
         this.shape = shape;

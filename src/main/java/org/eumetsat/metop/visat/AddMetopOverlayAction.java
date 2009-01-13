@@ -16,8 +16,6 @@
  */
 package org.eumetsat.metop.visat;
 
-import com.bc.ceres.glayer.Layer;
-
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
@@ -34,6 +32,7 @@ import org.eumetsat.iasi.visat.MetopSounderSupport;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +42,8 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+
+import com.bc.ceres.glayer.Layer;
 
 
 public class AddMetopOverlayAction extends ExecCommand {

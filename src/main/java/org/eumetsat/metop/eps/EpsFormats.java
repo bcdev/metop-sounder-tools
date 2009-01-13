@@ -28,6 +28,7 @@ import com.bc.ceres.core.Assert;
 
 import org.eumetsat.metop.amsu.AmsuFile;
 import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.mhs.MhsFile;
 
 
 public class EpsFormats {
@@ -92,7 +93,13 @@ public class EpsFormats {
             return new IasiFile(file, dataFormat);
         }
     }
-    
+
+    private class MhsFileFactory implements EpsFileFactory {
+        public EpsFile create(File file, DataFormat dataFormat) throws IOException {
+            return new MhsFile(file, dataFormat);
+        }
+    }
+
     private class AmsuFileFactory implements EpsFileFactory {
         public EpsFile create(File file, DataFormat dataFormat) throws IOException {
             return new AmsuFile(file, dataFormat);
@@ -139,13 +146,14 @@ public class EpsFormats {
         fileFactories.put(formatDescriptor, iasiFileFactory);
         
         //MHS
+        EpsFileFactory mhsFileFactory = new MhsFileFactory();
         formatDescriptor = new FormatDescriptor("MHSx", "1B", 3, 0);
         formatDescriptors.put(formatDescriptor, "eps_mhsl1b_6.5.xml");
-        fileFactories.put(formatDescriptor, defaultFileFactory);
+        fileFactories.put(formatDescriptor, mhsFileFactory);
         
         formatDescriptor = new FormatDescriptor("MHSx", "1B", 10, 0);
         formatDescriptors.put(formatDescriptor, "eps_mhsl1b_6.5.xml");
-        fileFactories.put(formatDescriptor, defaultFileFactory);
+        fileFactories.put(formatDescriptor, mhsFileFactory);
         
         //AMSU
         EpsFileFactory amsuFileFactory = new AmsuFileFactory();

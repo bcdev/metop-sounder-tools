@@ -18,8 +18,9 @@ package org.eumetsat.metop.mhs;
 
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
+import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.sounder.SounderFile;
-import org.eumetsat.metop.visat.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,13 +31,13 @@ import com.bc.ceres.glayer.Layer;
 
 public class MhsFile extends SounderFile {
 
-    protected MhsFile(File file, DataFormat format) throws IOException {
+    public MhsFile(File file, DataFormat format) throws IOException {
         super(file, format);
     }
     
     @Override
-    public synchronized Product createProduct(ProductReader reader) throws IOException {
-        Product product = createProduct("MHS", 42, reader);
+    public Product createProductImpl(ProductReader reader) throws IOException {
+        Product product = createProduct("MHS", 90, reader);
         for (MhsBandInfo bandInfo : MhsBandInfo.values()) {
             addBand(product, bandInfo);
         }
@@ -53,15 +54,11 @@ public class MhsFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new MhsSounderOverlay(avhrrProduct, getProduct());
+        return new SounderOverlay(avhrrProduct, getProduct(), MhsBandInfo.LAT.getName(), MhsBandInfo.LON.getName(), 12);
     }
     
     @Override
     public Layer createLayer(SounderOverlay overlay) {
-        if (overlay instanceof MhsSounderOverlay) {
-            MhsSounderOverlay amsuSounderOverlay = (MhsSounderOverlay) overlay;
-            return new MhsSounderLayer(amsuSounderOverlay);
-        }
-        return null;
+        return new AmsuSounderLayer(overlay);
     }
 }

@@ -19,7 +19,7 @@ package org.eumetsat.metop.amsu;
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.sounder.SounderFile;
-import org.eumetsat.metop.visat.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class AmsuFile extends SounderFile {
     }
     
     @Override
-    public synchronized Product createProduct(ProductReader reader) throws IOException {
+    public Product createProductImpl(ProductReader reader) throws IOException {
         Product product = createProduct(PRODUCT_TYPE, PRODUCT_WIDTH, reader);
         for (AmsuBandInfo bandInfo : AmsuBandInfo.values()) {
             addBand(product, bandInfo);
@@ -56,15 +56,11 @@ public class AmsuFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new AmsuSounderOverlay(avhrrProduct, getProduct());
+        return new SounderOverlay(avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47);
     }
     
     @Override
     public Layer createLayer(SounderOverlay overlay) {
-        if (overlay instanceof AmsuSounderOverlay) {
-            AmsuSounderOverlay amsuSounderOverlay = (AmsuSounderOverlay) overlay;
-            return new AmsuSounderLayer(amsuSounderOverlay);
-        }
-        return null;
+        return new AmsuSounderLayer(overlay);
     }
 }

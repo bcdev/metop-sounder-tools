@@ -25,11 +25,11 @@ import org.eumetsat.metop.sounder.MdrReader;
 import org.eumetsat.metop.sounder.RadianceReader;
 
 public enum MhsBandInfo implements BandInfo {
-    RADIANCE01("radiance_1", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(0)),
-    RADIANCE02("radiance_2", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(1)),
-    RADIANCE03("radiance_3", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(2)),
-    RADIANCE04("radiance_4", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(3)),
-    RADIANCE05("radiance_5", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(4)),
+    RADIANCE01("radiance_1", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader("SCENE_RADIANCES", 0)),
+    RADIANCE02("radiance_2", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader("SCENE_RADIANCES", 1)),
+    RADIANCE03("radiance_3", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader("SCENE_RADIANCES", 2)),
+    RADIANCE04("radiance_4", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader("SCENE_RADIANCES", 3)),
+    RADIANCE05("radiance_5", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader("SCENE_RADIANCES", 4)),
     
     SZA("solar_zenith_angle", ProductData.TYPE_INT16, 1.0E-2, new GeometryReader(0)),
     VZA("view_zenith_angle", ProductData.TYPE_INT16, 1.0E-2, new GeometryReader(1)),
