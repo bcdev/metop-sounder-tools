@@ -21,13 +21,15 @@ import com.bc.ceres.binio.DataContext;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.core.ProgressMonitor;
+import com.bc.ceres.glayer.Layer;
 
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
-import org.eumetsat.metop.visat.AvhrrOverlay;
+import org.eumetsat.metop.visat.AmsuSounderLayer;
+import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +75,11 @@ public class EpsFile {
         return false;
     }
     
-    public AvhrrOverlay createOverlay(Product avhrrProduct) {
+    public SounderOverlay createOverlay(Product avhrrProduct) {
+        return null;
+    }
+    
+    public Layer createLayer(SounderOverlay overlay) {
         return null;
     }
     

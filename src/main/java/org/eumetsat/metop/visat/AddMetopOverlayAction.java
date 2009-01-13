@@ -46,11 +46,11 @@ import javax.swing.SwingUtilities;
 
 public class AddMetopOverlayAction extends ExecCommand {
 
-    private Map<Product, Map<EpsFile, AvhrrOverlay>> overlayMap;
+    private Map<Product, Map<EpsFile, SounderOverlay>> overlayMap;
     private boolean handlerRegistered = false;
     
     public AddMetopOverlayAction() {
-        overlayMap = new WeakHashMap<Product, Map<EpsFile,AvhrrOverlay>>(8);
+        overlayMap = new WeakHashMap<Product, Map<EpsFile,SounderOverlay>>(8);
     }
     
     @Override
@@ -76,11 +76,11 @@ public class AddMetopOverlayAction extends ExecCommand {
         registerHandler();
         Layer rootLayer = psv.getRootLayer();
         final Product avhrrProduct = psv.getProduct();
-        AvhrrOverlay overlay = selectOverlay(avhrrProduct);
+        EpsFile selectedEpsFile = selectOverlayProduct(avhrrProduct);
+        SounderOverlay overlay = selectedEpsFile.createOverlay(avhrrProduct);
         
         if (overlay != null && !hasLayer(rootLayer, overlay)) {
-            SounderOverlayModel model = overlay.createModel();
-            Layer layer = overlay.createLayer(model);
+            Layer layer = selectedEpsFile.createLayer(overlay);
             rootLayer.getChildren().add(0, layer);
             // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
             layer.setVisible(false);
@@ -95,21 +95,21 @@ public class AddMetopOverlayAction extends ExecCommand {
         }
     }
     
-    private boolean hasLayer(Layer layer, AvhrrOverlay overlay) {
-        if (MetopSounderLayer.class.isAssignableFrom(layer.getClass()) &&
-                ((MetopSounderLayer) layer).getOverlay() == overlay) {
+    private boolean hasLayer(Layer layer, SounderOverlay overlay) {
+        if (AmsuSounderLayer.class.isAssignableFrom(layer.getClass()) &&
+                ((AmsuSounderLayer) layer).getOverlay() == overlay) {
             return true;
         }
         for (Layer childLayer : layer.getChildren()) {
-            if (MetopSounderLayer.class.isAssignableFrom(childLayer.getClass()) &&
-                    ((MetopSounderLayer) childLayer).getOverlay() == overlay) {
+            if (AmsuSounderLayer.class.isAssignableFrom(childLayer.getClass()) &&
+                    ((AmsuSounderLayer) childLayer).getOverlay() == overlay) {
                 return true;
             }
         }
         return false;
     }
     
-    private AvhrrOverlay selectOverlay(Product avhrrProduct) {
+    private EpsFile selectOverlayProduct(Product avhrrProduct) {
         ProductManager productManager = VisatApp.getApp().getProductManager();
         Product[] products = productManager.getProducts();
         DefaultListModel listModel = new DefaultListModel();
@@ -138,22 +138,21 @@ public class AddMetopOverlayAction extends ExecCommand {
             ProductReader productReader = amsuProduct.getProductReader();
             if (productReader instanceof EpsReader) {
                 EpsReader epsReader = (EpsReader) productReader;
-                EpsFile epsFile = epsReader.getEpsFile();
-                return getOverlay(epsFile, avhrrProduct);
+                return epsReader.getEpsFile();
             }
         }
         return null;
     }
     
-    private AvhrrOverlay getOverlay(EpsFile epsFile, Product avhrrProduct) {
+    private SounderOverlay getOverlay(EpsFile epsFile, Product avhrrProduct) {
         synchronized (overlayMap) {
             if (!overlayMap.containsKey(avhrrProduct)) {
-                HashMap<EpsFile, AvhrrOverlay> hashMap = new HashMap<EpsFile, AvhrrOverlay>();
+                HashMap<EpsFile, SounderOverlay> hashMap = new HashMap<EpsFile, SounderOverlay>();
                 overlayMap.put(avhrrProduct, hashMap);
             }
-            Map<EpsFile, AvhrrOverlay> overlays = overlayMap.get(avhrrProduct);
+            Map<EpsFile, SounderOverlay> overlays = overlayMap.get(avhrrProduct);
             if (!overlays.containsKey(epsFile)) {
-                AvhrrOverlay avhrrOverlay = epsFile.createOverlay(avhrrProduct);
+                SounderOverlay avhrrOverlay = epsFile.createOverlay(avhrrProduct);
                 overlays.put(epsFile, avhrrOverlay);
             }
             return overlays.get(epsFile);

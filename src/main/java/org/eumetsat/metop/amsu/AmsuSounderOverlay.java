@@ -16,15 +16,11 @@
  */
 package org.eumetsat.metop.amsu;
 
-import com.bc.ceres.glayer.Layer;
-
 import org.esa.beam.framework.datamodel.GeoCoding;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.eumetsat.metop.visat.AvhrrOverlay;
-import org.eumetsat.metop.visat.MetopSounderLayer;
-import org.eumetsat.metop.visat.SounderOverlayModel;
+import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -34,20 +30,26 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 
-public class AmsuAvhrrOverlay implements AvhrrOverlay {
+public class AmsuSounderOverlay implements SounderOverlay {
 
     private final Product avhrrProduct;
     private final Product amsuProduct;
     private final AmsuIfov[] ifovs;
-    private String bandName;
     
-    public AmsuAvhrrOverlay(Product avhrrProduct, Product amsuProduct, String bandName) {
+    public AmsuSounderOverlay(Product avhrrProduct, Product amsuProduct) {
         this.avhrrProduct = avhrrProduct;
         this.amsuProduct = amsuProduct;
-        this.bandName = bandName;
         ifovs = readIfovs();
     }
     
+    public Product getAvhrrProduct() {
+        return avhrrProduct;
+    }
+
+    public Product getAmsuProduct() {
+        return amsuProduct;
+    }
+
     private AmsuIfov[] readIfovs() {
         Raster latitudes = amsuProduct.getBand(BandInfo.LAT.name).getGeophysicalImage().getData();
         Raster longitudes = amsuProduct.getBand(BandInfo.LON.name).getGeophysicalImage().getData();
@@ -79,14 +81,6 @@ public class AmsuAvhrrOverlay implements AvhrrOverlay {
         return ifovs;
     }
 
-    public Layer createLayer(SounderOverlayModel model) {
-        return new MetopSounderLayer(this, model);
-    }
-    
-    @Override
-    public SounderOverlayModel createModel() {
-        return new SounderOverlayModel(amsuProduct.getBand(bandName));
-    }
     
     public JComponent createInfoComponent() {
         JLabel label = new JLabel("No info available!");

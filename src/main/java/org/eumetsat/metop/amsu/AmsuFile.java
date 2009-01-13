@@ -20,6 +20,7 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.core.ProgressMonitor;
+import com.bc.ceres.glayer.Layer;
 
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
@@ -28,7 +29,8 @@ import org.esa.beam.framework.datamodel.PixelGeoCoding;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.visat.AvhrrOverlay;
+import org.eumetsat.metop.visat.AmsuSounderLayer;
+import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,8 +90,17 @@ public class AmsuFile extends EpsFile {
     }
     
     @Override
-    public AvhrrOverlay createOverlay(Product avhrrProduct) {
+    public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new AmsuAvhrrOverlay(avhrrProduct, getProduct(), BandInfo.RADIANCE01.name);
+        return new AmsuSounderOverlay(avhrrProduct, getProduct());
+    }
+    
+    @Override
+    public Layer createLayer(SounderOverlay overlay) {
+        if (overlay instanceof AmsuSounderOverlay) {
+            AmsuSounderOverlay amsuSounderOverlay = (AmsuSounderOverlay) overlay;
+            return new AmsuSounderLayer(amsuSounderOverlay);
+        }
+        return null;
     }
 }

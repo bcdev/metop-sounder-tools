@@ -20,11 +20,9 @@ import com.bc.ceres.glayer.Layer;
 
 import org.eumetsat.metop.amsu.AmsuIfov;
 
-public interface AvhrrOverlay {
+public interface SounderOverlay {
 
     AmsuIfov[] getIfovs();
 
-    Layer createLayer(SounderOverlayModel model);
 
-    SounderOverlayModel createModel();
 }

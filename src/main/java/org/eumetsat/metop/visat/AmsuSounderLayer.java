@@ -16,12 +16,12 @@
  */
 package org.eumetsat.metop.visat;
 
-import com.bc.ceres.glayer.Layer;
-import com.bc.ceres.glevel.MultiLevelSource;
-import com.bc.ceres.grender.Rendering;
-import com.bc.ceres.grender.Viewport;
-
+import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.ColorPaletteDef;
+import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.util.math.MathUtils;
 import org.eumetsat.metop.amsu.AmsuIfov;
+import org.eumetsat.metop.amsu.AmsuSounderOverlay;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -32,13 +32,21 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
+import java.awt.image.Raster;
+
+import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.grender.Rendering;
+import com.bc.ceres.grender.Viewport;
 
 
-public class MetopSounderLayer extends Layer {
+public class AmsuSounderLayer extends Layer {
 
-    private final AvhrrOverlay overlay;
-    private final SounderOverlayModel model;
+    private final AmsuSounderOverlay overlay;
+    
+    private Band band;
+    private Raster rawData;
+    private Color[] colorPalette;
+    private ColorPaletteDef paletteDef;
     
     private final BasicStroke borderStroke;
     private final Color ifovSelectedColor;
@@ -46,17 +54,28 @@ public class MetopSounderLayer extends Layer {
     private final Color ifovAnomalousColor;
 
 
-    public MetopSounderLayer(AvhrrOverlay overlay, SounderOverlayModel sounderOverlayModel) {
+    public AmsuSounderLayer(AmsuSounderOverlay overlay) {
         this.overlay = overlay;
-        this.model = sounderOverlayModel;
         
         borderStroke = new BasicStroke(0.0f);
         ifovSelectedColor = Color.GREEN;
         ifovNormalColor = Color.RED;
         ifovAnomalousColor = Color.WHITE;
+
+        setBand(overlay.getAmsuProduct().getBandAt(0));
     }
 
-    public AvhrrOverlay getOverlay() {
+    
+    public void setBand(Band band) {
+        this.band = band;
+        rawData = band.getSourceImage().getData();
+        computeColorPalette();
+    }
+    
+    public Band getBand() {
+        return band;
+    }
+    public AmsuSounderOverlay getOverlay() {
         return overlay;
     }
     
@@ -93,7 +112,7 @@ public class MetopSounderLayer extends Layer {
                 for (AmsuIfov ifov : ifovs) {
                     final Shape ifovShape = ifov.shape;
                     if (ifovShape.intersects(viewRect)) {
-                        g2d.setPaint(model.getColor(ifov.ifovIndex, ifov.mdrIndex));
+                        g2d.setPaint(getColor(ifov.ifovIndex, ifov.mdrIndex));
                         g2d.fill(ifovShape);
                     }
                 }
@@ -111,6 +130,31 @@ public class MetopSounderLayer extends Layer {
     
     private static Rectangle getImageRegion(Viewport vp) {
         return vp.getViewToModelTransform().createTransformedShape(vp.getViewBounds()).getBounds();
+    }
+    
+    public Color getColor(int x, int y) {
+        double sample = rawData.getSampleDouble(x, y, 0);
+        int numColors = colorPalette.length;
+        double min = paletteDef.getMinDisplaySample();
+        double max = paletteDef.getMaxDisplaySample();
+        int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
+        return colorPalette[index];
+    }
+    
+    private void computeColorPalette() {
+        final int width = band.getSceneRasterWidth();
+        final int height = band.getSceneRasterHeight();
+        int valueMin = Integer.MAX_VALUE;
+        int valueMax = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                final int value = rawData.getSample(x, y, 0);
+                valueMin = Math.min(valueMin, value);
+                valueMax = Math.max(valueMax, value);
+            }
+        }
+        paletteDef = new ColorPaletteDef(valueMin, valueMax);
+        colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
     }
 
     
