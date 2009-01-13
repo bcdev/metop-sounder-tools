@@ -16,13 +16,6 @@
  */
 package org.eumetsat.metop.visat;
 
-import com.bc.ceres.glayer.Layer;
-
-import org.eumetsat.metop.amsu.AmsuIfov;
 
 public interface SounderOverlay {
-
-    AmsuIfov[] getIfovs();
-
-
 }
