@@ -14,14 +14,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.metop.visat;
+package org.eumetsat.metop.amsu;
 
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.util.math.MathUtils;
-import org.eumetsat.metop.amsu.AmsuIfov;
-import org.eumetsat.metop.amsu.AmsuSounderOverlay;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

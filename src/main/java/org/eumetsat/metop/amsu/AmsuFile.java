@@ -16,71 +16,35 @@
  */
 package org.eumetsat.metop.amsu;
 
-import com.bc.ceres.binio.CompoundData;
-import com.bc.ceres.binio.DataFormat;
-import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.glayer.Layer;
-
 import org.esa.beam.framework.dataio.ProductReader;
-import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.GeoCoding;
-import org.esa.beam.framework.datamodel.PixelGeoCoding;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
-import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.visat.AmsuSounderLayer;
+import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
+import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.glayer.Layer;
 
 
-public class AmsuFile extends EpsFile {
+public class AmsuFile extends SounderFile {
     
     private static final int PRODUCT_WIDTH = 30;
     public static final String PRODUCT_TYPE = "AMSU-A";
-    private Map<Band, MdrReader> mdrReaders;
 
     public AmsuFile(File file, DataFormat format) throws IOException {
         super(file, format);
-        mdrReaders = new HashMap<Band, MdrReader>(BandInfo.values().length * 2);
     }
     
     @Override
-    protected Product createProductImpl(ProductReader productReader) throws IOException {
-        Product product = new Product(getProductName(), PRODUCT_TYPE, PRODUCT_WIDTH, getMdrCount(), productReader);
-        addMetaData(product);
-        BandInfo[] bandInfos = BandInfo.values();
-        for (BandInfo bandInfo : bandInfos) {
-            Band band = product.addBand(bandInfo.name, bandInfo.type);
-            if (bandInfo.isScaled()) {
-                band.setScalingFactor(bandInfo.scaleFactor);
-            }
-            mdrReaders.put(band, bandInfo.reader);
+    public synchronized Product createProduct(ProductReader reader) throws IOException {
+        Product product = createProduct(PRODUCT_TYPE, PRODUCT_WIDTH, reader);
+        for (AmsuBandInfo bandInfo : AmsuBandInfo.values()) {
+            addBand(product, bandInfo);
         }
-        GeoCoding geoCoding = new PixelGeoCoding(product.getBand(BandInfo.LAT.name), product.getBand(BandInfo.LON.name), null, 5, ProgressMonitor.NULL);
-        product.setGeoCoding(geoCoding);
+        addGeocoding(product, AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName());
         return product;
-    }
-    
-    @Override
-    public void readBandData(int x, int y, int width, int height, Band band, ProductData buffer, ProgressMonitor pm) throws IOException {
-        MdrReader reader = mdrReaders.get(band);
-        int bufferIndex = 0;
-        SequenceData mdrData = getMdrData();
-        pm.beginTask("reading...", height);
-        try {
-            for (int yi = y; yi < y + height; yi++) {
-                CompoundData mdr = mdrData.getCompound(yi).getCompound(1);
-                bufferIndex = reader.read(x, width, buffer, bufferIndex, mdr);
-                pm.worked(1);
-            }
-        } finally {
-            pm.done();
-        }
     }
     
     @Override

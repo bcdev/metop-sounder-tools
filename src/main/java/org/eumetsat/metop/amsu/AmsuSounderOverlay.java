@@ -51,8 +51,8 @@ public class AmsuSounderOverlay implements SounderOverlay {
     }
 
     private AmsuIfov[] readIfovs() {
-        Raster latitudes = amsuProduct.getBand(BandInfo.LAT.name).getGeophysicalImage().getData();
-        Raster longitudes = amsuProduct.getBand(BandInfo.LON.name).getGeophysicalImage().getData();
+        Raster latitudes = amsuProduct.getBand(AmsuBandInfo.LAT.getName()).getGeophysicalImage().getData();
+        Raster longitudes = amsuProduct.getBand(AmsuBandInfo.LON.getName()).getGeophysicalImage().getData();
         GeoCoding geoCoding = avhrrProduct.getGeoCoding();
         
         final int width = amsuProduct.getSceneRasterWidth();

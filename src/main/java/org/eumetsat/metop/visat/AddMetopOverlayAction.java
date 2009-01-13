@@ -31,6 +31,7 @@ import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.iasi.visat.MetopSounderSupport;
+import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
 

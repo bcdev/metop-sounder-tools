@@ -28,7 +28,7 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
-import org.eumetsat.metop.visat.AmsuSounderLayer;
+import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.visat.SounderOverlay;
 
 import java.io.File;

@@ -14,7 +14,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.metop.amsu;
+package org.eumetsat.metop.sounder;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.SequenceData;
@@ -24,23 +24,22 @@ import org.esa.beam.framework.datamodel.ProductData;
 import java.io.IOException;
 
 
-class FlagReader implements MdrReader {
+public class GeometryReader implements MdrReader {
 
-    private final String memberName;
+    private final int index;
     
-    FlagReader(String memberName) {
-        this.memberName = memberName;
+    public GeometryReader(int index) {
+        this.index = index;
     }
-
+    
     @Override
     public int read(int x, int width, ProductData buffer, int bufferIndex, CompoundData mdr) throws IOException {
-        SequenceData dataSequence = mdr.getSequence(memberName);
+        SequenceData angularSequence = mdr.getSequence("ANGULAR_RELATION");
         for (int xi = x; xi < x + width; xi++) {
-            short value = dataSequence.getShort(xi);
-            System.out.println(xi+" "+value);
-            buffer.setElemIntAt(bufferIndex, value);
+            buffer.setElemIntAt(bufferIndex, angularSequence.getSequence(xi).getShort(index));
             bufferIndex++;
         }
         return bufferIndex;
     }
+
 }

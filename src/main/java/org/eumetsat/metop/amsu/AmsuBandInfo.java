@@ -17,8 +17,14 @@
 package org.eumetsat.metop.amsu;
 
 import org.esa.beam.framework.datamodel.ProductData;
+import org.eumetsat.metop.sounder.BandInfo;
+import org.eumetsat.metop.sounder.FlagReader;
+import org.eumetsat.metop.sounder.GeometryReader;
+import org.eumetsat.metop.sounder.LocationReader;
+import org.eumetsat.metop.sounder.MdrReader;
+import org.eumetsat.metop.sounder.RadianceReader;
 
-enum BandInfo {
+enum AmsuBandInfo implements BandInfo {
     RADIANCE01("radiance_1", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(0)),
     RADIANCE02("radiance_2", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(1)),
     RADIANCE03("radiance_3", ProductData.TYPE_INT32, 1.0E-7, new RadianceReader(2)),
@@ -46,26 +52,42 @@ enum BandInfo {
     SURFACE("surfave_type", ProductData.TYPE_INT16, 1.0, new FlagReader("SURFACE_PROPERTIES")),
     ELEVATION("elevation", ProductData.TYPE_INT16, 1.0, new FlagReader("TERRAIN_ELEVATION"));
     
-    private BandInfo(String name, int type, double scaleFactor, MdrReader reader) {
+    private AmsuBandInfo(String name, int type, double scaleFactor, MdrReader reader) {
         this.name = name;
         this.type = type;
         this.scaleFactor = scaleFactor;
         this.reader = reader;
     }
     
-    final String name;
-    final int type;
+    private final String name;
+    private final int type;
 //    final String unit;
 //
 //    final double scaleOffset;
-    final double scaleFactor;
+    private final double scaleFactor;
 //    final Number noDataValue;
 //    final double min;
 //    final double max;
 //    final String description;
-    final MdrReader reader;
+    private final MdrReader reader;
     
-    boolean isScaled() {
-        return scaleFactor != 1.0;
+    public boolean isScaled() {
+        return getScaleFactor() != 1.0;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public double getScaleFactor() {
+        return scaleFactor;
+    }
+
+    public MdrReader getReader() {
+        return reader;
     }
 }
