@@ -54,7 +54,7 @@ public class MhsFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new SounderOverlay(avhrrProduct, getProduct(), MhsBandInfo.LAT.getName(), MhsBandInfo.LON.getName(), 12);
+        return new SounderOverlay(avhrrProduct, getProduct(), MhsBandInfo.LAT.getName(), MhsBandInfo.LON.getName(), 15.88f/1.1f);
     }
     
     @Override

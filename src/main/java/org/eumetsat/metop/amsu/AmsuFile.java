@@ -56,7 +56,7 @@ public class AmsuFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new SounderOverlay(avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47);
+        return new SounderOverlay(avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47.63f/1.1f);
     }
     
     @Override

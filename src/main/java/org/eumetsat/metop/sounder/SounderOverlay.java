@@ -36,9 +36,9 @@ public class SounderOverlay {
     private final SounderIfov[] ifovs;
     private final String latBand;
     private final String lonBand;
-    private final int ifovSize;
+    private final float ifovSize;
     
-    public SounderOverlay(Product avhrrProduct, Product amsuProduct, String latBand, String lonBand, int ifovSize) {
+    public SounderOverlay(Product avhrrProduct, Product amsuProduct, String latBand, String lonBand, float ifovSize) {
         this.avhrrProduct = avhrrProduct;
         this.amsuProduct = amsuProduct;
         this.latBand = latBand;
