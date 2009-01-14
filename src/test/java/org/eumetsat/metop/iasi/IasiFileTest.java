@@ -159,10 +159,10 @@ public class IasiFileTest extends TestCase {
 
         final String avhrrFileName = "AVHR_x1x_1B_M02_20070615023403Z_20070615041903Z_N_O_20070615041730Z.nat";
         final long avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFileName);
-        final File iasiFile = IasiFile.findIasiFile(avhrrStartTime, iasiFiles);
+        final File iasiFile = EpsFile.findFile(avhrrStartTime, iasiFiles);
 
         assertEquals(iasiFiles[1], iasiFile);
-        assertNull(IasiFile.findIasiFile(avhrrStartTime, new File[0]));
+        assertNull(EpsFile.findFile(avhrrStartTime, new File[0]));
     }
 
     public static IasiFile createIasiFile() {

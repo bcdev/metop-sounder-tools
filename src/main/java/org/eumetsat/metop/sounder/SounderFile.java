@@ -66,18 +66,7 @@ public abstract class SounderFile extends EpsFile {
     @Override
     public void readBandData(int x, int y, int width, int height, Band band, ProductData buffer, ProgressMonitor pm) throws IOException {
         MdrReader reader = mdrReaders.get(band);
-        int bufferIndex = 0;
-        SequenceData mdrData = getMdrData();
-        pm.beginTask("reading...", height);
-        try {
-            for (int yi = y; yi < y + height; yi++) {
-                CompoundData mdr = mdrData.getCompound(yi).getCompound(1);
-                bufferIndex = reader.read(x, width, buffer, bufferIndex, mdr);
-                pm.worked(1);
-            }
-        } finally {
-            pm.done();
-        }
+        readBandData(reader, x, y, width, height, buffer, pm);
     }
 
 }

@@ -6,14 +6,18 @@ package org.eumetsat.metop.iasi;
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.glayer.Layer;
 import com.sun.org.apache.bcel.internal.util.ByteSequence;
 
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
+import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.ProductData.UTC;
+import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsRecord;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
@@ -94,6 +98,25 @@ public class IasiFile extends EpsFile {
     public int getMdrCount() {
         return mdrCount;
     }
+    
+  @Override
+  public boolean hasOverlayFor(Product avhrrProduct) {
+      // TODO check for date
+      return true;
+  }
+  
+  @Override
+  public SounderOverlay createOverlay(Product avhrrProduct) {
+      // TODO check for date
+//      return new SounderOverlay(this, avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47.63f/1.1f);
+      return null;
+  }
+  
+  @Override
+  public Layer createLayer(SounderOverlay overlay) {
+      return null;
+//      return new IasiFootprintLayer(overlay);
+  }
     
     static int computeIfovId(int mdrIndex, int efovIndex, int ifovIndex) {
         return mdrIndex * SNOT * PN + efovIndex * PN + ifovIndex;
@@ -479,42 +502,6 @@ public class IasiFile extends EpsFile {
         geometry.saa = mdrBody.getSequence("GGeoIISAnglesSUN").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
         return geometry;
     }
-
-    public static File findIasiFile(long avhrrStartTime, File[] files) {
-        try {
-            long leastTimeDifference = Long.MAX_VALUE;
-            int index = -1;
-
-            for (int i = 0; i < files.length; i++) {
-                final long iasiStartTime = extractStartTimeInMillis(files[i].getName());
-                final long timeDifference = avhrrStartTime - iasiStartTime;
-
-                if (timeDifference > 0 && timeDifference < leastTimeDifference) {
-                    leastTimeDifference = timeDifference;
-                    index = i;
-                }
-            }
-            if (index != -1) {
-                return files[index];
-            } else {
-                return null;
-            }
-        } catch (ParseException e) {
-            return null;
-        }
-    }
-
-    public static long extractStartTimeInMillis(String filename) throws ParseException {
-        if (filename.length() < 30) {
-            throw new IllegalArgumentException("filename.length < 30");
-        }
-        final String timeString = filename.substring(16, 30);
-        final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        return dateFormat.parse(timeString).getTime();
-    }
-
 
     public static class IasiFilenameFilter implements FilenameFilter {
 

@@ -16,21 +16,22 @@
  */
 package org.eumetsat.metop.amsu;
 
+import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
-
-import com.bc.ceres.binio.DataFormat;
-import com.bc.ceres.glayer.Layer;
 
 
 public class AmsuFile extends SounderFile {
     
-    private static final int PRODUCT_WIDTH = 30;
+    static final int PRODUCT_WIDTH = 30;
     public static final String PRODUCT_TYPE = "AMSU-A";
 
     public AmsuFile(File file, DataFormat format) throws IOException {
@@ -56,11 +57,31 @@ public class AmsuFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new SounderOverlay(avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47.63f/1.1f);
+        return new AmsuSounderOverlay(this, avhrrProduct);
     }
     
     @Override
     public Layer createLayer(SounderOverlay overlay) {
-        return new AmsuSounderLayer(overlay);
+        if (overlay instanceof AmsuSounderOverlay) {
+            AmsuSounderOverlay amsuSounderOverlay = (AmsuSounderOverlay) overlay;
+            try {
+                return new AmsuSounderLayer(amsuSounderOverlay);
+            } catch (IOException e) {
+            }
+        }
+        return null;
+    }
+    
+    public static class AmsuFilenameFilter implements FilenameFilter {
+
+        private final String iasiFilenamePrefix;
+
+        public AmsuFilenameFilter(String avhrrFilename) {
+            iasiFilenamePrefix = "AMSA" + avhrrFilename.substring(4, 15);
+        }
+
+        public boolean accept(File dir, String name) {
+            return name.startsWith(iasiFilenamePrefix) && name.endsWith(".nat");
+        }
     }
 }

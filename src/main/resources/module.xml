@@ -85,7 +85,7 @@
             <helpId>IasiFootprintOverlay</helpId>
             <selected>false</selected>
         </action>
-         -->
+        
         <action>
             <id>addMetopOverlay</id>
             <class>org.eumetsat.iasi.visat.AddSounderOverlayAction</class>
@@ -124,5 +124,6 @@
             <shortDescr>Import a EPS data product or product subset.</shortDescr>
             <description>Import a EPS data product or product subset.</description>
         </action>
+         -->
     </extension>
 </module>

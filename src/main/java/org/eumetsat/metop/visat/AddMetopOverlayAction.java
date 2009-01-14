@@ -16,6 +16,8 @@
  */
 package org.eumetsat.metop.visat;
 
+import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
@@ -32,6 +34,7 @@ import org.eumetsat.iasi.visat.MetopSounderSupport;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
+import org.eumetsat.metop.sounder.SounderLayer;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.util.HashMap;
@@ -42,8 +45,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-
-import com.bc.ceres.glayer.Layer;
 
 
 public class AddMetopOverlayAction extends ExecCommand {
@@ -98,13 +99,13 @@ public class AddMetopOverlayAction extends ExecCommand {
     }
     
     private boolean hasLayer(Layer layer, SounderOverlay overlay) {
-        if (AmsuSounderLayer.class.isAssignableFrom(layer.getClass()) &&
-                ((AmsuSounderLayer) layer).getOverlay() == overlay) {
+        if (SounderLayer.class.isAssignableFrom(layer.getClass()) &&
+                ((SounderLayer) layer).getOverlay() == overlay) {
             return true;
         }
         for (Layer childLayer : layer.getChildren()) {
-            if (AmsuSounderLayer.class.isAssignableFrom(childLayer.getClass()) &&
-                    ((AmsuSounderLayer) childLayer).getOverlay() == overlay) {
+            if (SounderLayer.class.isAssignableFrom(childLayer.getClass()) &&
+                    ((SounderLayer) childLayer).getOverlay() == overlay) {
                 return true;
             }
         }

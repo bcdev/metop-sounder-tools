@@ -16,20 +16,24 @@
  */
 package org.eumetsat.metop.mhs;
 
+import com.bc.ceres.binio.DataFormat;
+import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
+import org.eumetsat.metop.amsu.AmsuSounderOverlay;
 import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
-
-import com.bc.ceres.binio.DataFormat;
-import com.bc.ceres.glayer.Layer;
 
 
 public class MhsFile extends SounderFile {
+    
+    public static final int PRODUCT_WIDTH = 90;
 
     public MhsFile(File file, DataFormat format) throws IOException {
         super(file, format);
@@ -37,7 +41,7 @@ public class MhsFile extends SounderFile {
     
     @Override
     public Product createProductImpl(ProductReader reader) throws IOException {
-        Product product = createProduct("MHS", 90, reader);
+        Product product = createProduct("MHS", PRODUCT_WIDTH, reader);
         for (MhsBandInfo bandInfo : MhsBandInfo.values()) {
             addBand(product, bandInfo);
         }
@@ -54,11 +58,31 @@ public class MhsFile extends SounderFile {
     @Override
     public SounderOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
-        return new SounderOverlay(avhrrProduct, getProduct(), MhsBandInfo.LAT.getName(), MhsBandInfo.LON.getName(), 15.88f/1.1f);
+        return new MhsSounderOverlay(this, avhrrProduct);
     }
     
     @Override
     public Layer createLayer(SounderOverlay overlay) {
-        return new AmsuSounderLayer(overlay);
+        if (overlay instanceof MhsSounderOverlay) {
+            MhsSounderOverlay mhsSounderOverlay = (MhsSounderOverlay) overlay;
+            try {
+                return new MhsSounderLayer(mhsSounderOverlay);
+            } catch (IOException e) {
+            }
+        }
+        return null;
+    }
+    
+    public static class MhsFilenameFilter implements FilenameFilter {
+
+        private final String iasiFilenamePrefix;
+
+        public MhsFilenameFilter(String avhrrFilename) {
+            iasiFilenamePrefix = "MHSx" + avhrrFilename.substring(4, 15);
+        }
+
+        public boolean accept(File dir, String name) {
+            return name.startsWith(iasiFilenamePrefix) && name.endsWith(".nat");
+        }
     }
 }

@@ -111,7 +111,7 @@ public class AddSounderOverlayAction extends ExecCommand {
         File file = null;
         try {
             final long avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
-            file = IasiFile.findIasiFile(avhrrStartTime, avhrrDir.listFiles(new IasiFile.IasiFilenameFilter(avhrrFilename)));
+            file = EpsFile.findFile(avhrrStartTime, avhrrDir.listFiles(new IasiFile.IasiFilenameFilter(avhrrFilename)));
         } catch (ParseException e) {
             // ignore
         }

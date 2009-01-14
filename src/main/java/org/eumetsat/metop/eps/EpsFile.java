@@ -16,24 +16,31 @@
  */
 package org.eumetsat.metop.eps;
 
-import org.esa.beam.framework.dataio.ProductReader;
-import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.MetadataElement;
-import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
-import org.eumetsat.metop.sounder.SounderOverlay;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataContext;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.glayer.Layer;
+
+import org.esa.beam.framework.dataio.ProductReader;
+import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.MetadataElement;
+import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.datamodel.ProductData;
+import org.eumetsat.metop.sounder.BandInfo;
+import org.eumetsat.metop.sounder.MdrReader;
+import org.eumetsat.metop.sounder.SounderOverlay;
+import org.jfree.data.Range;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TimeZone;
 
 
 public class EpsFile {
@@ -71,7 +78,7 @@ public class EpsFile {
     }
     
     public boolean hasOverlayFor(Product avhrrProduct) {
-        return false;
+        return true;
     }
     
     public SounderOverlay createOverlay(Product avhrrProduct) {
@@ -101,6 +108,29 @@ public class EpsFile {
     }
     
     public void readBandData(int x, int y, int width, int height, Band band, ProductData buffer, ProgressMonitor pm) throws IOException {
+        throw new IllegalStateException("not supported");
+    }
+    
+    public ProductData readData(BandInfo bandInfo, final int height, final int width) throws IOException {
+        MdrReader reader = bandInfo.getReader();
+        ProductData data = ProductData.createInstance(bandInfo.getType(), width * height);
+        readBandData(reader, 0, 0, width, height, data, ProgressMonitor.NULL);
+        return data;
+    }
+    
+    public void readBandData(MdrReader reader, int x, int y, int width, int height, ProductData buffer, ProgressMonitor pm) throws IOException {
+        int bufferIndex = 0;
+        SequenceData mdrData = getMdrData();
+        pm.beginTask("reading...", height);
+        try {
+            for (int yi = y; yi < y + height; yi++) {
+                CompoundData mdr = mdrData.getCompound(yi).getCompound(1);
+                bufferIndex = reader.read(x, width, buffer, bufferIndex, mdr);
+                pm.worked(1);
+            }
+        } finally {
+            pm.done();
+        }
     }
 
     
@@ -197,6 +227,41 @@ public class EpsFile {
         final long micros = (millis - seconds * 1000) * 1000;
         
         return new ProductData.UTC(day, (int) seconds, (int) micros);
+    }
+    
+    public static File findFile(long avhrrStartTime, File[] files) {
+        try {
+            long leastTimeDifference = Long.MAX_VALUE;
+            int index = -1;
+
+            for (int i = 0; i < files.length; i++) {
+                final long iasiStartTime = extractStartTimeInMillis(files[i].getName());
+                final long timeDifference = Math.abs(avhrrStartTime - iasiStartTime);
+
+                if (timeDifference < leastTimeDifference) {
+                    leastTimeDifference = timeDifference;
+                    index = i;
+                }
+            }
+            if (index != -1) {
+                return files[index];
+            } else {
+                return null;
+            }
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    public static long extractStartTimeInMillis(String filename) throws ParseException {
+        if (filename.length() < 30) {
+            throw new IllegalArgumentException("filename.length < 30");
+        }
+        final String timeString = filename.substring(16, 30);
+        final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        return dateFormat.parse(timeString).getTime();
     }
     
     public static void main(String[] args) throws Exception {

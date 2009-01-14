@@ -16,17 +16,15 @@
  */
 package org.eumetsat.metop.mhs;
 
-import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderLayer;
 
-import com.bc.ceres.glayer.Layer;
+import java.io.IOException;
 
 
-public class MhsSounderLayer extends Layer {
+public class MhsSounderLayer extends SounderLayer {
 
-    private final SounderOverlay sounderOverlay;
-
-    public MhsSounderLayer(SounderOverlay sounderOverlay) {
-        this.sounderOverlay = sounderOverlay;
+    public MhsSounderLayer(MhsSounderOverlay overlay) throws IOException {
+        super(overlay, MhsFile.PRODUCT_WIDTH);
+        setBandInfo(MhsBandInfo.RADIANCE01);
     }
-
 }
