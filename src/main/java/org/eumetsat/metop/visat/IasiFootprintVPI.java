@@ -19,6 +19,7 @@ import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.RasterDataNode;
 import org.esa.beam.framework.datamodel.TiePointGrid;
+import org.esa.beam.framework.ui.command.Command;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.util.io.BeamFileChooser;
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 
+import javax.swing.AbstractButton;
+import javax.swing.Box;
 import javax.swing.JFileChooser;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
@@ -119,12 +122,12 @@ public class IasiFootprintVPI implements VisatPlugIn {
     }
 
     public void addCommandsToToolBar(VisatApp myVisatApp, DockableBar toolBar, String commandID) {
-//        final Command command = myVisatApp.getCommandManager().getCommand(commandID);
-//        assert command != null : "command != null [commandID=".concat(commandID).concat("]");
-//        final AbstractButton toolBarButton = command.createToolBarButton();
-//        toolBarButton.addMouseListener(myVisatApp.getMouseOverActionHandler());
-//        toolBar.add(toolBarButton);
-//        toolBar.add(Box.createHorizontalStrut(1));
+        final Command command = myVisatApp.getCommandManager().getCommand(commandID);
+        assert command != null : "command != null [commandID=".concat(commandID).concat("]");
+        final AbstractButton toolBarButton = command.createToolBarButton();
+        toolBarButton.addMouseListener(myVisatApp.getMouseOverActionHandler());
+        toolBar.add(toolBarButton);
+        toolBar.add(Box.createHorizontalStrut(1));
     }
 
     public void stop(VisatApp visatApp) {
