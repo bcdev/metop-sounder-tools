@@ -1,11 +1,11 @@
 package org.eumetsat.iasi.footprint;
 
-import org.eumetsat.metop.iasi.IasiAvhrrOverlay;
+import org.eumetsat.metop.iasi.IasiOverlay;
 import org.eumetsat.metop.iasi.Ifov;
 
 
 public interface IasiFootprintLayerModel {
-    IasiAvhrrOverlay getIasiAvhrrOverlay();
+    IasiOverlay getIasiOverlay();
 
     boolean isSelectedIfov(Ifov ifov);
 

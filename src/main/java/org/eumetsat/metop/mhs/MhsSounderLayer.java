@@ -27,4 +27,13 @@ public class MhsSounderLayer extends SounderLayer {
         super(overlay, MhsFile.PRODUCT_WIDTH);
         setBandInfo(MhsBandInfo.RADIANCE01);
     }
+    
+    @Override
+    public String getName() {
+        try {
+            return "MHS L1B ("+getOverlay().getEpsFile().getProductName()+")";
+        } catch (IOException e) {
+            return "";
+        }
+    }
 }

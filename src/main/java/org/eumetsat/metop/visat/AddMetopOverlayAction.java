@@ -31,11 +31,10 @@ import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.iasi.visat.MetopSounderSupport;
-import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderLayer;
-import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,11 +48,11 @@ import javax.swing.SwingUtilities;
 
 public class AddMetopOverlayAction extends ExecCommand {
 
-    private Map<Product, Map<EpsFile, SounderOverlay>> overlayMap;
+    private Map<Product, Map<EpsFile, AvhrrOverlay>> overlayMap;
     private boolean handlerRegistered = false;
     
     public AddMetopOverlayAction() {
-        overlayMap = new WeakHashMap<Product, Map<EpsFile,SounderOverlay>>(8);
+        overlayMap = new WeakHashMap<Product, Map<EpsFile,AvhrrOverlay>>(8);
     }
     
     @Override
@@ -80,7 +79,7 @@ public class AddMetopOverlayAction extends ExecCommand {
         Layer rootLayer = psv.getRootLayer();
         final Product avhrrProduct = psv.getProduct();
         EpsFile selectedEpsFile = selectOverlayProduct(avhrrProduct);
-        SounderOverlay overlay = selectedEpsFile.createOverlay(avhrrProduct);
+        AvhrrOverlay overlay = selectedEpsFile.createOverlay(avhrrProduct);
         
         if (overlay != null && !hasLayer(rootLayer, overlay)) {
             Layer layer = selectedEpsFile.createLayer(overlay);
@@ -98,7 +97,7 @@ public class AddMetopOverlayAction extends ExecCommand {
         }
     }
     
-    private boolean hasLayer(Layer layer, SounderOverlay overlay) {
+    private boolean hasLayer(Layer layer, AvhrrOverlay overlay) {
         if (SounderLayer.class.isAssignableFrom(layer.getClass()) &&
                 ((SounderLayer) layer).getOverlay() == overlay) {
             return true;
@@ -147,15 +146,15 @@ public class AddMetopOverlayAction extends ExecCommand {
         return null;
     }
     
-    private SounderOverlay getOverlay(EpsFile epsFile, Product avhrrProduct) {
+    private AvhrrOverlay getOverlay(EpsFile epsFile, Product avhrrProduct) {
         synchronized (overlayMap) {
             if (!overlayMap.containsKey(avhrrProduct)) {
-                HashMap<EpsFile, SounderOverlay> hashMap = new HashMap<EpsFile, SounderOverlay>();
+                HashMap<EpsFile, AvhrrOverlay> hashMap = new HashMap<EpsFile, AvhrrOverlay>();
                 overlayMap.put(avhrrProduct, hashMap);
             }
-            Map<EpsFile, SounderOverlay> overlays = overlayMap.get(avhrrProduct);
+            Map<EpsFile, AvhrrOverlay> overlays = overlayMap.get(avhrrProduct);
             if (!overlays.containsKey(epsFile)) {
-                SounderOverlay avhrrOverlay = epsFile.createOverlay(avhrrProduct);
+                AvhrrOverlay avhrrOverlay = epsFile.createOverlay(avhrrProduct);
                 overlays.put(epsFile, avhrrOverlay);
             }
             return overlays.get(epsFile);

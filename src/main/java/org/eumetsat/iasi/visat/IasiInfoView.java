@@ -107,7 +107,7 @@ public class IasiInfoView extends AbstractToolView {
             if (layer != null) {
                 modelListener = new IasiListener();
                 layer.getModel().addListener(modelListener);
-                iasiFile = layer.getModel().getIasiAvhrrOverlay().getIasiFile();
+                iasiFile = layer.getModel().getIasiOverlay().getIasiFile();
             }
         }
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -355,7 +355,7 @@ public class IasiInfoView extends AbstractToolView {
                 if (layer != null) {
                     modelListener = new IasiListener();
                     layer.getModel().addListener(modelListener);
-                    iasiFile = layer.getModel().getIasiAvhrrOverlay().getIasiFile();
+                    iasiFile = layer.getModel().getIasiOverlay().getIasiFile();
                 }
             }
         }

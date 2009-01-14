@@ -27,4 +27,13 @@ public class AmsuSounderLayer extends SounderLayer {
         super(overlay, AmsuFile.PRODUCT_WIDTH);
         setBandInfo(AmsuBandInfo.RADIANCE01);
     }
+    
+    @Override
+    public String getName() {
+        try {
+            return "AMSU-A L1B ("+getOverlay().getEpsFile().getProductName()+")";
+        } catch (IOException e) {
+            return "";
+        }
+    }
 }

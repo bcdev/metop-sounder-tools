@@ -37,7 +37,6 @@ public class FlagReader implements MdrReader {
         SequenceData dataSequence = mdr.getSequence(memberName);
         for (int xi = x; xi < x + width; xi++) {
             short value = dataSequence.getShort(xi);
-            System.out.println(xi+" "+value);
             buffer.setElemIntAt(bufferIndex, value);
             bufferIndex++;
         }

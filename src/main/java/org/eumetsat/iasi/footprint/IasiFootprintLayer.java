@@ -18,6 +18,7 @@ import org.eumetsat.metop.iasi.Ifov;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
+import java.io.IOException;
 
 public class IasiFootprintLayer extends Layer {
 
@@ -42,10 +43,13 @@ public class IasiFootprintLayer extends Layer {
         model.addListener(modelListener);
     }
 
-    
     @Override
     public String getName() {
-        return "IASI L1c ("+getModel().getIasiAvhrrOverlay().getName()+")";
+        try {
+            return "IASI L1C ("+model.getIasiOverlay().getEpsFile().getProductName()+")";
+        } catch (IOException e) {
+            return "";
+        }
     }
     
     public IasiFootprintLayerModel getModel() {
@@ -71,7 +75,7 @@ public class IasiFootprintLayer extends Layer {
     }
 
     public Efov[] getEfovs() {
-        return getModel().getIasiAvhrrOverlay().getEfovs();
+        return getModel().getIasiOverlay().getEfovs();
     }
 
     public Ifov getIfovForLocation(int pixelX, int pixelY) {

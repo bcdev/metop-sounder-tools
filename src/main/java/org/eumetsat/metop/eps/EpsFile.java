@@ -28,6 +28,7 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.BandInfo;
 import org.eumetsat.metop.sounder.MdrReader;
 import org.eumetsat.metop.sounder.SounderOverlay;
@@ -81,11 +82,11 @@ public class EpsFile {
         return true;
     }
     
-    public SounderOverlay createOverlay(Product avhrrProduct) {
+    public AvhrrOverlay createOverlay(Product avhrrProduct) {
         return null;
     }
     
-    public Layer createLayer(SounderOverlay overlay) {
+    public Layer createLayer(AvhrrOverlay overlay) {
         return null;
     }
     

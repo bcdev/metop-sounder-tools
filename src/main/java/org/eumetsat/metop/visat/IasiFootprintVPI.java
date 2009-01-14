@@ -25,13 +25,14 @@ import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
 import org.esa.beam.visat.VisatPlugIn;
 import org.eumetsat.iasi.footprint.IasiFootprintLayer;
-import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
 import org.eumetsat.metop.amsu.AmsuFile;
+import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsFormats;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.mhs.MhsFile;
-import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.mhs.MhsSounderLayer;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 
 import java.awt.Container;
 import java.io.File;
@@ -65,9 +66,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private static IasiFootprintVPI instance;
     private VisatApp visatApp;
     private static final String IASI_FOOTPRINT_CHOOSE_OPTION_NAME = "iasi.file.chooser";
-    private HashMap<Product, IasiFootprintLayerModel> iasiFootprintLayerModelMap;
-    private HashMap<Product, SounderOverlay> amsuFootprintLayerModelMap;
-    private HashMap<Product, SounderOverlay> mhsFootprintLayerModelMap;
+    private HashMap<Product, AvhrrOverlay> iasiFootprintLayerModelMap;
+    private HashMap<Product, AvhrrOverlay> amsuFootprintLayerModelMap;
+    private HashMap<Product, AvhrrOverlay> mhsFootprintLayerModelMap;
 
     // called via reflection
     public IasiFootprintVPI() {
@@ -79,9 +80,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
     public void start(final VisatApp visatApp) {
         this.visatApp = visatApp;
-        iasiFootprintLayerModelMap = new HashMap<Product, IasiFootprintLayerModel>(11);
-        amsuFootprintLayerModelMap = new HashMap<Product, SounderOverlay>(11);
-        mhsFootprintLayerModelMap = new HashMap<Product, SounderOverlay>(11);
+        iasiFootprintLayerModelMap = new HashMap<Product, AvhrrOverlay>(11);
+        amsuFootprintLayerModelMap = new HashMap<Product, AvhrrOverlay>(11);
+        mhsFootprintLayerModelMap = new HashMap<Product, AvhrrOverlay>(11);
         registerProductTreeListener();
         registerInternalFrameHandler();
 
@@ -208,30 +209,30 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private synchronized void addFootprintLayer(ProductSceneView psv) {
         Layer rootLayer = psv.getRootLayer();
         //IASI
-//        if (!hasLayer(rootLayer, IasiFootprintLayer.class)) {
-//            final Product avhrrProduct = psv.getProduct();
-//            SounderOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
-//            if (overlay == null) { 
-//                EpsFile epsFile = createIasiFootprintLayerModel(avhrrProduct);
-//                if (epsFile != null) {
-//                    overlay = epsFile.createOverlay(avhrrProduct);
-//                    iasiFootprintLayerModelMap.put(avhrrProduct, overlay);
-//                }
-//            }
-//            if (overlay != null) {
-//                EpsFile epsFile = overlay.getEpsFile();
-//                Layer layer = epsFile.createLayer(overlay);
-//                rootLayer.getChildren().add(0, layer);
-//                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
-//                layer.setVisible(false);
-//                layer.setVisible(true);
-//            }
-//        }
-        
-        //AMSU
         if (!hasLayer(rootLayer, IasiFootprintLayer.class)) {
             final Product avhrrProduct = psv.getProduct();
-            SounderOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
+            AvhrrOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
+            if (overlay == null) { 
+                EpsFile epsFile = createIasiFootprintLayerModel(avhrrProduct);
+                if (epsFile != null) {
+                    overlay = epsFile.createOverlay(avhrrProduct);
+                    iasiFootprintLayerModelMap.put(avhrrProduct, overlay);
+                }
+            }
+            if (overlay != null) {
+                EpsFile epsFile = overlay.getEpsFile();
+                Layer layer = epsFile.createLayer(overlay);
+                rootLayer.getChildren().add(0, layer);
+                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
+                layer.setVisible(false);
+                layer.setVisible(true);
+            }
+        }
+        
+        //AMSU
+        if (!hasLayer(rootLayer, AmsuSounderLayer.class)) {
+            final Product avhrrProduct = psv.getProduct();
+            AvhrrOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
             if (overlay == null) { 
                 EpsFile epsFile = createAmsuFootprintLayerModel(avhrrProduct);
                 if (epsFile != null) {
@@ -250,9 +251,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
         
         //MHS
-        if (!hasLayer(rootLayer, IasiFootprintLayer.class)) {
+        if (!hasLayer(rootLayer, MhsSounderLayer.class)) {
             final Product avhrrProduct = psv.getProduct();
-            SounderOverlay overlay = mhsFootprintLayerModelMap.get(avhrrProduct);
+            AvhrrOverlay overlay = mhsFootprintLayerModelMap.get(avhrrProduct);
             if (overlay == null) { 
                 EpsFile epsFile = createMhsFootprintLayerModel(avhrrProduct);
                 if (epsFile != null) {
@@ -495,7 +496,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
 //                iasiFootprintLayerModelMap.remove(avhrrProduct);
 //            }
             
-            SounderOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
+            AvhrrOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
             if (overlay != null) {
                 EpsFile epsFile = overlay.getEpsFile();
                 epsFile.close();

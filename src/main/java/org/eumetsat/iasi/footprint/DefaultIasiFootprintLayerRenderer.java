@@ -60,7 +60,7 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
         final boolean efovBigEnough = scale * IasiFootprintLayer.EFOV_SIZE > 10;
         final boolean ifovBigEnough = scale * IasiFootprintLayer.IFOV_SIZE > 5;
 
-        final Efov[] efovs = layerModel.getIasiAvhrrOverlay().getEfovs();
+        final Efov[] efovs = layerModel.getIasiOverlay().getEfovs();
         
         if (allBts == null) {
             getData(layerModel);
@@ -98,7 +98,7 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
     
     private void getData(IasiFootprintLayerModel layerModel) {
         try {
-            allBts = layerModel.getIasiAvhrrOverlay().getIasiFile().readAllBts(42);
+            allBts = layerModel.getIasiOverlay().getIasiFile().readAllBts(42);
         } catch (IOException e) {
             return;
         }

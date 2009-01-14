@@ -25,7 +25,6 @@ import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.util.math.MathUtils;
-import org.eumetsat.metop.amsu.AmsuSounderOverlay;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -68,7 +67,7 @@ public class SounderLayer extends Layer {
 
         height = overlay.getEpsFile().getMdrCount();
     }
-
+    
     public BandInfo getBandInfo() {
         return bandInfo;
     }
@@ -80,7 +79,7 @@ public class SounderLayer extends Layer {
         computeColorPalette();
     }
 
-    public SounderOverlay getOverlay() {
+    public AvhrrOverlay getOverlay() {
         return overlay;
     }
     

@@ -14,9 +14,11 @@ import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.ProductData.UTC;
+import org.eumetsat.iasi.footprint.DefaultIasiFootprintLayerModel;
 import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsRecord;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
 import javax.imageio.stream.FileImageInputStream;
@@ -78,45 +80,34 @@ public class IasiFile extends EpsFile {
     private GiadrScaleFactors giadrScaleFactors;
     private int mdrCount;
     
-//    private final EpsFile epsFile;
     private SequenceData mdrSequence;
-
-//    public IasiFile(EpsFile epsFile) throws IOException {
-//        this.epsFile = epsFile;
-//        readHeader();
-//    }
 
     public IasiFile(File file, DataFormat dataFormat) throws IOException {
         super(file, dataFormat);
         readHeader();
     }
 
-//    public EpsFile getEpsFile() {
-//        return epsFile;
-//    }
-    
-    public int getMdrCount() {
-        return mdrCount;
+    @Override
+    public boolean hasOverlayFor(Product avhrrProduct) {
+        // TODO check for date
+        return true;
     }
-    
-  @Override
-  public boolean hasOverlayFor(Product avhrrProduct) {
-      // TODO check for date
-      return true;
-  }
   
-  @Override
-  public SounderOverlay createOverlay(Product avhrrProduct) {
+    @Override
+    public AvhrrOverlay createOverlay(Product avhrrProduct) {
       // TODO check for date
-//      return new SounderOverlay(this, avhrrProduct, getProduct(), AmsuBandInfo.LAT.getName(), AmsuBandInfo.LON.getName(), 47.63f/1.1f);
-      return null;
-  }
+        try {
+            return new IasiOverlay(this, avhrrProduct);
+        } catch (IOException e) {
+            return null;
+        }
+    }
   
-  @Override
-  public Layer createLayer(SounderOverlay overlay) {
-      return null;
-//      return new IasiFootprintLayer(overlay);
-  }
+    @Override
+    public Layer createLayer(AvhrrOverlay overlay) {
+        IasiOverlay iasiOverlay = (IasiOverlay) overlay;
+        return new IasiFootprintLayer(new DefaultIasiFootprintLayerModel(iasiOverlay));
+    }
     
     static int computeIfovId(int mdrIndex, int efovIndex, int ifovIndex) {
         return mdrIndex * SNOT * PN + efovIndex * PN + ifovIndex;

@@ -19,24 +19,17 @@ package org.eumetsat.metop.sounder;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
 
+/**
+ * todo - add API doc
+ *
+ * @author Marco Zuehlke
+ * @version $Revision$ $Date$
+ * @since BEAM 4.2
+ */
+public interface AvhrrOverlay {
 
-public abstract class SounderOverlay implements AvhrrOverlay {
+    public abstract Product getAvhrrProduct();
 
-    private final EpsFile epsfile;
-    private final Product avhrrProduct;
+    public abstract EpsFile getEpsFile();
 
-    public SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
-        this.epsfile = epsfile;
-        this.avhrrProduct = avhrrProduct;
-    }
-    
-    public Product getAvhrrProduct() {
-        return avhrrProduct;
-    }
-
-    public EpsFile getEpsFile() {
-        return epsfile;
-    }
-
-    public abstract SounderIfov[] getIfovs();
 }

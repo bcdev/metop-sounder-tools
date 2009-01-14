@@ -17,7 +17,7 @@ import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsFormats;
-import org.eumetsat.metop.iasi.IasiAvhrrOverlay;
+import org.eumetsat.metop.iasi.IasiOverlay;
 import org.eumetsat.metop.iasi.IasiFile;
 
 import java.io.File;
@@ -151,10 +151,10 @@ public class AddSounderOverlayAction extends ExecCommand {
                 return iasiFootprintLayerModel;
             }
         }
-        final IasiAvhrrOverlay overlay;
+        final IasiOverlay overlay;
         try {
             IasiFile iasiFile = (IasiFile) EpsFormats.getInstance().openFile(file);
-            overlay = new IasiAvhrrOverlay(iasiFile, avhrrProduct);
+            overlay = new IasiOverlay(iasiFile, avhrrProduct);
             
 //            final int avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
 //            final long avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();

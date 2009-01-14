@@ -23,6 +23,7 @@ import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.amsu.AmsuSounderOverlay;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
@@ -56,13 +57,13 @@ public class MhsFile extends SounderFile {
     }
     
     @Override
-    public SounderOverlay createOverlay(Product avhrrProduct) {
+    public AvhrrOverlay createOverlay(Product avhrrProduct) {
         // TODO check for date
         return new MhsSounderOverlay(this, avhrrProduct);
     }
     
     @Override
-    public Layer createLayer(SounderOverlay overlay) {
+    public Layer createLayer(AvhrrOverlay overlay) {
         if (overlay instanceof MhsSounderOverlay) {
             MhsSounderOverlay mhsSounderOverlay = (MhsSounderOverlay) overlay;
             try {

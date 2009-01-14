@@ -18,6 +18,8 @@ package org.eumetsat.metop.iasi;
 
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.sounder.AvhrrOverlay;
 
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -27,7 +29,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 
-public class IasiAvhrrOverlay {
+public class IasiOverlay implements AvhrrOverlay {
     
     // IASI record parameters
     private static final int AMCO = 100;
@@ -61,7 +63,7 @@ public class IasiAvhrrOverlay {
 
     private int mdrCount;
     
-    public IasiAvhrrOverlay(IasiFile iasiFile, Product avhrrProduct) {
+    public IasiOverlay(IasiFile iasiFile, Product avhrrProduct) throws IOException {
         this.iasiFile = iasiFile;
         this.avhrrProduct = avhrrProduct;
         avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
@@ -69,10 +71,6 @@ public class IasiAvhrrOverlay {
         avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
         this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
         mdrCount = iasiFile.getMdrCount();
-    }
-    
-    public String getName() {
-        return "TODO";
     }
     
     public synchronized Efov[] getEfovs() {
@@ -86,6 +84,13 @@ public class IasiAvhrrOverlay {
 
     public Ifov getIfov(int index) {
         return getEfovs()[index / PN].getIfovs()[computeIfovIndex(index)];
+    }
+
+    public Product getAvhrrProduct() {
+        return avhrrProduct;
+    }
+    public EpsFile getEpsFile() {
+        return iasiFile;
     }
     
     public IasiFile getIasiFile() {
@@ -189,8 +194,6 @@ public class IasiAvhrrOverlay {
         final float xEast = 0.5f * (ifovPos[2].x + ifovPos[3].x);
         final float scaleX = (xEast - xWest) / IFOV_DIST;
 
-        System.out.println(scaleY01);
-        
         final Shape[] ifovShapes = new Shape[PN];
         for (int i = 0; i < PN; i++) {
             final PixelPos pos = ifovPos[i];
