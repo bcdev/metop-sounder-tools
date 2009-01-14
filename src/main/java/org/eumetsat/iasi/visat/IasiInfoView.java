@@ -15,6 +15,7 @@
 package org.eumetsat.iasi.visat;
 
 import com.jidesoft.grid.ColorCellRenderer;
+import com.bc.ceres.glayer.Layer;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
@@ -63,7 +64,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 
 /**
- * todo - API doc
+ * Tool view for showing information on the selected IASI IFOV.
  *
  * @author Ralf Quast
  * @version $Revision$ $Date$
