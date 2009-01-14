@@ -20,38 +20,23 @@ import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
 
 
-public class SounderOverlay {
+public abstract class SounderOverlay {
 
-    private final Product avhrrProduct;
-    private final Product amsuProduct;
-    private SounderIfov[] ifovs;
-    private final String latBand;
-    private final String lonBand;
-    private final float ifovSize;
     private final EpsFile epsfile;
-    
-    public SounderOverlay(EpsFile epsfile, Product avhrrProduct, Product amsuProduct, String latBand, String lonBand, float ifovSize) {
+    private final Product avhrrProduct;
+
+    public SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
         this.epsfile = epsfile;
         this.avhrrProduct = avhrrProduct;
-        this.amsuProduct = amsuProduct;
-        this.latBand = latBand;
-        this.lonBand = lonBand;
-        this.ifovSize = ifovSize;
     }
     
     public Product getAvhrrProduct() {
         return avhrrProduct;
     }
 
-    public Product getAmsuProduct() {
-        return amsuProduct;
-    }
-    
     public EpsFile getEpsFile() {
         return epsfile;
     }
 
-    public SounderIfov[] getIfovs() {
-        return ifovs;
-    }
+    public abstract SounderIfov[] getIfovs();
 }

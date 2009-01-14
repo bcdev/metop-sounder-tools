@@ -31,15 +31,13 @@ import java.io.IOException;
 
 public class AmsuSounderOverlay extends SounderOverlay {
 
-    private SounderIfov[] ifovs;
     private static final float ifovSize = 47.63f/1.1f;
     private final AmsuFile amsufile;
-    private final Product avhrrProduct;
+    private SounderIfov[] ifovs;
     
     public AmsuSounderOverlay(AmsuFile amsufile, Product avhrrProduct) {
-        super(amsufile, avhrrProduct, null, "", "", ifovSize);
+        super(amsufile, avhrrProduct);
         this.amsufile = amsufile;
-        this.avhrrProduct = avhrrProduct;
     }
     
     private SounderIfov[] readIfovs() throws IOException {
@@ -49,7 +47,7 @@ public class AmsuSounderOverlay extends SounderOverlay {
         ProductData latitudes = amsufile.readData(AmsuBandInfo.LAT, height, width);
         ProductData longitudes = amsufile.readData(AmsuBandInfo.LON, height, width);
         
-        GeoCoding geoCoding = avhrrProduct.getGeoCoding();
+        GeoCoding geoCoding = getAvhrrProduct().getGeoCoding();
         SounderIfov[] allIfovs = new SounderIfov[width * height];
         
         int index = 0;
