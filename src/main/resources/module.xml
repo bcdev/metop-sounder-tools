@@ -16,16 +16,22 @@
 
 
     <dependency>
+        <module>ceres-binio</module>
+    </dependency>
+    <dependency>
         <module>beam-core</module>
     </dependency>
     <dependency>
         <module>beam-gpf</module>
     </dependency>
     <dependency>
+        <module>beam-ui</module>
+    </dependency>
+    <dependency>
         <module>beam-visat</module>
     </dependency>
     <dependency>
-        <module>beam-shapefile-reader</module>
+        <module>beam-metop-avhrr-reader</module>
     </dependency>
 
     <categories>VISAT,IAVISA,IASI</categories>
