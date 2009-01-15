@@ -116,7 +116,7 @@ public class SounderLayer extends Layer {
                 for (SounderIfov ifov : ifovs) {
                     final Shape ifovShape = ifov.shape;
                     if (ifovShape.intersects(viewRect)) {
-                        g2d.setPaint(getColor(ifov.ifovIndex, ifov.mdrIndex));
+                        g2d.setPaint(getColor(ifov.ifovInMdrIndex, ifov.mdrIndex));
                         g2d.fill(ifovShape);
                     }
                 }

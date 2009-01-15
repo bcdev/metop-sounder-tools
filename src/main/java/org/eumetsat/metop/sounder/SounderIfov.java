@@ -22,12 +22,12 @@ import java.awt.Shape;
 public class SounderIfov {
 
     public final int mdrIndex;
-    public final int ifovIndex;
+    public final int ifovInMdrIndex;
     public final Shape shape;
     
-    public SounderIfov(int mdrIndex, int ifovIndex, Shape shape) {
+    public SounderIfov(int mdrIndex, int ifovInMdrIndex, Shape shape) {
         this.mdrIndex = mdrIndex;
-        this.ifovIndex = ifovIndex;
+        this.ifovInMdrIndex = ifovInMdrIndex;
         this.shape = shape;
     }
 }

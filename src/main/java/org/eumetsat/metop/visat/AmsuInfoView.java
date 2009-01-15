@@ -15,6 +15,7 @@
 package org.eumetsat.metop.visat;
 
 import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
@@ -25,6 +26,7 @@ import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderIfov;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -72,9 +74,9 @@ public class AmsuInfoView extends AbstractToolView {
 
     @Override
     protected JComponent createControl() {
-        final int[] ifovIds = initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds();
-        if (ifovIds.length != 0) {
-            update(ifovIds);
+        final SounderIfov[] ifovs = initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds();
+        if (ifovs.length != 0) {
+            update(ifovs);
         }
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -84,13 +86,13 @@ public class AmsuInfoView extends AbstractToolView {
         return tabbedPane;
     }
 
-    private int[] initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds() {
+    private SounderIfov[] initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds() {
         VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
 
         // todo - implement (rq-20090114)
         sounderFile = null;
         layerSelectionListener = new SounderLayerSelectionListenerImpl();
-        return new int[]{17, 11, 67};
+        return new SounderIfov[]{};
     }
 
     private Component createInfoComponent() {
@@ -184,14 +186,14 @@ public class AmsuInfoView extends AbstractToolView {
         return panel;
     }
 
-    private void update(int[] selectedIfovIds) {
+    private void update(SounderIfov[] selectedIfovs) {
         if (sounderFile != null) {
-            int ifovId = -1;
-            if (selectedIfovIds.length != 0) {
-                ifovId = selectedIfovIds[0];
+            int ifovIndex = -1;
+            if (selectedIfovs.length != 0) {
+                ifovIndex = selectedIfovs[0].ifovInMdrIndex;
             }
-            updateInfoFields(ifovId);
-            updateSpectrumDataset(ifovId);
+            updateInfoFields(ifovIndex);
+            updateSpectrumDataset(ifovIndex);
         }
     }
 
@@ -299,6 +301,8 @@ public class AmsuInfoView extends AbstractToolView {
     }
 
     private static SounderAngularRelation readAngularRelation(SounderFile sounderFile, int ifovId) throws IOException {
+        final SequenceData mdrData = sounderFile.getMdrData();
+
         // todo - implement (rq-20090114)
         return new SounderAngularRelation();
     }
