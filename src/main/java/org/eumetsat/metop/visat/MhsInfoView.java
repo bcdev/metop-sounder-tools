@@ -14,23 +14,22 @@
  */
 package org.eumetsat.metop.visat;
 
-import org.eumetsat.metop.amsu.AmsuSounderLayer;
+import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.Range;
 
-
 /**
- * Tool view for showing information on the selected AMSU field-of-view.
+ * Tool view for showing information on the selected MHS field-of-view.
  *
  * @author Ralf Quast
  * @version $Revision$ $Date$
  */
-public class AmsuInfoView extends SounderInfoView {
+public class MhsInfoView extends SounderInfoView {
 
     @Override
     protected SounderLayer getActiveSounderLayer() {
-        return IasiFootprintVPI.getActiveFootprintLayer(AmsuSounderLayer.class);
+        return IasiFootprintVPI.getActiveFootprintLayer(MhsSounderLayer.class);
     }
 
     @Override

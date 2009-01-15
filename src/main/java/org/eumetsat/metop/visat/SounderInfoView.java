@@ -72,13 +72,13 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected abstract SounderLayer getActiveSounderLayer();
 
-    protected abstract double[] getAbscissaValues();
+    protected abstract double[] getSpectrumAbscissaValues();
 
-    protected abstract NumberAxis createXAxis();
+    protected abstract NumberAxis createSpectrumPlotXAxis();
 
-    protected abstract NumberAxis createYAxis();
+    protected abstract NumberAxis createSpectrumPlotYAxis();
 
-    protected XYItemRenderer createXYItemRenderer() {
+    protected XYItemRenderer createSpectrumPlotXYItemRenderer() {
         final XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
         renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
 
@@ -178,9 +178,9 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private JFreeChart createSpectrumChart() {
-        final NumberAxis xAxis = createXAxis();
-        final NumberAxis yAxis = createYAxis();
-        final XYItemRenderer renderer = createXYItemRenderer();
+        final NumberAxis xAxis = createSpectrumPlotXAxis();
+        final NumberAxis yAxis = createSpectrumPlotYAxis();
+        final XYItemRenderer renderer = createSpectrumPlotXYItemRenderer();
 
         final XYPlot plot = new XYPlot(spectrum, xAxis, yAxis, renderer);
         configureSpectrumPlot(plot);
@@ -246,7 +246,7 @@ abstract class SounderInfoView extends AbstractToolView {
             return;
         }
 
-        final double[] abscissas = getAbscissaValues();
+        final double[] abscissas = getSpectrumAbscissaValues();
         final double[] radiances;
         try {
             radiances = readSceneRadiances(sounderFile, ifov);
