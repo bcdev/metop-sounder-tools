@@ -7,36 +7,17 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.DataFormat;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.glayer.Layer;
-import com.sun.org.apache.bcel.internal.util.ByteSequence;
 
 import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.ProductData.UTC;
-import org.eumetsat.iasi.footprint.DefaultIasiFootprintLayerModel;
-import org.eumetsat.iasi.footprint.IasiFootprintLayer;
+import org.eumetsat.iasi.footprint.IasiLayer;
 import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.eps.EpsRecord;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
-import org.eumetsat.metop.sounder.SounderOverlay;
 
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TimeZone;
 
 
 public class IasiFile extends EpsFile {
@@ -59,24 +40,9 @@ public class IasiFile extends EpsFile {
     private static final int VP = 1;
 
     public static final int IFOV_SIZE = 12;
-
     public static final float IFOV_DIST = 18;
-
-    private static final int G_EPS_IASI_MODE_OFFSET = 22;
-    private static final int G_EPS_LOC_IASI_AVHRR_IASI_OFFSET = 62;
-    private static final int G_EPS_LOC_IASI_AVHRR_IIS_OFFSET = 1262;
-    private static final int G_EPS_DAT_IASI_OFFSET = 9122;
-    private static final int G_QIS_FLAG_QUAL_OFFSET = 255260;
-    private static final int G_GEO_SOND_LOC_OFFSET = 255413;
-    private static final int G_GEO_SOND_ANGLES_METOP = 256373;
-    private static final int G_GEO_SOND_ANGLES_SUN = 263333;
-    private static final int I_DEF_SPECT_DWN_1B_OFFSET = 276297;
-
-    //    private static final int I_DEF_NSFIRST_1B_OFFSET = 276302;
-    private static final int G_S1C_SPECT_OFFSET = 276310;
     private static final double G_GEO_SOND_LOC_SCALING_FACTOR = 1.0E-6;
 
-    private EpsRecord mainProductHeaderRecord;
     private GiadrScaleFactors giadrScaleFactors;
     private int mdrCount;
     
@@ -106,7 +72,7 @@ public class IasiFile extends EpsFile {
     @Override
     public Layer createLayer(AvhrrOverlay overlay) {
         IasiOverlay iasiOverlay = (IasiOverlay) overlay;
-        return new IasiFootprintLayer(new DefaultIasiFootprintLayerModel(iasiOverlay));
+        return new IasiLayer(iasiOverlay);
     }
     
     static int computeIfovId(int mdrIndex, int efovIndex, int ifovIndex) {
@@ -126,9 +92,6 @@ public class IasiFile extends EpsFile {
     }
     
     private void readHeader() throws IOException {
-        CompoundData mphrData = getMetopData().getCompound(0).getCompound(0).getCompound(1);
-        mainProductHeaderRecord = new EpsRecord(mphrData, true);
-
         CompoundData giadrScaleFactorsRecord = getAuxDataRecord("giadr:iasi:1");
         giadrScaleFactors = new GiadrScaleFactors(giadrScaleFactorsRecord);
         

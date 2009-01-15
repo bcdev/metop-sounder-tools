@@ -25,7 +25,7 @@ import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
 import org.esa.beam.visat.VisatPlugIn;
-import org.eumetsat.iasi.footprint.IasiFootprintLayer;
+import org.eumetsat.iasi.footprint.IasiLayer;
 import org.eumetsat.metop.amsu.AmsuFile;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.eps.EpsFile;
@@ -239,7 +239,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         
         addOverlayLayer(rootLayer, avhrrInfo, amsuTimeFilter, AMSU_NAME_FILTER, AmsuSounderLayer.class, amsuFootprintLayerModelMap, "AMSU");
         addOverlayLayer(rootLayer, avhrrInfo, mhsTimeFilter, MHS_NAME_FILTER, MhsSounderLayer.class, mhsFootprintLayerModelMap, "MHS");
-        addOverlayLayer(rootLayer, avhrrInfo, iasiTimeFilter, IASI_NAME_FILTER, IasiFootprintLayer.class, iasiFootprintLayerModelMap, "IASI");
+        addOverlayLayer(rootLayer, avhrrInfo, iasiTimeFilter, IASI_NAME_FILTER, IasiLayer.class, iasiFootprintLayerModelMap, "IASI");
     }
     
     private <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
@@ -353,7 +353,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
 //        }
 //        rootLayer.
 //        final LayerModel layerModel = psv.getImageDisplay().getLayerModel();
-//        final IasiFootprintLayer footprintLayer = getLayer(layerModel, IasiFootprintLayer.class);
+//        final IasiLayer footprintLayer = getLayer(layerModel, IasiLayer.class);
 //        if (footprintLayer != null) {
 //            layerModel.removeLayer(footprintLayer);
 //        }

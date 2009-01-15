@@ -18,6 +18,7 @@ package org.eumetsat.metop.iasi;
 
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
+import org.eumetsat.iasi.footprint.IasiOverlayListener;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
@@ -27,6 +28,10 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 
 public class IasiOverlay implements AvhrrOverlay {
@@ -60,7 +65,8 @@ public class IasiOverlay implements AvhrrOverlay {
     private final int avhrrTrimLeft;
     
     private Efov[] efovs;
-
+    private Ifov selectedIfov;
+    private final Map<IasiOverlayListener, Object> listenerMap;
     private int mdrCount;
     
     public IasiOverlay(IasiFile iasiFile, Product avhrrProduct) throws IOException {
@@ -69,7 +75,8 @@ public class IasiOverlay implements AvhrrOverlay {
         avhrrEndMillis = avhrrProduct.getEndTime().getAsCalendar().getTimeInMillis();
         avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
         avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
-        this.avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
+        avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
+        listenerMap = Collections.synchronizedMap(new WeakHashMap<IasiOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
     }
     
@@ -77,9 +84,36 @@ public class IasiOverlay implements AvhrrOverlay {
         if (efovs == null) {
             System.out.println("createing EFOVs");
             efovs = createEfovs("norman");
+            
+            selectedIfov = efovs[0].getIfovs()[0];
         }
-
         return efovs;
+    }
+    
+    public Ifov getSelectedIfov() {
+        return selectedIfov;
+    }
+    
+    public void setSelectedIfov(Ifov selectedIfov) {
+        this.selectedIfov = selectedIfov;
+    }
+    
+    public void addListener(IasiOverlayListener listener) {
+        listenerMap.put(listener, null);
+    }
+
+    public void removeListener(IasiOverlayListener listener) {
+        listenerMap.remove(listener);
+    }
+
+    protected void fireSelectionChanged() {
+        final Set<IasiOverlayListener> listenerSet = listenerMap.keySet();
+
+        synchronized (listenerMap) {
+            for (final IasiOverlayListener listener : listenerSet) {
+                listener.selectionChanged(this);
+            }
+        }
     }
 
     public Ifov getIfov(int index) {

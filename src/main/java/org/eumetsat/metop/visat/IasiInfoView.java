@@ -22,10 +22,10 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.footprint.IasiFootprintLayer;
-import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
-import org.eumetsat.iasi.footprint.IasiFootprintLayerModelListener;
+import org.eumetsat.iasi.footprint.IasiLayer;
+import org.eumetsat.iasi.footprint.IasiOverlayListener;
 import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.iasi.IasiOverlay;
 import org.eumetsat.metop.iasi.Ifov;
 import org.eumetsat.metop.iasi.IasiFile.Geometry;
 import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
@@ -101,14 +101,14 @@ public class IasiInfoView extends AbstractToolView {
     protected JComponent createControl() {
         VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
 
-        IasiFootprintLayer layer = null;
+        IasiLayer layer = null;
         final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
         if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-            layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
+            layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
             if (layer != null) {
                 modelListener = new IasiListener();
-                layer.getModel().addListener(modelListener);
-                iasiFile = layer.getModel().getIasiOverlay().getIasiFile();
+                layer.getOverlay().addListener(modelListener);
+                iasiFile = layer.getOverlay().getIasiFile();
             }
         }
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -117,7 +117,7 @@ public class IasiInfoView extends AbstractToolView {
         tabbedPane.add("Radiance Analysis", createRadianceAnalysis());
 
         if (layer != null) {
-            update(layer.getModel().getSelectedIfovs());
+            update(layer.getOverlay().getSelectedIfov());
         }
         return tabbedPane;
     }
@@ -232,12 +232,9 @@ public class IasiInfoView extends AbstractToolView {
         return panel;
     }
 
-    private void update(Ifov[] selectedIfovs) {
-        if (iasiFile != null) {
-            int ifovId = -1;
-            if (selectedIfovs.length != 0) {
-                ifovId = selectedIfovs[0].getIndex();
-            }
+    private void update(Ifov selectedIfov) {
+        if (iasiFile != null && selectedIfov != null) {
+            int ifovId = selectedIfov.getIndex();
             updateLocation(ifovId);
             updateSpectrum(ifovId);
             updateRadianceAnalysis(ifovId);
@@ -336,13 +333,10 @@ public class IasiInfoView extends AbstractToolView {
         dataset.addSeries(series);
     }
 
-    private class IasiListener implements IasiFootprintLayerModelListener {
-
-        public void selectionChanged(IasiFootprintLayerModel model) {
-            update(model.getSelectedIfovs());
-        }
-
-        public void dataChanged(IasiFootprintLayerModel model) {
+    private class IasiListener implements IasiOverlayListener {
+        @Override
+        public void selectionChanged(IasiOverlay model) {
+            update(model.getSelectedIfov());
         }
     }
 
@@ -352,11 +346,11 @@ public class IasiInfoView extends AbstractToolView {
         public void internalFrameActivated(InternalFrameEvent e) {
             final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
             if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
+                final IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
                 if (layer != null) {
                     modelListener = new IasiListener();
-                    layer.getModel().addListener(modelListener);
-                    iasiFile = layer.getModel().getIasiOverlay().getIasiFile();
+                    layer.getOverlay().addListener(modelListener);
+                    iasiFile = layer.getOverlay().getIasiFile();
                 }
             }
         }
@@ -365,9 +359,9 @@ public class IasiInfoView extends AbstractToolView {
         public void internalFrameDeactivated(InternalFrameEvent e) {
             final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
             if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
+                final IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
                 if (layer != null) {
-                    layer.getModel().removeListener(modelListener);
+                    layer.getOverlay().removeListener(modelListener);
                     iasiFile = null;
                 }
             }

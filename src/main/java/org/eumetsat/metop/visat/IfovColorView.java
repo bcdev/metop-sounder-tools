@@ -19,9 +19,7 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.math.MathUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.footprint.DefaultIasiFootprintLayerRenderer;
-import org.eumetsat.iasi.footprint.IasiFootprintLayer;
-import org.eumetsat.iasi.footprint.IasiFootprintLayerRenderer;
+import org.eumetsat.iasi.footprint.IasiLayer;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -90,12 +88,10 @@ public class IfovColorView extends AbstractToolView {
     private void paintMyStuff(Graphics g) {
         final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
         if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-            IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
+            IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
             if (layer != null) {
-                IasiFootprintLayerRenderer iasiFootprintLayerRenderer = layer.getRenderer();
-                DefaultIasiFootprintLayerRenderer rendere = (DefaultIasiFootprintLayerRenderer) iasiFootprintLayerRenderer;
-                Color[] colorPalette = rendere.getColorPalette();
-                ColorPaletteDef colorPaletteDef = rendere.getColorPaletteDef();
+                Color[] colorPalette = layer.getColorPalette();
+                ColorPaletteDef colorPaletteDef = layer.getColorPaletteDef();
                 double roundFactor = MathUtils.computeRoundFactor(colorPaletteDef.getMinDisplaySample(), colorPaletteDef.getMaxDisplaySample(), 2);
                 Graphics2D g2d = (Graphics2D) g;
                 if (colorPalette != null) {
