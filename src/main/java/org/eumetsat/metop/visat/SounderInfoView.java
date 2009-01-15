@@ -24,6 +24,7 @@ import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.sounder.SounderFile;
 import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderConstants;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -265,10 +266,11 @@ abstract class SounderInfoView extends AbstractToolView {
     private static AngularRelation readAngularRelation(SounderFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "ANGULAR_RELATION", ifov);
 
-        final double sza = numberData.getNumber(0).doubleValue() * 1.0E-2;
-        final double vza = numberData.getNumber(1).doubleValue() * 1.0E-2;
-        final double saa = numberData.getNumber(2).doubleValue() * 1.0E-2;
-        final double vaa = numberData.getNumber(3).doubleValue() * 1.0E-2;
+        final double factor = SounderConstants.ANGULAR_RELATION_SCALING_FACTOR;
+        final double sza = numberData.getNumber(0).doubleValue() * factor;
+        final double vza = numberData.getNumber(1).doubleValue() * factor;
+        final double saa = numberData.getNumber(2).doubleValue() * factor;
+        final double vaa = numberData.getNumber(3).doubleValue() * factor;
 
         return new AngularRelation(sza, vza, saa, vaa);
     }
@@ -276,8 +278,9 @@ abstract class SounderInfoView extends AbstractToolView {
     private static GeoPos readEarthLocation(SounderFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "EARTH_LOCATION", ifov);
 
-        final float lat = numberData.getNumber(0).floatValue() * 1.0E-4f;
-        final float lon = numberData.getNumber(1).floatValue() * 1.0E-4f;
+        final float factor = (float) SounderConstants.EARTH_LOCATION_SCALING_FACTOR;
+        final float lat = numberData.getNumber(0).floatValue() * factor;
+        final float lon = numberData.getNumber(1).floatValue() * factor;
 
         return new GeoPos(lat, lon);
     }
@@ -285,9 +288,10 @@ abstract class SounderInfoView extends AbstractToolView {
     private static double[] readSceneRadiances(SounderFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "SCENE_RADIANCE", ifov);
 
+        final double factor = SounderConstants.SCENE_RADIANCE_SCALING_FACTOR;
         final double[] radiances = new double[numberData.getElementCount()];
         for (int i = 0; i < radiances.length; i++) {
-            radiances[i] = numberData.getNumber(i).doubleValue() * 1.0E-7;
+            radiances[i] = numberData.getNumber(i).doubleValue() * factor;
         }
 
         return radiances;
