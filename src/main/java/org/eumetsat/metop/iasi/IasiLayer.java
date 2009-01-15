@@ -164,6 +164,9 @@ public class IasiLayer extends Layer {
     }
     
     private synchronized void ensureDataLoaded() {
+        if (allBts != null) {
+            return;
+        }
         try {
             allBts = iasiOverlay.getIasiFile().readAllBts(42);
         } catch (IOException e) {
