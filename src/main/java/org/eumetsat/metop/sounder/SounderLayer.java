@@ -75,7 +75,7 @@ public class SounderLayer extends Layer {
         computeColorPalette();
     }
 
-    public AvhrrOverlay getOverlay() {
+    public SounderOverlay getOverlay() {
         return overlay;
     }
     
