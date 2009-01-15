@@ -30,7 +30,6 @@ import org.esa.beam.framework.ui.command.ExecCommand;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.visat.MetopSounderSupport;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
@@ -58,7 +57,7 @@ public class AddMetopOverlayAction extends ExecCommand {
     @Override
     public void actionPerformed(CommandEvent event) {
         ProductSceneView sceneView = VisatApp.getApp().getSelectedProductSceneView();
-        if (sceneView != null && MetopSounderSupport.isValidAvhrrProductSceneView(sceneView)) {
+        if (sceneView != null && IasiFootprintVPI.isValidAvhrrProductSceneView(sceneView)) {
             addFootprintLayer(sceneView);
             sceneView.repaint();
         }
@@ -68,7 +67,7 @@ public class AddMetopOverlayAction extends ExecCommand {
     public void updateState(CommandEvent event) {
         ProductSceneView sceneView = VisatApp.getApp().getSelectedProductSceneView();
         boolean enabled = false;
-        if (sceneView != null && MetopSounderSupport.isValidAvhrrProductSceneView(sceneView)) {
+        if (sceneView != null && IasiFootprintVPI.isValidAvhrrProductSceneView(sceneView)) {
             enabled = true;
         }
         setEnabled(enabled);

@@ -21,7 +21,7 @@ import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.visat.MetopSounderSupport;
+import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.sounder.SounderFile;
@@ -268,9 +268,9 @@ public class AmsuInfoView extends AbstractToolView {
 
         @Override
         public void internalFrameActivated(InternalFrameEvent e) {
-            final ProductSceneView psv = MetopSounderSupport.getProductSceneView(e);
-            if (MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-                final SounderLayer layer = getActiveAmsuSounderLayer();
+            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
+            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+                final SounderLayer layer = IasiFootprintVPI.getActiveFootprintLayer(AmsuSounderLayer.class);
                 if (layer != null) {
                     layerSelectionListener = new SounderLayerSelectionListenerImpl();
                     // todo - discuss with mz
@@ -282,21 +282,15 @@ public class AmsuInfoView extends AbstractToolView {
 
         @Override
         public void internalFrameDeactivated(InternalFrameEvent e) {
-            final ProductSceneView psv = MetopSounderSupport.getProductSceneView(e);
-            if (MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-                final SounderLayer layer = getActiveAmsuSounderLayer();
+            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
+            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+                final SounderLayer layer = IasiFootprintVPI.getActiveFootprintLayer(AmsuSounderLayer.class);
                 if (layer != null) {
                     // todo - discuss with mz
                     // layer.getModel().removeListener(modelListener);
                     sounderFile = null;
                 }
             }
-        }
-
-        private SounderLayer getActiveAmsuSounderLayer() {
-            final ProductSceneView sceneView = VisatApp.getApp().getSelectedProductSceneView();
-            Layer rootLayer = sceneView.getRootLayer();
-            return MetopSounderSupport.getLayer(rootLayer, AmsuSounderLayer.class);
         }
     }
 

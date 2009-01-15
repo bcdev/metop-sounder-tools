@@ -12,23 +12,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.iasi.visat;
+package org.eumetsat.metop.visat;
 
 import com.jidesoft.grid.ColorCellRenderer;
-import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.metop.iasi.IasiFile;
-import org.eumetsat.metop.iasi.IasiFile.Geometry;
-import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
-import org.eumetsat.metop.iasi.Ifov;
 import org.eumetsat.iasi.footprint.IasiFootprintLayer;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModel;
 import org.eumetsat.iasi.footprint.IasiFootprintLayerModelListener;
+import org.eumetsat.metop.iasi.IasiFile;
+import org.eumetsat.metop.iasi.Ifov;
+import org.eumetsat.metop.iasi.IasiFile.Geometry;
+import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -40,6 +40,16 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.IndexColorModel;
+import java.io.IOException;
+import java.text.NumberFormat;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -53,15 +63,6 @@ import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.IndexColorModel;
-import java.io.IOException;
-import java.text.NumberFormat;
 
 /**
  * Tool view for showing information on the selected IASI IFOV.
@@ -102,8 +103,8 @@ public class IasiInfoView extends AbstractToolView {
 
         IasiFootprintLayer layer = null;
         final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-        if (psv != null && MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-            layer = MetopSounderSupport.getActiveFootprintLayer();
+        if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+            layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
             if (layer != null) {
                 modelListener = new IasiListener();
                 layer.getModel().addListener(modelListener);
@@ -349,9 +350,9 @@ public class IasiInfoView extends AbstractToolView {
 
         @Override
         public void internalFrameActivated(InternalFrameEvent e) {
-            final ProductSceneView psv = MetopSounderSupport.getProductSceneView(e);
-            if (MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-                final IasiFootprintLayer layer = MetopSounderSupport.getActiveFootprintLayer();
+            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
+            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+                final IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
                 if (layer != null) {
                     modelListener = new IasiListener();
                     layer.getModel().addListener(modelListener);
@@ -362,9 +363,9 @@ public class IasiInfoView extends AbstractToolView {
 
         @Override
         public void internalFrameDeactivated(InternalFrameEvent e) {
-            final ProductSceneView psv = MetopSounderSupport.getProductSceneView(e);
-            if (MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-                final IasiFootprintLayer layer = MetopSounderSupport.getActiveFootprintLayer();
+            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
+            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+                final IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
                 if (layer != null) {
                     layer.getModel().removeListener(modelListener);
                     iasiFile = null;

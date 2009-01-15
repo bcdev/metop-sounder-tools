@@ -35,6 +35,8 @@ import org.eumetsat.metop.mhs.MhsFile;
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
+import sun.security.action.GetLongAction;
+
 import java.awt.Container;
 import java.io.File;
 import java.io.IOException;
@@ -153,11 +155,11 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return visatApp;
     }
 
-    public boolean isValidAvhrrProductSceneView(final ProductSceneView view) {
+    public static boolean isValidAvhrrProductSceneView(final ProductSceneView view) {
         return view != null && isValidAvhrrProduct(view.getProduct());
     }
 
-    public boolean isValidAvhrrProduct(final Product product) {
+    public static boolean isValidAvhrrProduct(final Product product) {
         if (product == null) {
             return false;
         }
@@ -185,18 +187,13 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return null;
     }
 
-
-//    public IasiFootprintLayer getActiveFootprintLayer() {
-//        final IasiFootprintVPI vpi = getInstance();
-//        final VisatApp app = vpi.getVisatApp();
-//        final ProductSceneView sceneView = app.getSelectedProductSceneView();
-//        return getFootprintLayer(sceneView);
-//    }
-
-//    public IasiFootprintLayer getFootprintLayer(ProductSceneView sceneView) {
-//        final LayerModel layerModel = sceneView.getImageDisplay().getLayerModel();
-//        return getLayer(layerModel, IasiFootprintLayer.class);
-//    }
+    public static <T extends Layer> T getActiveFootprintLayer(Class<T> layerType) {
+        final IasiFootprintVPI vpi = getInstance();
+        final VisatApp app = vpi.getVisatApp();
+        final ProductSceneView psv = app.getSelectedProductSceneView();
+        Layer rootLayer = psv.getRootLayer();
+        return vpi.getLayer(rootLayer, layerType);
+    }
 
     /////////////////////////////////////////////////////////////////////////
     // Private stuff
@@ -276,12 +273,25 @@ public class IasiFootprintVPI implements VisatPlugIn {
         
     }
     
+    private <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
+        if (layerType.isAssignableFrom(rootLayer.getClass())) {
+            return (T) rootLayer;
+        }
+        for (Layer childLayer : rootLayer.getChildren()) {
+            Layer layer = getLayer(childLayer, layerType);
+            if (layer != null) {
+                return (T) layer;
+            }
+        }
+        return null;
+    }
+    
     private <T extends Layer> boolean hasLayer(Layer layer, Class<T> layerType) {
         if (layerType.isAssignableFrom(layer.getClass())) {
             return true;
         }
         for (Layer childLayer : layer.getChildren()) {
-            if (layerType.isAssignableFrom(childLayer.getClass())) {
+            if (hasLayer(childLayer, layerType)) {
                 return true;
             }
         }

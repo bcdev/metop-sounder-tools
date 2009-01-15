@@ -12,7 +12,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.eumetsat.iasi.visat;
+package org.eumetsat.metop.visat;
 
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
@@ -89,8 +89,8 @@ public class IfovColorView extends AbstractToolView {
     
     private void paintMyStuff(Graphics g) {
         final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-        if (psv != null && MetopSounderSupport.isValidAvhrrProductSceneView(psv)) {
-            IasiFootprintLayer layer = MetopSounderSupport.getActiveFootprintLayer();
+        if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
+            IasiFootprintLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiFootprintLayer.class);
             if (layer != null) {
                 IasiFootprintLayerRenderer iasiFootprintLayerRenderer = layer.getRenderer();
                 DefaultIasiFootprintLayerRenderer rendere = (DefaultIasiFootprintLayerRenderer) iasiFootprintLayerRenderer;
