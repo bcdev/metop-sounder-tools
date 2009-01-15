@@ -102,7 +102,7 @@ public class SounderLayer extends Layer {
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-            Rectangle viewRect = getImageRegion(vp);
+            final Rectangle clip = g2d.getClipBounds();
             
 //            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
 //            final boolean ifovBigEnough = scale * 47 > 5; // TODO
@@ -112,7 +112,8 @@ public class SounderLayer extends Layer {
 //            if (ifovBigEnough) {
                 for (SounderIfov ifov : ifovs) {
                     final Shape ifovShape = ifov.shape;
-                    if (ifovShape.intersects(viewRect)) {
+                    boolean isVisible = clip == null || ifovShape.intersects(clip);
+                    if (isVisible) {
                         Color fillColor = getColor(ifov.ifovInMdrIndex, ifov.mdrIndex);
                         g2d.setPaint(fillColor);
                         g2d.fill(ifovShape);
@@ -132,10 +133,6 @@ public class SounderLayer extends Layer {
         } finally {
             g2d.setTransform(transformSave);
         }
-    }
-    
-    private static Rectangle getImageRegion(Viewport vp) {
-        return vp.getViewToModelTransform().createTransformedShape(vp.getViewBounds()).getBounds();
     }
     
     public Color getColor(int x, int y) {

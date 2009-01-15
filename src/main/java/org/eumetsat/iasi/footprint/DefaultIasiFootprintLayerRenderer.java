@@ -27,7 +27,7 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
     private final BasicStroke borderStroke;
     private final Color efovColor;
     private final Color ifovSelectedColor;
-    private final Color ifovNormalColor;
+//    private final Color ifovNormalColor;
     private final Color ifovAnomalousColor;
     private double[][][] allBts;
     private ColorPaletteDef paletteDef;
@@ -38,8 +38,8 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
         this.borderStroke = new BasicStroke(0.0f);
         efovColor = Color.WHITE;
         ifovSelectedColor = Color.GREEN;
-        ifovNormalColor = Color.RED;
-        ifovAnomalousColor = Color.WHITE;
+//        ifovNormalColor = Color.RED;
+        ifovAnomalousColor = Color.RED;
     }
 
     @Override
@@ -102,14 +102,20 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
         } catch (IOException e) {
             return;
         }
+        final Efov[] efovs = layerModel.getIasiOverlay().getEfovs();
         double min = Double.MAX_VALUE;
         double max = 0;
+        int efovIndex = 0;
         for (int i = 0; i < allBts.length; i++) {
             for (int j = 0; j < allBts[i].length; j++) {
+                Efov efov = efovs[efovIndex];
                 for (int k = 0; k < allBts[i][j].length; k++) {
-                    min = Math.min(min, allBts[i][j][k]);
-                    max = Math.max(min, allBts[i][j][k]);
+                    if (!efov.getIfovs()[k].isAnomalous()) {
+                        min = Math.min(min, allBts[i][j][k]);
+                        max = Math.max(min, allBts[i][j][k]);
+                    }
                 }
+                efovIndex++;
             }
         }
         paletteDef = new ColorPaletteDef(min, max);
@@ -148,20 +154,23 @@ public class DefaultIasiFootprintLayerRenderer implements IasiFootprintLayerRend
         g2d.draw(efov.getShape());
     }
 
-    // mz old code
-//    protected void renderIfov(IasiFootprintLayerModel layerModel, Graphics2D g2d, Ifov ifov) {
-//        final Shape ifovShape = ifov.getShape();
-//        boolean selected = layerModel.isSelectedIfov(ifov);
-//        g2d.setColor(selected ? ifovSelectedColor : ifov.isAnomalous() ? ifovAnomalousColor : ifovNormalColor);
-//        g2d.draw(ifovShape);
-//    }
-    
     protected void renderIfov(IasiFootprintLayerModel layerModel, Graphics2D g2d, Ifov ifov, double bt) {
         final Shape ifovShape = ifov.getShape();
-        boolean selected = layerModel.isSelectedIfov(ifov);
-        g2d.setColor(selected ? ifovSelectedColor : ifov.isAnomalous() ? ifovAnomalousColor : ifovNormalColor);
-        g2d.setPaint(getColor(bt));
-        g2d.fill(ifovShape);
+        if (!ifov.isAnomalous()) {
+            g2d.setPaint(getColor(bt));
+            g2d.fill(ifovShape);
+        }
+        
+        Color drawColor = null;
+        if (layerModel.isSelectedIfov(ifov)) {
+            drawColor = ifovSelectedColor;
+        } else if (ifov.isAnomalous()) {
+            drawColor = ifovAnomalousColor;
+        }
+        if (drawColor != null) {
+            g2d.setColor(drawColor);
+            g2d.draw(ifovShape);
+        }
     }
 
     public void regenerate() {
