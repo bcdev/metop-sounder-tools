@@ -19,7 +19,7 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.math.MathUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.iasi.footprint.IasiLayer;
+import org.eumetsat.metop.iasi.IasiLayer;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

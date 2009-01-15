@@ -18,7 +18,6 @@ package org.eumetsat.metop.iasi;
 
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.eumetsat.iasi.footprint.IasiOverlayListener;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 

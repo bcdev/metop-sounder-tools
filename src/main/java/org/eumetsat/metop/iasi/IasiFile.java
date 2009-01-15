@@ -11,7 +11,6 @@ import com.bc.ceres.glayer.Layer;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData.UTC;
-import org.eumetsat.iasi.footprint.IasiLayer;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
