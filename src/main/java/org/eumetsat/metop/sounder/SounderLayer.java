@@ -47,8 +47,6 @@ public class SounderLayer extends Layer {
     
     private final BasicStroke borderStroke;
     private final Color ifovSelectedColor;
-    private final Color ifovNormalColor;
-    private final Color ifovAnomalousColor;
 
     private int height;
     private final int width;
@@ -62,8 +60,6 @@ public class SounderLayer extends Layer {
         
         borderStroke = new BasicStroke(0.0f);
         ifovSelectedColor = Color.GREEN;
-        ifovNormalColor = Color.RED;
-        ifovAnomalousColor = Color.WHITE;
 
         height = overlay.getEpsFile().getMdrCount();
     }
@@ -112,12 +108,18 @@ public class SounderLayer extends Layer {
 //            final boolean ifovBigEnough = scale * 47 > 5; // TODO
 
             final SounderIfov[] ifovs = overlay.getIfovs();
+            final SounderIfov selectedIfov = overlay.getSelectedIfov();
 //            if (ifovBigEnough) {
                 for (SounderIfov ifov : ifovs) {
                     final Shape ifovShape = ifov.shape;
                     if (ifovShape.intersects(viewRect)) {
-                        g2d.setPaint(getColor(ifov.ifovInMdrIndex, ifov.mdrIndex));
+                        Color fillColor = getColor(ifov.ifovInMdrIndex, ifov.mdrIndex);
+                        g2d.setPaint(fillColor);
                         g2d.fill(ifovShape);
+                        if (selectedIfov != null && selectedIfov == ifov) {
+                            g2d.setColor(ifovSelectedColor);
+                            g2d.draw(ifovShape);
+                        }
                     }
                 }
 //            }
@@ -156,13 +158,4 @@ public class SounderLayer extends Layer {
         paletteDef = new ColorPaletteDef(valueMin, valueMax);
         colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
     }
-
-    
-//    protected void renderIfov(IasiFootprintLayerModel layerModel, Graphics2D g2d, Ifov ifov, double bt) {
-//        final Shape ifovShape = ifov.getShape();
-////        boolean selected = layerModel.isSelectedIfov(ifov);
-////        g2d.setColor(selected ? ifovSelectedColor : ifov.isAnomalous() ? ifovAnomalousColor : ifovNormalColor);
-//        g2d.setPaint(getColor(bt));
-//        g2d.fill(ifovShape);
-//    }
 }
