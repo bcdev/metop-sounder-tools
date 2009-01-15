@@ -158,6 +158,11 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return visatApp;
     }
 
+    public static boolean isValidAvhrrProductSceneViewSelected() {
+        final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+        return view != null && isValidAvhrrProduct(view.getProduct());
+    }
+
     public static boolean isValidAvhrrProductSceneView(final ProductSceneView view) {
         return view != null && isValidAvhrrProduct(view.getProduct());
     }

@@ -19,12 +19,9 @@ import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
-import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.metop.sounder.SounderConstants;
-import org.eumetsat.metop.sounder.SounderFile;
-import org.eumetsat.metop.sounder.SounderIfov;
-import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.sounder.*;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -39,14 +36,16 @@ import org.jfree.data.xy.XYSeriesCollection;
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameListener;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
 
 abstract class SounderInfoView extends AbstractToolView {
-    private SounderFile sounderFile;
-    private SounderLayerSelectionListener layerSelectionListener;
+    private SounderOverlayListener overlayListener;
+    private InternalFrameListener internalFrameListener;
+    private EpsFile sounderFile;
     private XYSeriesCollection spectrum;
     private JTextField latTextField;
     private JTextField lonTextField;
@@ -59,16 +58,57 @@ abstract class SounderInfoView extends AbstractToolView {
 
     @Override
     protected JComponent createControl() {
-        final SounderIfov[] ifovs = initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds();
-        if (ifovs.length != 0) {
-            update(ifovs);
+        overlayListener = new SounderOverlayListener() {
+            @Override
+            public void selectionChanged(SounderOverlay overlay) {
+                update(overlay.getSelectedIfov());
+            }
+        };
+        internalFrameListener = new InternalFrameAdapter() {
+            @Override
+            public void internalFrameActivated(InternalFrameEvent e) {
+                if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
+                    final SounderLayer layer = getActiveSounderLayer();
+                    if (layer != null) {
+                        layer.getOverlay().addListener(overlayListener);
+                        sounderFile = layer.getOverlay().getEpsFile();
+                    }
+                }
+            }
+
+            @Override
+            public void internalFrameDeactivated(InternalFrameEvent e) {
+                if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
+                    final SounderLayer layer = getActiveSounderLayer();
+                    if (layer != null) {
+                        layer.getOverlay().removeListener(overlayListener);
+                        sounderFile = null;
+                    }
+                }
+            }
+        };
+        VisatApp.getApp().addInternalFrameListener(internalFrameListener);
+
+        if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
+            final SounderLayer layer = getActiveSounderLayer();
+            if (layer != null) {
+                final SounderOverlay overlay = layer.getOverlay();
+                overlay.addListener(overlayListener);
+                sounderFile = overlay.getEpsFile();
+            }
         }
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        final JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Sounder Information", createInfoComponent());
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
 
         return tabbedPane;
+    }
+
+    @Override
+    public void dispose() {
+        VisatApp.getApp().removeInternalFrameListener(internalFrameListener);
+        super.dispose();
     }
 
     protected abstract SounderLayer getActiveSounderLayer();
@@ -93,15 +133,6 @@ abstract class SounderInfoView extends AbstractToolView {
 
     @SuppressWarnings({"UnusedDeclaration"})
     protected void configureSpectrumChart(JFreeChart spectrumChart) {
-    }
-
-    private SounderIfov[] initLayerModelListenerAndSounderFileFromActivePsvAndReturnSelectedIfovIds() {
-        VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
-
-        // todo - implement (rq-20090114)
-        sounderFile = null;
-        layerSelectionListener = new SounderLayerSelectionListenerImpl();
-        return new SounderIfov[]{};
     }
 
     private Component createInfoComponent() {
@@ -192,14 +223,10 @@ abstract class SounderInfoView extends AbstractToolView {
         return chart;
     }
 
-    private void update(SounderIfov[] selectedIfovs) {
+    private void update(SounderIfov selectedIfovs) {
         if (sounderFile != null) {
-            SounderIfov ifov = null;
-            if (selectedIfovs.length != 0) {
-                ifov = selectedIfovs[0];
-            }
-            updateInfoFields(ifov);
-            updateSpectrumDataset(ifov);
+            updateInfoFields(selectedIfovs);
+            updateSpectrumDataset(selectedIfovs);
         }
     }
 
@@ -263,7 +290,7 @@ abstract class SounderInfoView extends AbstractToolView {
         spectrum.addSeries(series);
     }
 
-    private static AngularRelation readAngularRelation(SounderFile sounderFile, SounderIfov ifov) throws IOException {
+    private static AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "ANGULAR_RELATION", ifov);
 
         final double factor = SounderConstants.ANGULAR_RELATION_SCALING_FACTOR;
@@ -275,7 +302,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return new AngularRelation(sza, vza, saa, vaa);
     }
 
-    private static GeoPos readEarthLocation(SounderFile sounderFile, SounderIfov ifov) throws IOException {
+    private static GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "EARTH_LOCATION", ifov);
 
         final float factor = (float) SounderConstants.EARTH_LOCATION_SCALING_FACTOR;
@@ -285,7 +312,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return new GeoPos(lat, lon);
     }
 
-    private static double[] readSceneRadiances(SounderFile sounderFile, SounderIfov ifov) throws IOException {
+    private static double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, "SCENE_RADIANCE", ifov);
 
         final double factor = SounderConstants.SCENE_RADIANCE_SCALING_FACTOR;
@@ -297,61 +324,16 @@ abstract class SounderInfoView extends AbstractToolView {
         return radiances;
     }
 
-    private static NumberData getNumberData(SounderFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    private static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
         return NumberData.create(getSequenceData(sounderFile, sequenceName, ifov));
     }
 
-    private static SequenceData getSequenceData(SounderFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    private static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
         return getCompoundData(sounderFile, ifov.mdrIndex).getSequence(sequenceName).getSequence(ifov.ifovInMdrIndex);
     }
 
-    private static CompoundData getCompoundData(SounderFile sounderFile, int mdrIndex) throws IOException {
+    private static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {
         return sounderFile.getMdrData().getCompound(mdrIndex).getCompound(1);
-    }
-
-    private class SounderLayerSelectionListenerImpl implements SounderInfoView.SounderLayerSelectionListener {
-
-        @Override
-        public void selectionChanged(SounderLayer layer) {
-            // todo - implement (rq-20090114)
-            // update(layer.getSelectedIfovs());
-        }
-
-    }
-
-    private class ProductSceneViewHook extends InternalFrameAdapter {
-
-        @Override
-        public void internalFrameActivated(InternalFrameEvent e) {
-            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final SounderLayer layer = getActiveSounderLayer();
-                if (layer != null) {
-                    // todo - implement
-//                    modelListener = new IasiListener();
-//                    layer.getModel().addListener(modelListener);
-//                    iasiFile = layer.getModel().getIasiOverlay().getIasiFile();
-                }
-            }
-        }
-
-        @Override
-        public void internalFrameDeactivated(InternalFrameEvent e) {
-            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final SounderLayer layer = getActiveSounderLayer();
-                if (layer != null) {
-                    // todo - implement
-//                    layer.getModel().removeListener(modelListener);
-//                    iasiFile = null;
-                }
-            }
-        }
-
-    }
-
-    private interface SounderLayerSelectionListener {
-        void selectionChanged(SounderLayer layer);
     }
 
     private static class AngularRelation {
