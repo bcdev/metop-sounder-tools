@@ -18,7 +18,7 @@ package org.eumetsat.metop.eps;
 
 import java.util.Map;
 
-public class EpsMetatData {
+public class EpsMetaData {
 
     private String type;
     private String description;

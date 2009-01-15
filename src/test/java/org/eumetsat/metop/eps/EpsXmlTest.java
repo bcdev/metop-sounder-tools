@@ -25,7 +25,7 @@ import com.bc.ceres.binio.SequenceType;
 import com.bc.ceres.binio.SimpleType;
 import com.bc.ceres.binio.Type;
 
-import org.eumetsat.metop.eps.EpsMetatData;
+import org.eumetsat.metop.eps.EpsMetaData;
 import org.eumetsat.metop.eps.EpsXml;
 
 import junit.framework.TestCase;
@@ -69,9 +69,9 @@ public class EpsXmlTest extends TestCase {
         assertEquals("PRODUCT_NAME", member0.getName());
         Object metadata = member0.getMetadata();
         assertNotNull(metadata);
-        assertTrue(metadata instanceof EpsMetatData);
-        EpsMetatData epsMetatData = (EpsMetatData) metadata;
-        assertEquals("Complete name of the product", epsMetatData.getDescription());
+        assertTrue(metadata instanceof EpsMetaData);
+        EpsMetaData epsMetaData = (EpsMetaData) metadata;
+        assertEquals("Complete name of the product", epsMetaData.getDescription());
     }
     
     public void testMdr() throws Exception {

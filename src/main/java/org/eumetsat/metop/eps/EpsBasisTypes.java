@@ -113,9 +113,9 @@ public class EpsBasisTypes {
         format.addTypeDef("pointer", POINTER);
         
         CompoundMember auxDataPointer = MEMBER("Aux_Data_Pointer", SEQUENCE(BYTE, 100));
-        EpsMetatData auxDataPointerMetatData = new EpsMetatData();
-        auxDataPointerMetatData.setType("string");
-        auxDataPointer.setMetadata(auxDataPointerMetatData);
+        EpsMetaData auxDataPointerMetaData = new EpsMetaData();
+        auxDataPointerMetaData.setType("string");
+        auxDataPointer.setMetadata(auxDataPointerMetaData);
         format.addTypeDef("geadr", COMPOUND("geadr", auxDataPointer));
         format.addTypeDef("veadr", COMPOUND("veadr", auxDataPointer));
         

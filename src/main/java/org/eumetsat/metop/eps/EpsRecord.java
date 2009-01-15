@@ -46,13 +46,13 @@ public class EpsRecord {
     }
     
     public String getDescription(int memberIndex) {
-        EpsMetatData metaData = getMetaData(memberIndex);
+        EpsMetaData metaData = getMetaData(memberIndex);
         String description = metaData.getDescription();
         return description != null ? description : "";
     }
      
     public String getUnits(int memberIndex) {
-        EpsMetatData metaData =  getMetaData(memberIndex);
+        EpsMetaData metaData =  getMetaData(memberIndex);
         String units = metaData.getUnits();
         return units != null ? units : "";
     }
@@ -79,7 +79,7 @@ public class EpsRecord {
     
     public ProductData getProductDataAscii(int memberIndex) throws IOException {
         String valueAsString = getRawString(memberIndex).trim();
-        EpsMetatData metaData = getMetaData(memberIndex);
+        EpsMetaData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
         if (type.equals("string")) {
@@ -117,7 +117,7 @@ public class EpsRecord {
     
     public ProductData getProductDataBinary(int memberIndex) throws IOException {
         
-        EpsMetatData metaData = getMetaData(memberIndex);
+        EpsMetaData metaData = getMetaData(memberIndex);
         String type = metaData.getType();
         String scalingFactor = metaData.getScalingFactor();
         if (recordData.getCompoundType().getMemberType(memberIndex).isSequenceType() &&
@@ -187,12 +187,12 @@ public class EpsRecord {
         }
     }
     
-    private EpsMetatData getMetaData(int memberIndex) {
+    private EpsMetaData getMetaData(int memberIndex) {
         CompoundType compoundType = recordData.getCompoundType();
         CompoundMember member = compoundType.getMember(memberIndex);
         Object object =  member.getMetadata();
-        if (object != null && object instanceof EpsMetatData) {
-            return (EpsMetatData) object;
+        if (object != null && object instanceof EpsMetaData) {
+            return (EpsMetaData) object;
         } else {
             return null;
         }   

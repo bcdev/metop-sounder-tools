@@ -211,13 +211,13 @@ public class EpsXml {
                     MEMBER("cr", SimpleType.BYTE));
     }
     
-    private EpsMetatData getAsciiMetadata(Element element) {
+    private EpsMetaData getAsciiMetadata(Element element) {
         if (element.getName().equals("array")) {
             List<Element> children = element.getChildren();
             Element childElement = children.get(0);
             return getAsciiMetadata(childElement);
         }
-        EpsMetatData metaData = new EpsMetatData();
+        EpsMetaData metaData = new EpsMetaData();
         Attribute type = element.getAttribute("type");
         String typeString = type.getValue();
         metaData.setType(typeString);
