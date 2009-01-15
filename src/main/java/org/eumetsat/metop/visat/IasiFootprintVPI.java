@@ -35,10 +35,9 @@ import org.eumetsat.metop.mhs.MhsFile;
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
-import sun.security.action.GetLongAction;
-
 import java.awt.Container;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -67,10 +66,14 @@ public class IasiFootprintVPI implements VisatPlugIn {
             "radiance_4",
             "radiance_5",
     };
+    
+    private static final FileFilter IASI_NAME_FILTER = new PatternFileFilter("IASI");
+    private static final FileFilter AMSU_NAME_FILTER = new PatternFileFilter("AMSU");
+    private static final FileFilter MHS_NAME_FILTER = new PatternFileFilter("MHSx");
 
     private static IasiFootprintVPI instance;
     private VisatApp visatApp;
-    private static final String IASI_FOOTPRINT_CHOOSE_OPTION_NAME = "iasi.file.chooser";
+    private static final String FOOTPRINT_CHOOSE_OPTION_NAME = "iasi.file.chooser";
     private HashMap<Product, AvhrrOverlay> iasiFootprintLayerModelMap;
     private HashMap<Product, AvhrrOverlay> amsuFootprintLayerModelMap;
     private HashMap<Product, AvhrrOverlay> mhsFootprintLayerModelMap;
@@ -206,71 +209,32 @@ public class IasiFootprintVPI implements VisatPlugIn {
         visatApp.addInternalFrameListener(new ProductSceneViewHook());
     }
 
-    private synchronized void addFootprintLayer(ProductSceneView psv) {
+    private synchronized void addFootprintLayers(ProductSceneView psv) {
         Layer rootLayer = psv.getRootLayer();
-        //IASI
-        if (!hasLayer(rootLayer, IasiFootprintLayer.class)) {
-            final Product avhrrProduct = psv.getProduct();
-            AvhrrOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
-            if (overlay == null) { 
-                EpsFile epsFile = createIasiFootprintLayerModel(avhrrProduct);
-                if (epsFile != null) {
-                    overlay = epsFile.createOverlay(avhrrProduct);
-                    iasiFootprintLayerModelMap.put(avhrrProduct, overlay);
-                }
-            }
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                Layer layer = epsFile.createLayer(overlay);
-                rootLayer.getChildren().add(0, layer);
-                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
-                layer.setVisible(false);
-                layer.setVisible(true);
-            }
+        final Product avhrrProduct = psv.getProduct();
+        final File avhrrFileLocation = avhrrProduct.getFileLocation();
+        if(avhrrFileLocation == null) {
+            // might be a subset - subsets are not yet supported
+            return;
         }
-        
-        //AMSU
-        if (!hasLayer(rootLayer, AmsuSounderLayer.class)) {
-            final Product avhrrProduct = psv.getProduct();
-            AvhrrOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
-            if (overlay == null) { 
-                EpsFile epsFile = createAmsuFootprintLayerModel(avhrrProduct);
-                if (epsFile != null) {
-                    overlay = epsFile.createOverlay(avhrrProduct);
-                    amsuFootprintLayerModelMap.put(avhrrProduct, overlay);
-                }
-            }
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                Layer layer = epsFile.createLayer(overlay);
-                rootLayer.getChildren().add(0, layer);
-                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
-                layer.setVisible(false);
-                layer.setVisible(true);
-            }
+        final String avhrrFilename = avhrrFileLocation.getName();
+        final File avhrrDir = avhrrFileLocation.getParentFile();
+
+        long avhrrStartTime = 0;
+        try {
+            avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
+        } catch (ParseException e) {
+            // ignore
         }
+        AvhrrProductInfo avhrrInfo = new AvhrrProductInfo(avhrrProduct, avhrrFilename, avhrrDir, avhrrStartTime);
+
+        FilenameFilter iasiTimeFilter = new IasiFile.NameFilter(avhrrInfo.avhrrFilename);
+        FilenameFilter amsuTimeFilter = new AmsuFile.NameFilter(avhrrInfo.avhrrFilename);
+        FilenameFilter mhsTimeFilter = new MhsFile.NameFilter(avhrrInfo.avhrrFilename);
         
-        //MHS
-        if (!hasLayer(rootLayer, MhsSounderLayer.class)) {
-            final Product avhrrProduct = psv.getProduct();
-            AvhrrOverlay overlay = mhsFootprintLayerModelMap.get(avhrrProduct);
-            if (overlay == null) { 
-                EpsFile epsFile = createMhsFootprintLayerModel(avhrrProduct);
-                if (epsFile != null) {
-                    overlay = epsFile.createOverlay(avhrrProduct);
-                    mhsFootprintLayerModelMap.put(avhrrProduct, overlay);
-                }
-            }
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                Layer layer = epsFile.createLayer(overlay);
-                rootLayer.getChildren().add(0, layer);
-                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
-                layer.setVisible(false);
-                layer.setVisible(true);
-            }
-        }
-        
+        addOverlayLayer(rootLayer, avhrrInfo, amsuTimeFilter, AMSU_NAME_FILTER, AmsuSounderLayer.class, amsuFootprintLayerModelMap, "AMSU");
+        addOverlayLayer(rootLayer, avhrrInfo, mhsTimeFilter, MHS_NAME_FILTER, MhsSounderLayer.class, mhsFootprintLayerModelMap, "MHS");
+        addOverlayLayer(rootLayer, avhrrInfo, iasiTimeFilter, IASI_NAME_FILTER, IasiFootprintLayer.class, iasiFootprintLayerModelMap, "IASI");
     }
     
     private <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
@@ -297,85 +261,49 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
         return false;
     }
-
-    private EpsFile createIasiFootprintLayerModel(Product avhrrProduct) {
-        final File avhrrFileLocation = avhrrProduct.getFileLocation();
-        if(avhrrFileLocation == null) {
-            // might be a subset - subsets are not yet supported
-            return null;
+    
+    private static class AvhrrProductInfo {
+        private final Product avhrrProduct;
+        private final String avhrrFilename;
+        private final File avhrrDir;
+        private final long avhrrStartTime;
+        private AvhrrProductInfo(Product avhrrProduct, String avhrrFilename, File avhrrDir, long avhrrStartTime) {
+            this.avhrrProduct = avhrrProduct;
+            this.avhrrFilename = avhrrFilename;
+            this.avhrrDir = avhrrDir;
+            this.avhrrStartTime = avhrrStartTime;
         }
-        final String avhrrFilename = avhrrFileLocation.getName();
-        final File avhrrDir = avhrrFileLocation.getParentFile();
+    }
 
-        File file = null;
-        try {
-            final long avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
-            file = EpsFile.findFile(avhrrStartTime, avhrrDir.listFiles(new IasiFile.IasiFilenameFilter(avhrrFilename)));
-        } catch (ParseException e) {
-            // ignore
-        }
-        if (file == null) {
-            if (visatApp.showQuestionDialog("IASI Footprint Layer",
-                                            "No matching IASI file was found for this AVHRR scene.\n" +
-                                                    "Do you want to choose one manually?",
-                                            IASI_FOOTPRINT_CHOOSE_OPTION_NAME) == JOptionPane.YES_OPTION) {
-                file = showOpenFileDialog("Open IASI File", new FileFilter() {
-                    @Override
-                    public boolean accept(File f) {
-                        return f.getName().matches("IASI_.*.nat");
-                    }
-
-                    @Override
-                    public String getDescription() {
-                        return "IASI Files (*.nat)";
-                    }
-                }, avhrrDir);
+    private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, HashMap<Product, AvhrrOverlay> overlayMap, String type) {
+        if (!hasLayer(rootLayer, layerType)) {
+            AvhrrOverlay overlay = overlayMap.get(avhrrInfo.avhrrProduct);
+            if (overlay == null) { 
+                EpsFile epsFile = openEpsFile(avhrrInfo, timeFilter, nameFilter, type);
+                if (epsFile != null) {
+                    overlay = epsFile.createOverlay(avhrrInfo.avhrrProduct);
+                    overlayMap.put(avhrrInfo.avhrrProduct, overlay);
+                }
             }
-        }
-        if (file == null) {
-            return null;
-        }
-        try {
-            return new IasiFile(file, EpsFormats.getInstance().getIasiDataFormat());
-        } catch (IOException e) {
-            visatApp.showErrorDialog("IASI Footprint Layer",
-                                     "Not able to create IASI Footprint layer.");
-            return null;
+            if (overlay != null) {
+                EpsFile epsFile = overlay.getEpsFile();
+                Layer layer = epsFile.createLayer(overlay);
+                rootLayer.getChildren().add(0, layer);
+                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
+                layer.setVisible(false);
+                layer.setVisible(true);
+            }
         }
     }
     
-    private EpsFile createAmsuFootprintLayerModel(Product avhrrProduct) {
-        final File avhrrFileLocation = avhrrProduct.getFileLocation();
-        if(avhrrFileLocation == null) {
-            // might be a subset - subsets are not yet supported
-            return null;
-        }
-        final String avhrrFilename = avhrrFileLocation.getName();
-        final File avhrrDir = avhrrFileLocation.getParentFile();
-
-        File file = null;
-        try {
-            final long avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
-            file = EpsFile.findFile(avhrrStartTime, avhrrDir.listFiles(new AmsuFile.AmsuFilenameFilter(avhrrFilename)));
-        } catch (ParseException e) {
-            // ignore
-        }
+    private EpsFile openEpsFile(AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, String type) {
+        File file = EpsFile.findFile(avhrrInfo.avhrrStartTime, avhrrInfo.avhrrDir.listFiles(timeFilter));
         if (file == null) {
-            if (visatApp.showQuestionDialog("AMSU Footprint Layer",
-                                            "No matching AMSU file was found for this AVHRR scene.\n" +
+            if (visatApp.showQuestionDialog(type +" Footprint Layer",
+                                            "No matching "+type+" file was found for this AVHRR scene.\n" +
                                                     "Do you want to choose one manually?",
-                                            IASI_FOOTPRINT_CHOOSE_OPTION_NAME) == JOptionPane.YES_OPTION) {
-                file = showOpenFileDialog("Open AMSA File", new FileFilter() {
-                    @Override
-                    public boolean accept(File f) {
-                        return f.getName().matches("AMSA_.*.nat");
-                    }
-
-                    @Override
-                    public String getDescription() {
-                        return "AMSA Files (*.nat)";
-                    }
-                }, avhrrDir);
+                                            FOOTPRINT_CHOOSE_OPTION_NAME) == JOptionPane.YES_OPTION) {
+                file = showOpenFileDialog("Open "+type+" File", nameFilter, avhrrInfo.avhrrDir);
             }
         }
         if (file == null) {
@@ -383,62 +311,12 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
         try {
             return EpsFormats.getInstance().openFile(file);
-//            return new IasiFile(file, EpsFormats.getInstance().getIasiDataFormat());
         } catch (IOException e) {
-            visatApp.showErrorDialog("AMSU Footprint Layer",
-                                     "Not able to create AMSU Footprint layer.");
+            visatApp.showErrorDialog(type+" Footprint Layer",
+                                     "Not able to create "+type+" Footprint layer.");
             return null;
         }
     }
-
-    
-    private EpsFile createMhsFootprintLayerModel(Product avhrrProduct) {
-        final File avhrrFileLocation = avhrrProduct.getFileLocation();
-        if(avhrrFileLocation == null) {
-            // might be a subset - subsets are not yet supported
-            return null;
-        }
-        final String avhrrFilename = avhrrFileLocation.getName();
-        final File avhrrDir = avhrrFileLocation.getParentFile();
-
-        File file = null;
-        try {
-            final long avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
-            file = EpsFile.findFile(avhrrStartTime, avhrrDir.listFiles(new MhsFile.MhsFilenameFilter(avhrrFilename)));
-        } catch (ParseException e) {
-            // ignore
-        }
-        if (file == null) {
-            if (visatApp.showQuestionDialog("MHS Footprint Layer",
-                                            "No matching MHS file was found for this AVHRR scene.\n" +
-                                                    "Do you want to choose one manually?",
-                                            IASI_FOOTPRINT_CHOOSE_OPTION_NAME) == JOptionPane.YES_OPTION) {
-                file = showOpenFileDialog("Open MHS File", new FileFilter() {
-                    @Override
-                    public boolean accept(File f) {
-                        return f.getName().matches("MHSx_.*.nat");
-                    }
-
-                    @Override
-                    public String getDescription() {
-                        return "MHS Files (*.nat)";
-                    }
-                }, avhrrDir);
-            }
-        }
-        if (file == null) {
-            return null;
-        }
-        try {
-            return EpsFormats.getInstance().openFile(file);
-//            new IasiFile(file, EpsFormats.getInstance().getIasiDataFormat());
-        } catch (IOException e) {
-            visatApp.showErrorDialog("IASI Footprint Layer",
-                                     "Not able to create IASI Footprint layer.");
-            return null;
-        }
-    }
-
 
     private File showOpenFileDialog(String title, FileFilter fileFilter, File currentDir) {
         BeamFileChooser fileChooser = new BeamFileChooser();
@@ -460,7 +338,6 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return null;
     }
 
-
     private synchronized void removeFootprintLayer(ProductSceneView psv) {
 //        Layer rootLayer = psv.getRootLayer();
 //        if (rootLayer.getChildren().contains(selectedLayer)) {
@@ -477,12 +354,31 @@ public class IasiFootprintVPI implements VisatPlugIn {
 //        }
     }
 
+    private static class PatternFileFilter extends FileFilter {
+        private final String matchExpression;
+        private final String description;
+        
+        public PatternFileFilter(String typeIdentifier) {
+            this.matchExpression = typeIdentifier + "_.*.nat";
+            this.description = typeIdentifier + " Files (*.nat)";
+        }
+        @Override
+        public boolean accept(File f) {
+            return f.getName().matches(matchExpression);
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+    }
+
     private class ProductSceneViewHook extends InternalFrameAdapter {
         @Override
         public void internalFrameOpened(InternalFrameEvent e) {
             final ProductSceneView psv = getProductSceneView(e);
             if (isValidAvhrrProductSceneView(psv)) {
-                addFootprintLayer(psv);
+                addFootprintLayers(psv);
                 psv.repaint();
             }
         }

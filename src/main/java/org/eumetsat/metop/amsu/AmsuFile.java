@@ -73,11 +73,11 @@ public class AmsuFile extends SounderFile {
         return null;
     }
     
-    public static class AmsuFilenameFilter implements FilenameFilter {
+    public static class NameFilter implements FilenameFilter {
 
         private final String iasiFilenamePrefix;
 
-        public AmsuFilenameFilter(String avhrrFilename) {
+        public NameFilter(String avhrrFilename) {
             iasiFilenamePrefix = "AMSA" + avhrrFilename.substring(4, 15);
         }
 

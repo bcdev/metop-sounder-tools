@@ -494,11 +494,11 @@ public class IasiFile extends EpsFile {
         return geometry;
     }
 
-    public static class IasiFilenameFilter implements FilenameFilter {
+    public static class NameFilter implements FilenameFilter {
 
         private final String iasiFilenamePrefix;
 
-        public IasiFilenameFilter(String avhrrFilename) {
+        public NameFilter(String avhrrFilename) {
             iasiFilenamePrefix = "IASI" + avhrrFilename.substring(4, 15).replace("1B", "1C");
         }
 

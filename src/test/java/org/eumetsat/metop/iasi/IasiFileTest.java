@@ -20,6 +20,7 @@ import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsFormats;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -116,7 +117,7 @@ public class IasiFileTest extends TestCase {
     }
 
     public void testIasiFilenameFilter() {
-        final IasiFile.IasiFilenameFilter filter = new IasiFile.IasiFilenameFilter(AVHR_FILENAME);
+        final FilenameFilter filter = new IasiFile.NameFilter(AVHR_FILENAME);
 
         assertTrue(filter.accept(null, "IASI_x1x_1C_M02_20070717012957Z_20070717031156Z_N_O_20070717031940Z.nat"));
         assertTrue(filter.accept(null, "IASI_x1x_1C_M02.nat"));

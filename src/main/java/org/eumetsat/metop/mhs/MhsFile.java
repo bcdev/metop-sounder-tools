@@ -74,11 +74,11 @@ public class MhsFile extends SounderFile {
         return null;
     }
     
-    public static class MhsFilenameFilter implements FilenameFilter {
+    public static class NameFilter implements FilenameFilter {
 
         private final String iasiFilenamePrefix;
 
-        public MhsFilenameFilter(String avhrrFilename) {
+        public NameFilter(String avhrrFilename) {
             iasiFilenamePrefix = "MHSx" + avhrrFilename.substring(4, 15);
         }
 
