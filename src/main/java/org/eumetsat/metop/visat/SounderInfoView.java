@@ -45,7 +45,6 @@ import java.io.IOException;
 abstract class SounderInfoView extends AbstractToolView {
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
-    private EpsFile sounderFile;
     private XYSeriesCollection spectrum;
     private JTextField latTextField;
     private JTextField lonTextField;
@@ -61,7 +60,7 @@ abstract class SounderInfoView extends AbstractToolView {
         overlayListener = new SounderOverlayListener() {
             @Override
             public void selectionChanged(SounderOverlay overlay) {
-                update(overlay.getSelectedIfov());
+                update(overlay);
             }
         };
         internalFrameListener = new InternalFrameAdapter() {
@@ -71,7 +70,6 @@ abstract class SounderInfoView extends AbstractToolView {
                     final SounderLayer layer = getActiveSounderLayer();
                     if (layer != null) {
                         layer.getOverlay().addListener(overlayListener);
-                        sounderFile = layer.getOverlay().getEpsFile();
                     }
                 }
             }
@@ -82,25 +80,25 @@ abstract class SounderInfoView extends AbstractToolView {
                     final SounderLayer layer = getActiveSounderLayer();
                     if (layer != null) {
                         layer.getOverlay().removeListener(overlayListener);
-                        sounderFile = null;
                     }
                 }
             }
         };
         VisatApp.getApp().addInternalFrameListener(internalFrameListener);
 
+        final JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.add("Sounder Info", createInfoComponent());
+        tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
+
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getActiveSounderLayer();
             if (layer != null) {
                 final SounderOverlay overlay = layer.getOverlay();
                 overlay.addListener(overlayListener);
-                sounderFile = overlay.getEpsFile();
+                update(overlay);
             }
         }
 
-        final JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.add("Sounder Information", createInfoComponent());
-        tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
 
         return tabbedPane;
     }
@@ -217,21 +215,22 @@ abstract class SounderInfoView extends AbstractToolView {
         final XYPlot plot = new XYPlot(spectrum, xAxis, yAxis, renderer);
         configureSpectrumPlot(plot);
 
-        final JFreeChart chart = new JFreeChart("Sounder IFOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        final JFreeChart chart = new JFreeChart("Sounder FOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
         configureSpectrumChart(chart);
 
         return chart;
     }
 
-    private void update(SounderIfov selectedIfovs) {
-        if (sounderFile != null) {
-            updateInfoFields(selectedIfovs);
-            updateSpectrumDataset(selectedIfovs);
+    private void update(SounderOverlay overlay) {
+        if (overlay != null) {
+            updateInfoFields(overlay);
+            updateSpectrumDataset(overlay);
         }
     }
 
-    private void updateInfoFields(SounderIfov ifov) {
-        if (ifov == null) {
+    private void updateInfoFields(SounderOverlay overlay) {
+        final SounderIfov selectedIfov = overlay.getSelectedIfov();
+        if (selectedIfov == null) {
             clearInfoFields();
             return;
         }
@@ -239,8 +238,8 @@ abstract class SounderInfoView extends AbstractToolView {
         final GeoPos geoPos;
         final AngularRelation angularRelation;
         try {
-            geoPos = readEarthLocation(sounderFile, ifov);
-            angularRelation = readAngularRelation(sounderFile, ifov);
+            geoPos = readEarthLocation(overlay.getEpsFile(), selectedIfov);
+            angularRelation = readAngularRelation(overlay.getEpsFile(), selectedIfov);
         } catch (IOException e) {
             clearInfoFields();
             return;
@@ -253,8 +252,8 @@ abstract class SounderInfoView extends AbstractToolView {
         szaTextField.setText(Double.toString(angularRelation.sza));
         saaTextField.setText(Double.toString(angularRelation.saa));
 
-        mdrIndexTextField.setText(Integer.toString(ifov.mdrIndex));
-        ifovInMdrIndexTextField.setText(Integer.toString(ifov.ifovInMdrIndex));
+        mdrIndexTextField.setText(Integer.toString(selectedIfov.mdrIndex));
+        ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.ifovInMdrIndex));
     }
 
     private void clearInfoFields() {
@@ -268,16 +267,17 @@ abstract class SounderInfoView extends AbstractToolView {
         ifovInMdrIndexTextField.setText("");
     }
 
-    private void updateSpectrumDataset(SounderIfov ifov) {
+    private void updateSpectrumDataset(SounderOverlay overlay) {
         spectrum.removeAllSeries();
-        if (ifov == null) {
+        final SounderIfov selectedIfov = overlay.getSelectedIfov();
+        if (selectedIfov == null) {
             return;
         }
 
         final double[] abscissas = getSpectrumAbscissaValues();
         final double[] radiances;
         try {
-            radiances = readSceneRadiances(sounderFile, ifov);
+            radiances = readSceneRadiances(overlay.getEpsFile(), selectedIfov);
         } catch (IOException e) {
             return;
         }
