@@ -75,7 +75,7 @@ public class SounderLayer extends Layer {
     public void setBandInfo(BandInfo bandInfo) throws IOException {
         this.bandInfo = bandInfo;
         buffer = ProductData.createInstance(bandInfo.getType(), width * height);
-        overlay.getEpsFile().readBandData(bandInfo.getReader(), 0, 0, width, height, buffer , ProgressMonitor.NULL);
+        overlay.getEpsFile().readData(bandInfo.getReader(), 0, 0, width, height, buffer , ProgressMonitor.NULL);
         computeColorPalette();
     }
 

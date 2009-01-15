@@ -24,6 +24,8 @@ public abstract class SounderOverlay implements AvhrrOverlay {
 
     private final EpsFile epsfile;
     private final Product avhrrProduct;
+    
+    private SounderIfov selectedIfov;
 
     public SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
         this.epsfile = epsfile;
@@ -36,6 +38,14 @@ public abstract class SounderOverlay implements AvhrrOverlay {
 
     public EpsFile getEpsFile() {
         return epsfile;
+    }
+    
+    public SounderIfov getSelectedIfov() {
+        return selectedIfov;
+    }
+    
+    public void setSelectedIfov(SounderIfov selectedIfov) {
+        this.selectedIfov = selectedIfov;
     }
 
     public abstract SounderIfov[] getIfovs();

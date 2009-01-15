@@ -115,11 +115,11 @@ public class EpsFile {
     public ProductData readData(BandInfo bandInfo, final int height, final int width) throws IOException {
         MdrReader reader = bandInfo.getReader();
         ProductData data = ProductData.createInstance(bandInfo.getType(), width * height);
-        readBandData(reader, 0, 0, width, height, data, ProgressMonitor.NULL);
+        readData(reader, 0, 0, width, height, data, ProgressMonitor.NULL);
         return data;
     }
     
-    public void readBandData(MdrReader reader, int x, int y, int width, int height, ProductData buffer, ProgressMonitor pm) throws IOException {
+    public void readData(MdrReader reader, int x, int y, int width, int height, ProductData buffer, ProgressMonitor pm) throws IOException {
         int bufferIndex = 0;
         SequenceData mdrData = getMdrData();
         pm.beginTask("reading...", height);

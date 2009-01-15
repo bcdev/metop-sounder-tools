@@ -19,13 +19,7 @@ package org.eumetsat.metop.sounder;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
 
-/**
- * todo - add API doc
- *
- * @author Marco Zuehlke
- * @version $Revision$ $Date$
- * @since BEAM 4.2
- */
+
 public interface AvhrrOverlay {
 
     public abstract Product getAvhrrProduct();

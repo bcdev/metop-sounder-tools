@@ -131,28 +131,10 @@ public class IasiFile extends EpsFile {
 
         CompoundData giadrScaleFactorsRecord = getAuxDataRecord("giadr:iasi:1");
         giadrScaleFactors = new GiadrScaleFactors(giadrScaleFactorsRecord);
-//        determineMdrCount(iis);
         
         mdrSequence = getMdrData();
-        mdrCount = mdrSequence.getElementCount();
+        mdrCount = getMdrCount();
     }
-
-
-//    private void determineMdrCount(ImageInputStream iis) throws IOException {
-//        final GenericRecordHeader mdrHeader;
-//
-//        synchronized (this.iis) {
-//            iis.seek(firstMdrOffset);
-//            mdrHeader = GenericRecordHeader.readGenericRecordHeader(iis);
-//        }
-//
-//        mdrSize = mdrHeader.recordSize;
-//        mdrCount = (int) ((iis.length() - firstMdrOffset) / mdrSize);
-//    }
-//
-//    private long getMdrOffset(int i) {
-//        return firstMdrOffset + (i * mdrSize);
-//    }
 
     public GeoPos readGeoPos(int ifovId) throws IOException {
         final int mdrIndex = computeMdrIndex(ifovId);

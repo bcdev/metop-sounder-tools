@@ -73,6 +73,7 @@ public class AmsuSounderOverlay extends SounderOverlay {
         if (ifovs == null) {
             try {
                 ifovs = readIfovs();
+                setSelectedIfov(ifovs[0]);
             } catch (IOException e) {
                 ifovs = new SounderIfov[0];
             }
