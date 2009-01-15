@@ -30,7 +30,7 @@ abstract class NumberData {
         if (elementType == SimpleType.BYTE) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getByte(index);
                 }
             };
@@ -38,7 +38,7 @@ abstract class NumberData {
         if (elementType == SimpleType.UBYTE) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getUByte(index);
                 }
             };
@@ -46,7 +46,7 @@ abstract class NumberData {
         if (elementType == SimpleType.SHORT) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getShort(index);
                 }
             };
@@ -54,7 +54,7 @@ abstract class NumberData {
         if (elementType == SimpleType.USHORT) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getUShort(index);
                 }
             };
@@ -62,7 +62,7 @@ abstract class NumberData {
         if (elementType == SimpleType.INT) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getInt(index);
                 }
             };
@@ -70,7 +70,7 @@ abstract class NumberData {
         if (elementType == SimpleType.UINT) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getUInt(index);
                 }
             };
@@ -78,7 +78,7 @@ abstract class NumberData {
         if (elementType == SimpleType.LONG) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getLong(index);
                 }
             };
@@ -86,7 +86,7 @@ abstract class NumberData {
         if (elementType == SimpleType.FLOAT) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getFloat(index);
                 }
             };
@@ -94,14 +94,14 @@ abstract class NumberData {
         if (elementType == SimpleType.DOUBLE) {
             return new NumberData(sequenceData) {
                 @Override
-                public Number getNumber(int index) throws IOException {
+                public final Number getNumber(int index) throws IOException {
                     return getSequenceData().getDouble(index);
                 }
             };
         }
 
         throw new IllegalArgumentException(MessageFormat.format(
-                "Illegal sequence type: {0}", sequenceData.getSequenceType().getName()));
+                "Unsupported sequence type: {0}", sequenceData.getSequenceType().getName()));
     }
 
     private NumberData(SequenceData sequenceData) {
