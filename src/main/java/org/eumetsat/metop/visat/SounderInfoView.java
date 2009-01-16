@@ -67,7 +67,7 @@ abstract class SounderInfoView extends AbstractToolView {
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
                 if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderLayer layer = getActiveSounderLayer();
+                    final SounderLayer layer = getSounderLayer();
                     if (layer != null) {
                         layer.getOverlay().addListener(overlayListener);
                     }
@@ -77,7 +77,7 @@ abstract class SounderInfoView extends AbstractToolView {
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
                 if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderLayer layer = getActiveSounderLayer();
+                    final SounderLayer layer = getSounderLayer();
                     if (layer != null) {
                         layer.getOverlay().removeListener(overlayListener);
                     }
@@ -91,7 +91,7 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
 
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-            final SounderLayer layer = getActiveSounderLayer();
+            final SounderLayer layer = getSounderLayer();
             if (layer != null) {
                 final SounderOverlay overlay = layer.getOverlay();
                 overlay.addListener(overlayListener);
@@ -109,13 +109,13 @@ abstract class SounderInfoView extends AbstractToolView {
         super.dispose();
     }
 
-    protected abstract SounderLayer getActiveSounderLayer();
-
-    protected abstract double[] getSpectrumAbscissaValues();
+    protected abstract SounderLayer getSounderLayer();
 
     protected abstract NumberAxis createSpectrumPlotXAxis();
 
     protected abstract NumberAxis createSpectrumPlotYAxis();
+
+    protected abstract XYSeries createSpectrumPlotXYSeries(double[] radiances);
 
     protected XYItemRenderer createSpectrumPlotXYItemRenderer() {
         final XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
@@ -274,7 +274,6 @@ abstract class SounderInfoView extends AbstractToolView {
             return;
         }
 
-        final double[] abscissas = getSpectrumAbscissaValues();
         final double[] radiances;
         try {
             radiances = readSceneRadiances(overlay.getEpsFile(), selectedIfov);
@@ -282,10 +281,7 @@ abstract class SounderInfoView extends AbstractToolView {
             return;
         }
 
-        final XYSeries series = new XYSeries("Sample Values");
-        for (int i = 0; i < radiances.length; i++) {
-            series.add(abscissas[i], radiances[i]);
-        }
+        final XYSeries series = createSpectrumPlotXYSeries(radiances);
 
         spectrum.addSeries(series);
     }
@@ -325,7 +321,7 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
-        return NumberData.create(getSequenceData(sounderFile, sequenceName, ifov));
+        return NumberData.of(getSequenceData(sounderFile, sequenceName, ifov));
     }
 
     private static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {

@@ -24,7 +24,7 @@ import java.text.MessageFormat;
 abstract class NumberData {
     private final SequenceData sequenceData;
 
-    static NumberData create(SequenceData sequenceData) {
+    static NumberData of(SequenceData sequenceData) {
         final Type elementType = sequenceData.getSequenceType().getElementType();
 
         if (elementType == SimpleType.BYTE) {

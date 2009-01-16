@@ -18,6 +18,7 @@ import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.Range;
+import org.jfree.data.xy.XYSeries;
 
 /**
  * Tool view for showing information on the selected MHS field-of-view.
@@ -26,22 +27,25 @@ import org.jfree.data.Range;
  * @version $Revision$ $Date$
  */
 public class MhsInfoView extends SounderInfoView {
+    private static final double[] CHANNEL_FREQUENCIES = new double[5];
 
-    @Override
-    protected SounderLayer getActiveSounderLayer() {
-        return IasiFootprintVPI.getActiveFootprintLayer(MhsSounderLayer.class);
+    static {
+        CHANNEL_FREQUENCIES[0] = 89.0;
+        CHANNEL_FREQUENCIES[1] = 157.0;
+        CHANNEL_FREQUENCIES[2] = 183.311;
+        CHANNEL_FREQUENCIES[3] = 183.311;
+        CHANNEL_FREQUENCIES[4] = 190.311;
     }
 
     @Override
-    protected double[] getSpectrumAbscissaValues() {
-        // todo - implement
-        return new double[0];
+    protected SounderLayer getSounderLayer() {
+        return IasiFootprintVPI.getActiveFootprintLayer(MhsSounderLayer.class);
     }
 
     @Override
     protected NumberAxis createSpectrumPlotXAxis() {
         // todo - implement
-        final NumberAxis axis = new NumberAxis("Wavenumber (cm-1)");
+        final NumberAxis axis = new NumberAxis("Frequency (cm-1)");
         axis.setRange(645.0, 2760.0);
 
         return axis;
@@ -49,10 +53,20 @@ public class MhsInfoView extends SounderInfoView {
 
     @Override
     protected NumberAxis createSpectrumPlotYAxis() {
-        // todo - implement
-        final NumberAxis axis = new NumberAxis("Scene Radiance (mW/m2/sr/cm-1)");
-        axis.setRange(new Range(180.0, 305.0));
+        final NumberAxis axis = new NumberAxis("Brightness Temperature (K)");
+        axis.setRange(new Range(175.0, 325.0));
 
         return axis;
+    }
+
+    @Override
+    protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
+        final XYSeries series = new XYSeries("Sample Values");
+
+        for (int i = 0; i < radiances.length; i++) {
+            series.add(i + 1, BlackBody.temperature(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
+        }
+
+        return series;
     }
 }

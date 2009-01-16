@@ -372,28 +372,10 @@ public class IasiInfoView extends AbstractToolView {
         final double[][] spectrum = iasiFile.readSpectrum(ifovId);
 
         for (double[] sample : spectrum) {
-            sample[1] = brightnessTemperature(sample[0], sample[1]);
+            sample[1] = BlackBody.temperatureForWavenumber(sample[0], sample[1]);
         }
 
         return spectrum;
-    }
-
-    /**
-     * Calculates the brightness temperature corresponding to a radiance measurement
-     * by means of Planck's law.
-     *
-     * @param wavenumber the wavenumber (cm-1)
-     * @param radiance   the radiance (W/m2/sr/m-1)
-     *
-     * @return the brightness temperature (K)
-     */
-    private static double brightnessTemperature(double wavenumber, double radiance) {
-        final double c1 = 1.191042722E-16;
-        final double c2 = 1.4387752E-2;
-        final double a = c2 * wavenumber;
-        final double b = c1 * wavenumber * wavenumber * wavenumber;
-
-        return a / (Math.log(1.0 + (b / radiance)));
     }
 
     private static class RadianceAnalysisTableModel extends DefaultTableModel {

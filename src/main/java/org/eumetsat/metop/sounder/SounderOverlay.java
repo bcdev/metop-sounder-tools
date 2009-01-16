@@ -19,7 +19,10 @@ package org.eumetsat.metop.sounder;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 
 public abstract class SounderOverlay implements AvhrrOverlay {
@@ -36,7 +39,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         // avoid memory leaks (Bloch 2008, Effective Java, Item 6)
         listenerMap = Collections.synchronizedMap(new WeakHashMap<SounderOverlayListener, Object>());
     }
-    
+
     @Override
     public Product getAvhrrProduct() {
         return avhrrProduct;
@@ -46,11 +49,11 @@ public abstract class SounderOverlay implements AvhrrOverlay {
     public EpsFile getEpsFile() {
         return epsfile;
     }
-    
+
     public SounderIfov getSelectedIfov() {
         return selectedIfov;
     }
-    
+
     public void setSelectedIfov(SounderIfov selectedIfov) {
         if (selectedIfov != this.selectedIfov) {
             this.selectedIfov = selectedIfov;
@@ -69,9 +72,9 @@ public abstract class SounderOverlay implements AvhrrOverlay {
     public abstract SounderIfov[] getIfovs();
 
     protected void fireSelectionChanged() {
-        final Set<SounderOverlayListener> listenerSet = listenerMap.keySet();
-
         synchronized (listenerMap) {
+            final Set<SounderOverlayListener> listenerSet = listenerMap.keySet();
+
             for (final SounderOverlayListener listener : listenerSet) {
                 listener.selectionChanged(this);
             }

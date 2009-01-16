@@ -18,6 +18,7 @@ import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.Range;
+import org.jfree.data.xy.XYSeries;
 
 
 /**
@@ -27,22 +28,35 @@ import org.jfree.data.Range;
  * @version $Revision$ $Date$
  */
 public class AmsuInfoView extends SounderInfoView {
+    private static final double[] CHANNEL_FREQUENCIES = new double[15];
 
-    @Override
-    protected SounderLayer getActiveSounderLayer() {
-        return IasiFootprintVPI.getActiveFootprintLayer(AmsuSounderLayer.class);
+    static {
+        CHANNEL_FREQUENCIES[0] = 23.80;
+        CHANNEL_FREQUENCIES[1] = 31.40;
+        CHANNEL_FREQUENCIES[2] = 50.30;
+        CHANNEL_FREQUENCIES[3] = 52.80;
+        CHANNEL_FREQUENCIES[4] = 53.59;
+        CHANNEL_FREQUENCIES[5] = 54.40;
+        CHANNEL_FREQUENCIES[6] = 54.94;
+        CHANNEL_FREQUENCIES[7] = 55.50;
+        CHANNEL_FREQUENCIES[8] = 57.290344;
+        CHANNEL_FREQUENCIES[9] = 57.290344;
+        CHANNEL_FREQUENCIES[10] = 57.290344;
+        CHANNEL_FREQUENCIES[11] = 57.290344;
+        CHANNEL_FREQUENCIES[12] = 57.290344;
+        CHANNEL_FREQUENCIES[13] = 57.290344;
+        CHANNEL_FREQUENCIES[14] = 89.0;
     }
 
     @Override
-    protected double[] getSpectrumAbscissaValues() {
-        // todo - implement
-        return new double[0];
+    protected SounderLayer getSounderLayer() {
+        return IasiFootprintVPI.getActiveFootprintLayer(AmsuSounderLayer.class);
     }
 
     @Override
     protected NumberAxis createSpectrumPlotXAxis() {
         // todo - implement
-        final NumberAxis axis = new NumberAxis("Wavenumber (cm-1)");
+        final NumberAxis axis = new NumberAxis("Channel");
         axis.setRange(645.0, 2760.0);
 
         return axis;
@@ -50,10 +64,20 @@ public class AmsuInfoView extends SounderInfoView {
 
     @Override
     protected NumberAxis createSpectrumPlotYAxis() {
-        // todo - implement
-        final NumberAxis axis = new NumberAxis("Scene Radiance (mW/m2/sr/cm-1)");
-        axis.setRange(new Range(180.0, 305.0));
+        final NumberAxis axis = new NumberAxis("Brightness Temperature (K)");
+        axis.setRange(new Range(175.0, 325.0));
 
         return axis;
+    }
+
+    @Override
+    protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
+        final XYSeries series = new XYSeries("Sample Values");
+
+        for (int i = 0; i < radiances.length; i++) {
+            series.add(i + 1, BlackBody.temperature(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
+        }
+
+        return series;
     }
 }
