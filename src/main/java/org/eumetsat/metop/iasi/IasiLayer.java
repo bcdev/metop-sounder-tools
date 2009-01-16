@@ -50,13 +50,11 @@ public class IasiLayer extends Layer {
     public IasiLayer(IasiOverlay iasiOverlay) {
         this.iasiOverlay = iasiOverlay;
         
-        // TODO - re-enable selection (mz, 07.11.2009)
-        //setPropertyValue("selectTool", new IfovSelectTool());
         modelListener = new LayerModelHandler();
         iasiOverlay.addListener(modelListener);
       
         // Set default layer style properties
-        this.borderStroke = new BasicStroke(0.0f);
+        this.borderStroke = new BasicStroke(0.4f);
         efovColor = Color.WHITE;
         ifovSelectedColor = Color.GREEN;
         //ifovNormalColor = Color.RED;
