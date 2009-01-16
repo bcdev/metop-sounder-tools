@@ -48,6 +48,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.AbstractButton;
 import javax.swing.Box;
@@ -81,9 +82,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private static IasiFootprintVPI instance;
     private VisatApp visatApp;
     private static final String FOOTPRINT_CHOOSE_OPTION_NAME = "iasi.file.chooser";
-    private HashMap<Product, AvhrrOverlay> iasiFootprintLayerModelMap;
-    private HashMap<Product, AvhrrOverlay> amsuFootprintLayerModelMap;
-    private HashMap<Product, AvhrrOverlay> mhsFootprintLayerModelMap;
+    private Map<Product, AvhrrOverlay> iasiFootprintLayerModelMap;
+    private Map<Product, AvhrrOverlay> amsuFootprintLayerModelMap;
+    private Map<Product, AvhrrOverlay> mhsFootprintLayerModelMap;
 
     // called via reflection
     public IasiFootprintVPI() {
@@ -289,7 +290,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
     }
 
-    private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, HashMap<Product, AvhrrOverlay> overlayMap, String type) {
+    private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, Map<Product, AvhrrOverlay> overlayMap, String type) {
         if (!hasLayer(rootLayer, layerType)) {
             AvhrrOverlay overlay = overlayMap.get(avhrrInfo.avhrrProduct);
             if (overlay == null) { 
@@ -412,25 +413,17 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
 
         public void productRemoved(Product avhrrProduct) {
-            AvhrrOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
+            removeOverlay(avhrrProduct, iasiFootprintLayerModelMap);
+            removeOverlay(avhrrProduct, amsuFootprintLayerModelMap);
+            removeOverlay(avhrrProduct, mhsFootprintLayerModelMap);
+        }
+        
+        private void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
+            AvhrrOverlay overlay = overlayMap.get(avhrrProduct);
             if (overlay != null) {
                 EpsFile epsFile = overlay.getEpsFile();
                 epsFile.close();
-                iasiFootprintLayerModelMap.remove(avhrrProduct);
-            }
-            
-            overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                epsFile.close();
-                amsuFootprintLayerModelMap.remove(avhrrProduct);
-            }
-            
-            overlay = mhsFootprintLayerModelMap.get(avhrrProduct);
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                epsFile.close();
-                mhsFootprintLayerModelMap.remove(avhrrProduct);
+                overlayMap.remove(avhrrProduct);
             }
         }
 
