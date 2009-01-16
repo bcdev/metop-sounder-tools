@@ -86,7 +86,7 @@ public class IasiOverlay implements AvhrrOverlay {
             System.out.println("createing EFOVs");
             efovs = createEfovs("norman");
             
-            selectedIfov = efovs[0].getIfovs()[0];
+            setSelectedIfov(efovs[0].getIfovs()[0]);
         }
         return efovs;
     }
@@ -97,6 +97,7 @@ public class IasiOverlay implements AvhrrOverlay {
     
     public void setSelectedIfov(Ifov selectedIfov) {
         this.selectedIfov = selectedIfov;
+        fireSelectionChanged();
     }
     
     public void addListener(IasiOverlayListener listener) {

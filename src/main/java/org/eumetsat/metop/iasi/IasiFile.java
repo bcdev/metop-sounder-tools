@@ -364,22 +364,22 @@ public class IasiFile extends EpsFile {
                 ra.std[i][j] = EpsFile.readVInt4(stdI.getCompound(j));
             }
         }
-        SequenceData image = mdrBody.getSequence("GCcsImageClassified").getSequence(efovIndex).getSequence(ifovIndex);
+        SequenceData image = mdrBody.getSequence("GCcsImageClassified").getSequence(efovIndex);
         for (int i = 0; i < ra.image.length; i++) {
             SequenceData imageI = image.getSequence(i);
-            for (int j = 0; j < ra.std[i].length; j++) {
+            for (int j = 0; j < ra.image[i].length; j++) {
                 ra.image[i][j] = imageI.getByte(j);
             }
         }
-        ra.mode = mdrBody.getInt("IDefCcsMode");
+        ra.mode = mdrBody.getSequence("IDefCcsMode").getByte(3);
         ra.imageH = mdrBody.getSequence("GCcsImageClassifiedNbLin").getShort(efovIndex);
         ra.imageW = mdrBody.getSequence("GCcsImageClassifiedNbCol").getShort(efovIndex);
         ra.avhrrY = EpsFile.readVInt4(mdrBody.getSequence("GCcsImageClassifiedFirstLin").getCompound(efovIndex));
         ra.avhrrX = EpsFile.readVInt4(mdrBody.getSequence("GCcsImageClassifiedFirstCol").getCompound(efovIndex));
-        SequenceData type = mdrBody.getSequence("GCcsRadAnalType");
-        for (int i = 0; i < ra.type.length; i++) {
-            ra.type[i] = type.getByte(i);
-        }
+//        SequenceData type = mdrBody.getSequence("GCcsRadAnalType");
+//        for (int i = 0; i < ra.type.length; i++) {
+//            ra.type[i] = type.getByte(i);
+//        }
         
         return ra;
     }
@@ -397,11 +397,13 @@ public class IasiFile extends EpsFile {
         final int ifovIndex = computeIfovIndex(ifovId);
 
         Geometry geometry = new Geometry();
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        geometry.vza = mdrBody.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.vaa = mdrBody.getSequence("GGeoIISAnglesMETOP").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.sza = mdrBody.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.saa = mdrBody.getSequence("GGeoIISAnglesSUN").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        CompoundData mdr = getMdr(mdrIndex);
+        geometry.vza = mdr.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getSequence(0).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        geometry.vaa = mdr.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getSequence(1).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+//        geometry.vaa = mdr.getSequence("GGeoIISAnglesMETOP").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        geometry.sza = mdr.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getSequence(0).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        geometry.saa = mdr.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getSequence(1).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+//        geometry.saa = mdr.getSequence("GGeoIISAnglesSUN").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
         return geometry;
     }
 

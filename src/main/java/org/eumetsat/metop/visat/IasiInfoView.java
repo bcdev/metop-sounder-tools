@@ -44,6 +44,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -81,7 +82,9 @@ public class IasiInfoView extends AbstractToolView {
     private static final IndexColorModel CLASS_COLOR_MODEL = new IndexColorModel(8, 8, CLASS_COLORS, 0, DataBuffer.TYPE_USHORT, null);
 
     private IasiFile iasiFile;
-    private IasiListener modelListener;
+    private IasiOverlay iasiOverlay;
+    private IasiListener modelListener = new IasiListener();
+    private ProductSceneView psv;
 
     private XYSeriesCollection dataset;
     private RadianceAnalysisTableModel radianceTableModel;
@@ -99,27 +102,38 @@ public class IasiInfoView extends AbstractToolView {
 
     @Override
     protected JComponent createControl() {
-        VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
-
-        IasiLayer layer = null;
-        final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-        if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-            layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
-            if (layer != null) {
-                modelListener = new IasiListener();
-                layer.getOverlay().addListener(modelListener);
-                iasiFile = layer.getOverlay().getIasiFile();
-            }
-        }
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Location and Geometry", createLocationComponent());
         tabbedPane.add("IASI Spectrum", createSpectrumComponent());
         tabbedPane.add("Radiance Analysis", createRadianceAnalysis());
 
-        if (layer != null) {
-            update(layer.getOverlay().getSelectedIfov());
-        }
+        VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
+        setProductSceneView(VisatApp.getApp().getSelectedProductSceneView());
         return tabbedPane;
+    }
+    
+    public void setProductSceneView(final ProductSceneView pvs) {
+        final ProductSceneView psvOld = this.psv;
+        if (psvOld == pvs) {
+            return;
+        }
+        if (this.psv != null) {
+            iasiOverlay.removeListener(modelListener);
+            iasiOverlay = null;
+            iasiFile = null;
+        }
+        this.psv = pvs;
+        if (this.psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(this.psv)) {
+            IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+            if (layer != null) {
+                iasiOverlay = layer.getOverlay();
+                iasiOverlay.addListener(modelListener);
+                iasiFile = iasiOverlay.getIasiFile();
+                update(iasiOverlay.getSelectedIfov());
+            }
+        } else {
+            update(null);
+        }
     }
 
 
@@ -233,12 +247,13 @@ public class IasiInfoView extends AbstractToolView {
     }
 
     private void update(Ifov selectedIfov) {
+        int ifovId = -1;
         if (iasiFile != null && selectedIfov != null) {
-            int ifovId = selectedIfov.getIndex();
-            updateLocation(ifovId);
-            updateSpectrum(ifovId);
-            updateRadianceAnalysis(ifovId);
+            ifovId = selectedIfov.getIndex();
         }
+        updateLocation(ifovId);
+        updateSpectrum(ifovId);
+        updateRadianceAnalysis(ifovId);
     }
 
     private void updateLocation(int ifovId) {
@@ -282,11 +297,11 @@ public class IasiInfoView extends AbstractToolView {
 
 
     private void updateRadianceAnalysis(int ifovId) {
-        final RadianceAnalysis radianceAnalysis;
         if (ifovId == -1) {
             cleanRadianceAnalysis();
             return;
         }
+        final RadianceAnalysis radianceAnalysis;
         try {
             radianceAnalysis = iasiFile.readRadianceAnalysis(ifovId);
         } catch (IOException e) {
@@ -341,30 +356,26 @@ public class IasiInfoView extends AbstractToolView {
     }
 
     private class ProductSceneViewHook extends InternalFrameAdapter {
-
+        
         @Override
         public void internalFrameActivated(InternalFrameEvent e) {
-            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
-                if (layer != null) {
-                    modelListener = new IasiListener();
-                    layer.getOverlay().addListener(modelListener);
-                    iasiFile = layer.getOverlay().getIasiFile();
-                }
+            final Container content = getContent(e);
+            if (content instanceof ProductSceneView) {
+                setProductSceneView((ProductSceneView) content);
+            } else {
+                setProductSceneView(null);
             }
         }
 
         @Override
         public void internalFrameDeactivated(InternalFrameEvent e) {
-            final ProductSceneView psv = VisatApp.getApp().getSelectedProductSceneView();
-            if (IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-                final IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
-                if (layer != null) {
-                    layer.getOverlay().removeListener(modelListener);
-                    iasiFile = null;
-                }
+            if (getContent(e) instanceof ProductSceneView) {
+                setProductSceneView(null);
             }
+        }
+
+        private Container getContent(InternalFrameEvent e) {
+            return e.getInternalFrame().getContentPane();
         }
     }
 
