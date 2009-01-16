@@ -103,39 +103,39 @@ public class IasiFootprintVPI implements VisatPlugIn {
         registerProductTreeListener();
         registerInternalFrameHandler();
 
-        final DockableBarManager barManager = visatApp.getMainFrame().getDockableBarManager();
-        DockableBar toolBar = barManager.getDockableBar("iasiToolBar");
-        if (toolBar == null) {
-            toolBar = createToolBar(visatApp);
-            barManager.addDockableBar(toolBar);
-        }
+//        final DockableBarManager barManager = visatApp.getMainFrame().getDockableBarManager();
+//        DockableBar toolBar = barManager.getDockableBar("iasiToolBar");
+//        if (toolBar == null) {
+//            toolBar = createToolBar(visatApp);
+//            barManager.addDockableBar(toolBar);
+//        }
 //        addCommandsToToolBar(visatApp, toolBar, "showIasiOverlay");
         
         ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayerUIFactory());
     }
 
-    public CommandBar createToolBar(final VisatApp visatApp) {
-        final CommandBar toolBar = new CommandBar("iasiToolBar");
-        toolBar.setTitle("IASI Tools");
-        toolBar.getContext().setInitSide(DockableBarContext.DOCK_SIDE_NORTH);
-        toolBar.getContext().setInitIndex(1);
-        toolBar.getContext().setInitSubindex(2);
-        toolBar.setHidable(false);
-
-        toolBar.addDockableBarListener(new DockableBarAdapter() {
-            @Override
-            public void dockableBarShown(DockableBarEvent event) {
-                visatApp.updateState();
-            }
-
-            @Override
-            public void dockableBarHidden(DockableBarEvent event) {
-                visatApp.updateState();
-            }
-        });
-       
-        return toolBar;
-    }
+//    public CommandBar createToolBar(final VisatApp visatApp) {
+//        final CommandBar toolBar = new CommandBar("iasiToolBar");
+//        toolBar.setTitle("IASI Tools");
+//        toolBar.getContext().setInitSide(DockableBarContext.DOCK_SIDE_NORTH);
+//        toolBar.getContext().setInitIndex(1);
+//        toolBar.getContext().setInitSubindex(2);
+//        toolBar.setHidable(false);
+//
+//        toolBar.addDockableBarListener(new DockableBarAdapter() {
+//            @Override
+//            public void dockableBarShown(DockableBarEvent event) {
+//                visatApp.updateState();
+//            }
+//
+//            @Override
+//            public void dockableBarHidden(DockableBarEvent event) {
+//                visatApp.updateState();
+//            }
+//        });
+//       
+//        return toolBar;
+//    }
 
     public void addCommandsToToolBar(VisatApp myVisatApp, DockableBar toolBar, String commandID) {
         final Command command = myVisatApp.getCommandManager().getCommand(commandID);
