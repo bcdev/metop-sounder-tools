@@ -383,7 +383,7 @@ public class IasiInfoView extends AbstractToolView {
         final double[][] spectrum = iasiFile.readSpectrum(ifovId);
 
         for (double[] sample : spectrum) {
-            sample[1] = BlackBody.temperatureForWavenumber(sample[0], sample[1]);
+            sample[1] = BlackBody.temperatureAtWavenumber(sample[0], sample[1]);
         }
 
         return spectrum;

@@ -16,11 +16,14 @@ package org.eumetsat.metop.visat;
 
 import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.binio.CompoundType;
+import com.bc.ceres.binio.CompoundMember;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.eps.EpsMetaData;
 import org.eumetsat.metop.sounder.*;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -107,6 +110,18 @@ abstract class SounderInfoView extends AbstractToolView {
     public void dispose() {
         VisatApp.getApp().removeInternalFrameListener(internalFrameListener);
         super.dispose();
+    }
+
+    protected String getSceneRadianceSequenceName() {
+        return "SCENE_RADIANCE";
+    }
+    
+    protected String getEarthLocationSequenceName() {
+        return "EARTH_LOCATION";
+    }
+
+    protected String getAngularRelationSequenceName() {
+        return "ANGULAR_RELATION";
     }
 
     protected abstract SounderLayer getSounderLayer();
@@ -199,7 +214,7 @@ abstract class SounderInfoView extends AbstractToolView {
         chartPanel.setMaximumDrawHeight(20000);
         chartPanel.setMinimumDrawWidth(0);
         chartPanel.setMaximumDrawWidth(20000);
-        chartPanel.setPreferredSize(new Dimension(200, 200));
+        chartPanel.setPreferredSize(new Dimension(400, 200));
 
         final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
         containerPanel.add(chartPanel);
@@ -215,7 +230,7 @@ abstract class SounderInfoView extends AbstractToolView {
         final XYPlot plot = new XYPlot(spectrum, xAxis, yAxis, renderer);
         configureSpectrumPlot(plot);
 
-        final JFreeChart chart = new JFreeChart("Sounder FOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        final JFreeChart chart = new JFreeChart("Sounder IFOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
         configureSpectrumChart(chart);
 
         return chart;
@@ -286,8 +301,8 @@ abstract class SounderInfoView extends AbstractToolView {
         spectrum.addSeries(series);
     }
 
-    private static AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, "ANGULAR_RELATION", ifov);
+    private AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, getAngularRelationSequenceName(), ifov);
 
         final double factor = SounderConstants.ANGULAR_RELATION_SCALING_FACTOR;
         final double sza = numberData.getNumber(0).doubleValue() * factor;
@@ -298,8 +313,8 @@ abstract class SounderInfoView extends AbstractToolView {
         return new AngularRelation(sza, vza, saa, vaa);
     }
 
-    private static GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, "EARTH_LOCATION", ifov);
+    private GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, getEarthLocationSequenceName(), ifov);
 
         final float factor = (float) SounderConstants.EARTH_LOCATION_SCALING_FACTOR;
         final float lat = numberData.getNumber(0).floatValue() * factor;
@@ -308,8 +323,8 @@ abstract class SounderInfoView extends AbstractToolView {
         return new GeoPos(lat, lon);
     }
 
-    private static double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, "SCENE_RADIANCE", ifov);
+    private double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, getSceneRadianceSequenceName(), ifov);
 
         final double factor = SounderConstants.SCENE_RADIANCE_SCALING_FACTOR;
         final double[] radiances = new double[numberData.getElementCount()];
@@ -318,6 +333,14 @@ abstract class SounderInfoView extends AbstractToolView {
         }
 
         return radiances;
+    }
+
+    private static EpsMetaData getMetaData(EpsFile sounderFile, String sequenceName) throws IOException {
+        final CompoundData compoundData = getCompoundData(sounderFile, 0);
+        final CompoundType compoundType = compoundData.getCompoundType();
+        final CompoundMember compoundMember = compoundType.getMember(compoundType.getMemberIndex(sequenceName));
+
+        return (EpsMetaData) compoundMember.getMetadata();
     }
 
     private static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {

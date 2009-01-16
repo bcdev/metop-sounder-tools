@@ -53,6 +53,34 @@
             <initIndex>0</initIndex>
         </toolView>
         <toolView>
+            <id>org.eumetsat.metop.visat.AmsuInfoView</id>
+            <class>org.eumetsat.metop.visat.AmsuInfoView</class>
+            <title>AMSU - Info</title>
+            <mnemonic/>
+            <accelerator/>
+            <description>Inspect selected AMSU IFOV.</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo24.gif</largeIcon>
+            <helpId>IasiInfoView</helpId>
+            <initState>HIDDEN</initState>
+            <initSide>SOUTH</initSide>
+            <initIndex>0</initIndex>
+        </toolView>
+        <toolView>
+            <id>org.eumetsat.metop.visat.MhsInfoView</id>
+            <class>org.eumetsat.metop.visat.MhsInfoView</class>
+            <title>MHS - Info</title>
+            <mnemonic/>
+            <accelerator/>
+            <description>Inspect selected MHS IFOV.</description>
+            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiInfo24.gif</largeIcon>
+            <helpId>IasiInfoView</helpId>
+            <initState>HIDDEN</initState>
+            <initSide>SOUTH</initSide>
+            <initIndex>0</initIndex>
+        </toolView>
+        <toolView>
             <id>org.eumetsat.metop.visat.IfovColorView</id>
             <class>org.eumetsat.metop.visat.IfovColorView</class>
             <toolBarId>Metop Tools</toolBarId>

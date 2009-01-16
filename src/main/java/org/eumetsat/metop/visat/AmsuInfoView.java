@@ -17,6 +17,7 @@ package org.eumetsat.metop.visat;
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.JFreeChart;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
 
@@ -55,9 +56,8 @@ public class AmsuInfoView extends SounderInfoView {
 
     @Override
     protected NumberAxis createSpectrumPlotXAxis() {
-        // todo - implement
         final NumberAxis axis = new NumberAxis("Channel");
-        axis.setRange(645.0, 2760.0);
+        axis.setRange(0, CHANNEL_FREQUENCIES.length + 1);
 
         return axis;
     }
@@ -74,10 +74,15 @@ public class AmsuInfoView extends SounderInfoView {
     protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
         final XYSeries series = new XYSeries("Sample Values");
 
-        for (int i = 0; i < radiances.length; i++) {
-            series.add(i + 1, BlackBody.temperature(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
+        for (int i = 0; i < CHANNEL_FREQUENCIES.length; i++) {
+            series.add(i + 1, BlackBody.temperatureAtFrequency(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
         }
 
         return series;
+    }
+
+    @Override
+    protected void configureSpectrumChart(JFreeChart spectrumChart) {
+        spectrumChart.setTitle("AMSU IFOV Spectrum");
     }
 }
