@@ -48,6 +48,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractButton;
@@ -277,6 +278,16 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return false;
     }
     
+    private <T extends Layer> void removeLayer(Layer layer, Class<T> layerType) {
+        List<Layer> children = layer.getChildren();
+        for (Layer childLayer : children) {
+            if (childLayer.getClass().isAssignableFrom(layerType)) {
+                children.remove(childLayer);
+                return;
+            }
+        }
+    }
+    
     private static class AvhrrProductInfo {
         private final Product avhrrProduct;
         private final String avhrrFilename;
@@ -353,20 +364,21 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return null;
     }
 
-    private synchronized void removeFootprintLayer(ProductSceneView psv) {
-//        Layer rootLayer = psv.getRootLayer();
-//        if (rootLayer.getChildren().contains(selectedLayer)) {
-//            // todo warn
-//            rootLayer.getChildren().remove(selectedLayer);
-//        } else {
-//            // todo warn
-//        }
-//        rootLayer.
-//        final LayerModel layerModel = psv.getImageDisplay().getLayerModel();
-//        final IasiLayer footprintLayer = getLayer(layerModel, IasiLayer.class);
-//        if (footprintLayer != null) {
-//            layerModel.removeLayer(footprintLayer);
-//        }
+    private <T extends Layer> void removeLayer(ProductSceneView psv, Class<T> layerType) {
+        Layer rootLayer = psv.getRootLayer();
+        boolean hasLayer = hasLayer(rootLayer, layerType);
+        if (hasLayer) {
+            removeLayer(rootLayer, layerType);
+        }
+    }
+    
+    private void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
+        AvhrrOverlay overlay = overlayMap.get(avhrrProduct);
+        if (overlay != null) {
+            EpsFile epsFile = overlay.getEpsFile();
+            epsFile.close();
+            overlayMap.remove(avhrrProduct);
+        }
     }
 
     private static class PatternFileFilter extends FileFilter {
@@ -402,7 +414,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
         public void internalFrameClosed(InternalFrameEvent e) {
             final ProductSceneView psv = getProductSceneView(e);
             if (isValidAvhrrProductSceneView(psv)) {
-                removeFootprintLayer(psv);
+                removeLayer(psv, IasiLayer.class);
+                removeLayer(psv, AmsuSounderLayer.class);
+                removeLayer(psv, MhsSounderLayer.class);
             }
         }
 
@@ -418,15 +432,6 @@ public class IasiFootprintVPI implements VisatPlugIn {
             removeOverlay(avhrrProduct, mhsFootprintLayerModelMap);
         }
         
-        private void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
-            AvhrrOverlay overlay = overlayMap.get(avhrrProduct);
-            if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                epsFile.close();
-                overlayMap.remove(avhrrProduct);
-            }
-        }
-
         public void productSelected(Product product, int clickCount) {
         }
 
@@ -439,29 +444,31 @@ public class IasiFootprintVPI implements VisatPlugIn {
         public void bandSelected(Band band, int clickCount) {
         }
     }
+    
+    private static class AbstractLayerUIExtension extends AbstractLayerUI {
+        
+        @Override
+        public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
+            IasiLayer selectedIasiLayer = (IasiLayer) layer;
+            Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
+            view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
+            Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+            selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
+        }
+    }
 
-    public class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
+    private static class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
 
+        private static final AbstractLayerUI abstractLayerUI = new AbstractLayerUIExtension();
+        
         @Override
         public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
-            return (E) new AbstractLayerUI() {
-                @Override
-                public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
-                    System.out.println("handle selection: "+rectangle);
-                    IasiLayer selectedIasiLayer = (IasiLayer) layer;
-                    Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
-                    view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
-                    Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
-                    selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
-                }
-            };
+            return (E) abstractLayerUI;
         }
 
         @Override
         public Class<?>[] getExtensionTypes() {
             return new Class<?>[] {LayerUI.class};
         }
-
     }
-
 }
