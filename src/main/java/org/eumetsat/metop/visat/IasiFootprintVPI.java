@@ -6,6 +6,8 @@
  */
 package org.eumetsat.metop.visat;
 
+import com.bc.ceres.core.ExtensionFactory;
+import com.bc.ceres.core.ExtensionManager;
 import com.bc.ceres.glayer.Layer;
 import com.jidesoft.action.CommandBar;
 import com.jidesoft.action.DockableBar;
@@ -19,6 +21,8 @@ import org.esa.beam.framework.datamodel.MetadataElement;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.RasterDataNode;
 import org.esa.beam.framework.datamodel.TiePointGrid;
+import org.esa.beam.framework.ui.AbstractLayerUI;
+import org.esa.beam.framework.ui.LayerUI;
 import org.esa.beam.framework.ui.command.Command;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
@@ -31,11 +35,13 @@ import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsFormats;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.iasi.IasiLayer;
+import org.eumetsat.metop.iasi.Ifov;
 import org.eumetsat.metop.mhs.MhsFile;
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
 import java.awt.Container;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -101,6 +107,8 @@ public class IasiFootprintVPI implements VisatPlugIn {
             barManager.addDockableBar(toolBar);
         }
         addCommandsToToolBar(visatApp, toolBar, "showIasiOverlay");
+        
+        ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayerUIFactory());
     }
 
     public CommandBar createToolBar(final VisatApp visatApp) {
@@ -403,14 +411,14 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
 
         public void productRemoved(Product avhrrProduct) {
-//            SounderOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
-//            if (overlay != null) {
-//                EpsFile epsFile = overlay.getEpsFile();
-//                epsFile.close();
-//                iasiFootprintLayerModelMap.remove(avhrrProduct);
-//            }
+            AvhrrOverlay overlay = iasiFootprintLayerModelMap.get(avhrrProduct);
+            if (overlay != null) {
+                EpsFile epsFile = overlay.getEpsFile();
+                epsFile.close();
+                iasiFootprintLayerModelMap.remove(avhrrProduct);
+            }
             
-            AvhrrOverlay overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
+            overlay = amsuFootprintLayerModelMap.get(avhrrProduct);
             if (overlay != null) {
                 EpsFile epsFile = overlay.getEpsFile();
                 epsFile.close();
@@ -436,6 +444,28 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
         public void bandSelected(Band band, int clickCount) {
         }
+    }
+
+    public class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
+
+        @Override
+        public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
+            return (E) new AbstractLayerUI() {
+                @Override
+                public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
+                    System.out.println("handle selection: "+rectangle);
+                    IasiLayer iasiLayer = (IasiLayer) layer;
+                    Ifov ifov = iasiLayer.getIfovForLocation(rectangle.x, rectangle.y);
+                    iasiLayer.getOverlay().setSelectedIfov(ifov);
+                }
+            };
+        }
+
+        @Override
+        public Class<?>[] getExtensionTypes() {
+            return new Class<?>[] {LayerUI.class};
+        }
+
     }
 
 }
