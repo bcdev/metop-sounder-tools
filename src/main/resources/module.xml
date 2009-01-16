@@ -40,6 +40,7 @@
         <toolView>
             <id>org.eumetsat.metop.visat.IasiInfoView</id>
             <class>org.eumetsat.metop.visat.IasiInfoView</class>
+            <toolBarId>Metop Tools</toolBarId>
             <title>IASI - Info</title>
             <mnemonic>I</mnemonic>
             <accelerator>ctrl alt I</accelerator>
@@ -54,6 +55,7 @@
         <toolView>
             <id>org.eumetsat.metop.visat.IfovColorView</id>
             <class>org.eumetsat.metop.visat.IfovColorView</class>
+            <toolBarId>Metop Tools</toolBarId>
             <title>IASI - IfovColorView</title>
             <mnemonic>I</mnemonic>
             <accelerator>ctrl alt I</accelerator>
