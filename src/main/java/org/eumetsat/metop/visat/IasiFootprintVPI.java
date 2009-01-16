@@ -42,6 +42,7 @@ import org.eumetsat.metop.sounder.AvhrrOverlay;
 
 import java.awt.Container;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -106,7 +107,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
             toolBar = createToolBar(visatApp);
             barManager.addDockableBar(toolBar);
         }
-        addCommandsToToolBar(visatApp, toolBar, "showIasiOverlay");
+//        addCommandsToToolBar(visatApp, toolBar, "showIasiOverlay");
         
         ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayerUIFactory());
     }
@@ -454,9 +455,11 @@ public class IasiFootprintVPI implements VisatPlugIn {
                 @Override
                 public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
                     System.out.println("handle selection: "+rectangle);
-                    IasiLayer iasiLayer = (IasiLayer) layer;
-                    Ifov ifov = iasiLayer.getIfovForLocation(rectangle.x, rectangle.y);
-                    iasiLayer.getOverlay().setSelectedIfov(ifov);
+                    IasiLayer selectedIasiLayer = (IasiLayer) layer;
+                    Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
+                    view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
+                    Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+                    selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
                 }
             };
         }
