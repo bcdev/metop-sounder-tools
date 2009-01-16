@@ -16,6 +16,8 @@
  */
 package org.eumetsat.metop.iasi;
 
+import com.bc.ceres.binio.CompoundData;
+
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
@@ -182,12 +184,13 @@ public class IasiOverlay implements AvhrrOverlay {
         final long[] millis;
         final boolean[][] anomalousFlags;
         final byte mode;
-        locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdrIndex);
-        millis = iasiFile.readGEPSDatIasiMdr(mdrIndex);
-        anomalousFlags = iasiFile.readGQisFlagQualMdr(mdrIndex);
-        mode = iasiFile.readMdrGEPSIasiMode(mdrIndex);
+        CompoundData mdr = iasiFile.getMdr(mdrIndex);
+        locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdr);
+        millis = iasiFile.readGEPSDatIasiMdr(mdr);
+        anomalousFlags = iasiFile.readGQisFlagQualMdr(mdr);
+        mode = iasiFile.readMdrGEPSIasiMode(mdr);
         // todo - to Efov shape factory
-        iisLocs = iasiFile.readMdrGEPSLocIasiAvhrrIIS(mdrIndex);
+        iisLocs = iasiFile.readMdrGEPSLocIasiAvhrrIIS(mdr);
 
         final long mdrStartMillis = millis[0];
 

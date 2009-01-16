@@ -97,6 +97,11 @@ public class IasiFile extends EpsFile {
         mdrSequence = getMdrData();
         mdrCount = getMdrCount();
     }
+    
+
+    public CompoundData getMdr(int mdrIndex) throws IOException {
+        return mdrSequence.getCompound(mdrIndex).getCompound(1);
+    }
 
     public GeoPos readGeoPos(int ifovId) throws IOException {
         final int mdrIndex = computeMdrIndex(ifovId);
@@ -115,8 +120,7 @@ public class IasiFile extends EpsFile {
         final double[][][][] data = new double[mdrCount][SNOT][PN][2];
 
         for (int mdrIndex = 0; mdrIndex < mdrCount; mdrIndex++) {
-            CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-            SequenceData geoSondLoc = mdrBody.getSequence("GGeoSondLoc");
+            SequenceData geoSondLoc = getMdr(mdrIndex).getSequence("GGeoSondLoc");
 
             for (int j = 0; j < SNOT; j++) {
                 SequenceData efovSequence = geoSondLoc.getSequence(j);
@@ -127,7 +131,6 @@ public class IasiFile extends EpsFile {
                 }
             }
         }
-
         return data;
     }
 
@@ -135,17 +138,15 @@ public class IasiFile extends EpsFile {
         final double[][][][] data = new double[mdrCount][][][];
 
         for (int i = 0; i < mdrCount; i++) {
-            data[i] = readMdrGEPSLocIasiAvhrrIASI(i);
+            CompoundData mdr = getMdr(i);
+            data[i] = readMdrGEPSLocIasiAvhrrIASI(mdr);
         }
-
         return data;
     }
 
-    double[][][] readMdrGEPSLocIasiAvhrrIASI(int mdrIndex) throws IOException {
+    double[][][] readMdrGEPSLocIasiAvhrrIASI(CompoundData mdr) throws IOException {
         final double[][][] data = new double[SNOT][PN][2];
-
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        SequenceData mdrData = mdrBody.getSequence("GEPSLocIasiAvhrr_IASI");
+        SequenceData mdrData = mdr.getSequence("GEPSLocIasiAvhrr_IASI");
 
         for (int j = 0; j < SNOT; j++) {
             SequenceData efovData = mdrData.getSequence(j);
@@ -159,21 +160,9 @@ public class IasiFile extends EpsFile {
         return data;
     }
 
-    public double[][][][] readGEPSLocIasiAvhrrIIS() throws IOException {
-        final double[][][][] data = new double[mdrCount][][][];
-
-        for (int i = 0; i < mdrCount; i++) {
-            data[i] = readMdrGEPSLocIasiAvhrrIIS(i);
-        }
-
-        return data;
-    }
-
-    double[][][] readMdrGEPSLocIasiAvhrrIIS(int mdrIndex) throws IOException {
+    double[][][] readMdrGEPSLocIasiAvhrrIIS(CompoundData mdr) throws IOException {
         final double[][][] data = new double[SNOT][SGI][2];
-
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        SequenceData mdrData = mdrBody.getSequence("GEPSLocIasiAvhrr_IIS");
+        SequenceData mdrData = mdr.getSequence("GEPSLocIasiAvhrr_IIS");
         
         for (int j = 0; j < SNOT; j++) {
             SequenceData efovData = mdrData.getSequence(j);
@@ -187,20 +176,9 @@ public class IasiFile extends EpsFile {
         return data;
     }
 
-    public long[][] readGEPSDatIasi() throws IOException {
-        final long[][] data = new long[mdrCount][];
-
-        for (int i = 0; i < mdrCount; i++) {
-            data[i] = readGEPSDatIasiMdr(i);
-        }
-
-        return data;
-    }
-
-    long[] readGEPSDatIasiMdr(int mdrIndex) throws IOException {
+    long[] readGEPSDatIasiMdr(CompoundData mdr) throws IOException {
         final long[] data = new long[SNOT];
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        SequenceData mdrData = mdrBody.getSequence("GEPSDatIasi");
+        SequenceData mdrData = mdr.getSequence("GEPSDatIasi");
 
         for (int j = 0; j < SNOT; j++) {
             CompoundData efovData = mdrData.getCompound(j);
@@ -210,32 +188,21 @@ public class IasiFile extends EpsFile {
         return data;
     }
 
-//    public ProductData.UTC readGEPSDatIasi(int ifovIndex) throws IOException {
-//        final int efovIndex = ifovIndex / PN;
-//        final int mdrIndex = efovIndex / SNOT;
-//        final long efovOffset = (efovIndex % SNOT) * 6;
-//
-//        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-//        SequenceData mdrData = mdrBody.getSequence("GEPSDatIasi");
-//        
-//        return getDatIasi(mdrData, ???);
-//    }
-
-    public boolean[][][] readGQisFlagQual() throws IOException {
+    boolean[][][] readGQisFlagQual() throws IOException {
         final boolean[][][] data = new boolean[mdrCount][][];
 
         for (int mdrIndex = 0; mdrIndex < mdrCount; mdrIndex++) {
-            data[mdrIndex] = readGQisFlagQualMdr(mdrIndex);
+            CompoundData mdr = getMdr(mdrIndex);
+            data[mdrIndex] = readGQisFlagQualMdr(mdr);
         }
 
         return data;
     }
 
-    boolean[][] readGQisFlagQualMdr(int mdrIndex) throws IOException {
+    boolean[][] readGQisFlagQualMdr(CompoundData mdr) throws IOException {
         final boolean[][] data = new boolean[SNOT][PN];
 
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        SequenceData mdrData = mdrBody.getSequence("GQisFlagQual");
+        SequenceData mdrData = mdr.getSequence("GQisFlagQual");
         
         for (int j = 0; j < SNOT; j++) {
             SequenceData efovData = mdrData.getSequence(j);
@@ -262,15 +229,15 @@ public class IasiFile extends EpsFile {
         final byte[] modes = new byte[mdrCount];
 
         for (int mdrIndex = 0; mdrIndex < mdrCount; mdrIndex++) {
-            modes[mdrIndex] = readMdrGEPSIasiMode(mdrIndex);
+            CompoundData mdr = getMdr(mdrIndex);
+            modes[mdrIndex] = readMdrGEPSIasiMode(mdr);
         }
 
         return modes;
     }
 
-    byte readMdrGEPSIasiMode(int mdrIndex) throws IOException {
-        CompoundData mdrBody = mdrSequence.getCompound(mdrIndex).getCompound(1);
-        SequenceData bitfield4Bytes = mdrBody.getSequence("GEPSIasiMode");
+    byte readMdrGEPSIasiMode(CompoundData mdr) throws IOException {
+        SequenceData bitfield4Bytes = mdr.getSequence("GEPSIasiMode");
         return bitfield4Bytes.getByte(2);
     }
     
