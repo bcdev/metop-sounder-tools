@@ -446,9 +446,13 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
     private static class AbstractLayerUIExtension extends AbstractLayerUI {
 
+        protected AbstractLayerUIExtension(Layer layer) {
+            super(layer);
+        }
+
         @Override
-        public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
-            IasiLayer selectedIasiLayer = (IasiLayer) layer;
+        public void handleSelection(ProductSceneView view, Rectangle rectangle) {
+            IasiLayer selectedIasiLayer = (IasiLayer) getLayer();
             Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
             view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
             Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
@@ -458,11 +462,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
     private static class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
 
-        private static final AbstractLayerUI abstractLayerUI = new AbstractLayerUIExtension();
-
         @Override
         public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
-            return (E) abstractLayerUI;
+            return (E) new AbstractLayerUIExtension(iasiLayer);
         }
 
         @Override
