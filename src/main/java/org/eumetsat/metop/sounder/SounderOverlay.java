@@ -19,10 +19,7 @@ package org.eumetsat.metop.sounder;
 import org.esa.beam.framework.datamodel.Product;
 import org.eumetsat.metop.eps.EpsFile;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 
 public abstract class SounderOverlay implements AvhrrOverlay {
@@ -72,12 +69,12 @@ public abstract class SounderOverlay implements AvhrrOverlay {
     public abstract SounderIfov[] getIfovs();
 
     protected void fireSelectionChanged() {
+        final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
-            final Set<SounderOverlayListener> listenerSet = listenerMap.keySet();
-
-            for (final SounderOverlayListener listener : listenerSet) {
-                listener.selectionChanged(this);
-            }
+            listenerSet = new HashSet<SounderOverlayListener>(listenerMap.keySet());
+        }
+        for (final SounderOverlayListener listener : listenerSet) {
+            listener.selectionChanged(this);
         }
     }
 
