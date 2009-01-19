@@ -16,8 +16,6 @@
  */
 package org.eumetsat.metop.iasi;
 
-import com.bc.ceres.binio.CompoundData;
-
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.util.Debug;
@@ -34,9 +32,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
+
+import com.bc.ceres.binio.CompoundData;
 
 
 public class IasiOverlay implements AvhrrOverlay {

@@ -21,6 +21,7 @@ import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
+import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.SounderOverlay;
 
@@ -32,19 +33,14 @@ import java.io.IOException;
 public class MhsSounderOverlay extends SounderOverlay {
 
     private static final float ifovSize = 15.88f/1.1f;
-    private final MhsFile mhsFile;
-    private SounderIfov[] ifovs;
     
     public MhsSounderOverlay(MhsFile mhsFile, Product avhrrProduct) {
         super(mhsFile, avhrrProduct);
-        this.mhsFile = mhsFile;
-    }
-    
-    public MhsFile getMhsFile() {
-        return mhsFile;
     }
 
-    private SounderIfov[] readIfovs() throws IOException {
+    @Override
+    protected SounderIfov[] readIfovs() throws IOException {
+        EpsFile mhsFile = getEpsFile();
         final int height = mhsFile.getMdrCount();
         final int width = MhsFile.PRODUCT_WIDTH;
         final float scalingFactor = 1E-4f;
@@ -70,18 +66,5 @@ public class MhsSounderOverlay extends SounderOverlay {
             }
         }
         return allIfovs;
-    }
-
-    @Override
-    public synchronized SounderIfov[] getIfovs() {
-        if (ifovs == null) {
-            try {
-                ifovs = readIfovs();
-                setSelectedIfov(ifovs[0]);
-            } catch (IOException e) {
-                ifovs = new SounderIfov[0];
-            }
-        }
-        return ifovs;
     }
 }

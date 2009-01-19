@@ -17,17 +17,26 @@
 package org.eumetsat.metop.sounder;
 
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.util.Debug;
 import org.eumetsat.metop.eps.EpsFile;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+
+import javax.swing.SwingWorker;
 
 
 public abstract class SounderOverlay implements AvhrrOverlay {
 
+    private static final SounderIfov[] NO_DATA = new SounderIfov[0];
+    
     private final EpsFile epsfile;
     private final Product avhrrProduct;
     private final Map<SounderOverlayListener, Object> listenerMap;
-
+    
+    private SounderIfov[] ifovs;
+    private boolean loadingIfovs;
     private SounderIfov selectedIfov;
 
     public SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
@@ -66,8 +75,39 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         listenerMap.remove(listener);
     }
 
-    public abstract SounderIfov[] getIfovs();
+    public synchronized SounderIfov[] getIfovs() {
+        if (ifovs == null) {
+            if (loadingIfovs) {
+                return NO_DATA;
+            }
+            SwingWorker<SounderIfov[], Object> worker = new SwingWorker<SounderIfov[], Object>() {
 
+                @Override
+                protected SounderIfov[] doInBackground() throws Exception {
+                    return readIfovs();
+                }
+                
+                @Override
+                protected void done() {
+                    try {
+                        ifovs = get();
+                        loadingIfovs = false;
+                        fireDataChanged();
+                    } catch (Exception e) {
+                        loadingIfovs = false;
+                        Debug.trace(e);
+                    }
+                }
+                
+            };
+            worker.execute();
+            return NO_DATA;
+        }
+        return ifovs;
+    }
+    
+    protected abstract SounderIfov[] readIfovs() throws IOException;
+    
     protected void fireSelectionChanged() {
         final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
@@ -75,6 +115,16 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         }
         for (final SounderOverlayListener listener : listenerSet) {
             listener.selectionChanged(this);
+        }
+    }
+    
+    protected void fireDataChanged() {
+        final Set<SounderOverlayListener> listenerSet;
+        synchronized (listenerMap) {
+            listenerSet = new HashSet<SounderOverlayListener>(listenerMap.keySet());
+        }
+        for (final SounderOverlayListener listener : listenerSet) {
+            listener.dataChanged(this);
         }
     }
 

@@ -24,7 +24,9 @@ import com.bc.ceres.grender.Viewport;
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
+import org.eumetsat.metop.iasi.Efov;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -37,13 +39,15 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 
+import javax.swing.SwingWorker;
+
 
 public class SounderLayer extends Layer {
 
     private final SounderOverlay overlay;
     
-    private Color[] colorPalette;
-    private ColorPaletteDef paletteDef;
+    private ColorInfo colorInfo;
+    private boolean loadingColorInfo;
     
     private final BasicStroke borderStroke;
     private final Color ifovSelectedColor;
@@ -52,7 +56,6 @@ public class SounderLayer extends Layer {
     private final int width;
 
     private BandInfo bandInfo;
-    private ProductData buffer;
 
     public SounderLayer(SounderOverlay overlay, int productWidth) throws IOException {
         this.overlay = overlay;
@@ -68,11 +71,9 @@ public class SounderLayer extends Layer {
         return bandInfo;
     }
 
-    public void setBandInfo(BandInfo bandInfo) throws IOException {
+    public synchronized void setBandInfo(BandInfo bandInfo) throws IOException {
         this.bandInfo = bandInfo;
-        buffer = ProductData.createInstance(bandInfo.getType(), width * height);
-        overlay.getEpsFile().readData(bandInfo.getReader(), 0, 0, width, height, buffer , ProgressMonitor.NULL);
-        computeColorPalette();
+        this.colorInfo = null;
     }
 
     public SounderOverlay getOverlay() {
@@ -84,6 +85,11 @@ public class SounderLayer extends Layer {
         if (overlay.getIfovs().length == 0) {
             return;
         }
+        ColorInfo cInfo = getColorInfo();
+        if (cInfo == null) {
+            return;
+        }
+        
         final Graphics2D g2d = rendering.getGraphics();
         final Viewport vp = rendering.getViewport();
         final AffineTransform transformSave = g2d.getTransform();
@@ -114,7 +120,7 @@ public class SounderLayer extends Layer {
                     final Shape ifovShape = ifov.shape;
                     boolean isVisible = clip == null || ifovShape.intersects(clip);
                     if (isVisible) {
-                        Color fillColor = getColor(ifov.ifovInMdrIndex, ifov.mdrIndex);
+                        Color fillColor = cInfo.getColor(ifov.ifovInMdrIndex, ifov.mdrIndex);
                         g2d.setPaint(fillColor);
                         g2d.fill(ifovShape);
                         if (selectedIfov != null && selectedIfov == ifov) {
@@ -135,24 +141,69 @@ public class SounderLayer extends Layer {
         }
     }
     
-    public Color getColor(int x, int y) {
-        double sample = buffer.getElemDoubleAt(x + y * width);
-        int numColors = colorPalette.length;
-        double min = paletteDef.getMinDisplaySample();
-        double max = paletteDef.getMaxDisplaySample();
-        int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
-        return colorPalette[index];
+    private synchronized ColorInfo getColorInfo() {
+        if (colorInfo != null) {
+            return colorInfo;
+        }
+        if (loadingColorInfo) {
+            return null;
+        }
+        loadingColorInfo = true;
+        SwingWorker<ColorInfo, Object> worker = new SwingWorker<ColorInfo, Object>() {
+
+            @Override
+            protected ColorInfo doInBackground() throws Exception {
+                ProductData buffer = ProductData.createInstance(bandInfo.getType(), width * height);
+                overlay.getEpsFile().readData(bandInfo.getReader(), 0, 0, width, height, buffer , ProgressMonitor.NULL);
+                return new ColorInfo(buffer);
+            }
+            
+            @Override
+            protected void done() {
+                try {
+                    colorInfo = get();
+                    loadingColorInfo = false;
+                    fireLayerDataChanged(null);
+                } catch (Exception e) {
+                    loadingColorInfo = false;
+                    Debug.trace(e);
+                }
+            }
+            
+        }; 
+        worker.execute();
+        return null;
     }
     
-    private void computeColorPalette() {
-        int valueMin = Integer.MAX_VALUE;
-        int valueMax = 0;
-        for (int i = 0; i < buffer.getNumElems(); i++) {
-            final int value = buffer.getElemIntAt(i);
-            valueMin = Math.min(valueMin, value);
-            valueMax = Math.max(valueMax, value);
+    private class ColorInfo {
+        private final ProductData buffer;
+        private ColorPaletteDef paletteDef;
+        private Color[] colorPalette;
+        
+        public ColorInfo(ProductData buffer) {
+            this.buffer = buffer;
+            computeColorPalette();
         }
-        paletteDef = new ColorPaletteDef(valueMin, valueMax);
-        colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
+        
+        public Color getColor(int x, int y) {
+            double sample = buffer.getElemDoubleAt(x + y * width);
+            int numColors = colorPalette.length;
+            double min = paletteDef.getMinDisplaySample();
+            double max = paletteDef.getMaxDisplaySample();
+            int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
+            return colorPalette[index];
+        }
+        
+        private void computeColorPalette() {
+            int valueMin = Integer.MAX_VALUE;
+            int valueMax = 0;
+            for (int i = 0; i < buffer.getNumElems(); i++) {
+                final int value = buffer.getElemIntAt(i);
+                valueMin = Math.min(valueMin, value);
+                valueMax = Math.max(valueMax, value);
+            }
+            paletteDef = new ColorPaletteDef(valueMin, valueMax);
+            colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
+        }
     }
 }

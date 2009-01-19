@@ -22,4 +22,5 @@ package org.eumetsat.metop.sounder;
  */
 public interface SounderOverlayListener {
     void selectionChanged(SounderOverlay overlay);
+    void dataChanged(SounderOverlay overlay);
 }

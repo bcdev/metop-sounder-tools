@@ -66,6 +66,11 @@ abstract class SounderInfoView extends AbstractToolView {
             public void selectionChanged(SounderOverlay overlay) {
                 update(overlay);
             }
+
+            @Override
+            public void dataChanged(SounderOverlay overlay) {
+                update(overlay);
+            }
         };
         internalFrameListener = new InternalFrameAdapter() {
             @Override
