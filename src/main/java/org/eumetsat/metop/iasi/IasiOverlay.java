@@ -57,10 +57,9 @@ public class IasiOverlay implements AvhrrOverlay {
     private static final int SS = 8700;
     private static final int VP = 1;
     
-    public static final int IFOV_SIZE = 12;
-    public static final float IFOV_DIST = 18;
+    private static final int IFOV_SIZE = 12;
+    private static final float IFOV_DIST = 18;
 
-    
     private static final Efov[] NO_DATA = new Efov[0];
     
     private final IasiFile iasiFile;
@@ -97,7 +96,7 @@ public class IasiOverlay implements AvhrrOverlay {
 
                 @Override
                 protected Efov[] doInBackground() throws Exception {
-                    return createEfovs("norman");
+                    return createEfovs("fast");
                 }
                 
                 @Override
@@ -155,7 +154,6 @@ public class IasiOverlay implements AvhrrOverlay {
         }
     }
 
-
     public Product getAvhrrProduct() {
         return avhrrProduct;
     }
@@ -188,31 +186,18 @@ public class IasiOverlay implements AvhrrOverlay {
     }
     
     private Efov[] createEfovs(String efovStyle) {
-        final Efov[] efovs = new Efov[mdrCount * SNOT];
+        final Efov[] newEfovs = new Efov[mdrCount * SNOT];
 
         for (int mdrIndex = 0; mdrIndex < mdrCount; mdrIndex++) {
             try {
-                readEfovMdr(mdrIndex, efovStyle, efovs, mdrIndex * SNOT);
+                readEfovMdr(mdrIndex, efovStyle, newEfovs, mdrIndex * SNOT);
             } catch (IOException e) {
-                    return Arrays.copyOfRange(efovs, 0, mdrIndex * SNOT);
+                    return Arrays.copyOfRange(newEfovs, 0, mdrIndex * SNOT);
             }
         }
-
-        return efovs;
+        return newEfovs;
     }
     
-    public Ifov readIfovMdr(int ifovId) {
-        final Efov[] efovs = new Efov[SNOT];
-        try {
-            readEfovMdr(computeMdrIndex(ifovId), "norman", efovs, 0);
-            final int efovInMdrIndex = ifovId % (SNOT);
-            return efovs[efovInMdrIndex].getIfovs()[computeIfovIndex(ifovId)];
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private void readEfovMdr(int mdrIndex, String efovStyle, Efov[] efovs, int dest) throws IOException {
         final double[][][] locs;
         final double[][][] iisLocs;
@@ -290,10 +275,26 @@ public class IasiOverlay implements AvhrrOverlay {
             return createEfovBoundShape(ifovs);
         } else if ("norman".equals(efovStyle)) {
             return createNormanShape(ifovs);
+        } else if ("fast".equals(efovStyle)) {
+            return createFastShape(ifovs);
         }
         return createIisEfovShape(mdrStartMillis, iisLocs);
     }
 
+    private Shape createFastShape(Ifov[] ifovs) {
+        boolean started = false;
+        GeneralPath path = new GeneralPath();
+        for (Ifov ifov : ifovs) {
+            if (!started) {
+                path.moveTo(ifov.getPixelX(), ifov.getPixelY());
+                started = true;
+            } else {
+                path.lineTo(ifov.getPixelX(), ifov.getPixelY());
+            }
+        }
+        path.closePath();
+        return path;
+    }
 
     private Shape createIisGridShape(long mdrStartMillis, double[][] iisLocs) {
         GeneralPath path = new GeneralPath();
