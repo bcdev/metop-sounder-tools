@@ -9,18 +9,8 @@ package org.eumetsat.metop.visat;
 import com.bc.ceres.core.ExtensionFactory;
 import com.bc.ceres.core.ExtensionManager;
 import com.bc.ceres.glayer.Layer;
-import com.jidesoft.action.CommandBar;
 import com.jidesoft.action.DockableBar;
-import com.jidesoft.action.DockableBarContext;
-import com.jidesoft.action.DockableBarManager;
-import com.jidesoft.action.event.DockableBarAdapter;
-import com.jidesoft.action.event.DockableBarEvent;
-
-import org.esa.beam.framework.datamodel.Band;
-import org.esa.beam.framework.datamodel.MetadataElement;
-import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.RasterDataNode;
-import org.esa.beam.framework.datamodel.TiePointGrid;
+import org.esa.beam.framework.datamodel.*;
 import org.esa.beam.framework.ui.AbstractLayerUI;
 import org.esa.beam.framework.ui.LayerUI;
 import org.esa.beam.framework.ui.command.Command;
@@ -40,6 +30,10 @@ import org.eumetsat.metop.mhs.MhsFile;
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
+import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.filechooser.FileFilter;
 import java.awt.Container;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -50,15 +44,6 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.AbstractButton;
-import javax.swing.Box;
-import javax.swing.JFileChooser;
-import javax.swing.JInternalFrame;
-import javax.swing.JOptionPane;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-import javax.swing.filechooser.FileFilter;
 
 public class IasiFootprintVPI implements VisatPlugIn {
 
@@ -75,7 +60,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
             "radiance_4",
             "radiance_5",
     };
-    
+
     private static final FileFilter IASI_NAME_FILTER = new PatternFileFilter("IASI");
     private static final FileFilter AMSU_NAME_FILTER = new PatternFileFilter("AMSU");
     private static final FileFilter MHS_NAME_FILTER = new PatternFileFilter("MHSx");
@@ -95,6 +80,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     /////////////////////////////////////////////////////////////////////////
     // VisatPlugIn interface implementation
 
+    @Override
     public void start(final VisatApp visatApp) {
         this.visatApp = visatApp;
         iasiFootprintLayerModelMap = new HashMap<Product, AvhrrOverlay>(11);
@@ -110,7 +96,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
 //            barManager.addDockableBar(toolBar);
 //        }
 //        addCommandsToToolBar(visatApp, toolBar, "showIasiOverlay");
-        
+
         ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayerUIFactory());
     }
 
@@ -146,6 +132,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         toolBar.add(Box.createHorizontalStrut(1));
     }
 
+    @Override
     public void stop(VisatApp visatApp) {
     }
 
@@ -155,6 +142,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
      * <p>If a plug-in uses top-level containers such as dialogs or frames, implementors of this method should invoke
      * <code>SwingUtilities.updateComponentTreeUI()</code> on such containers.
      */
+    @Override
     public void updateComponentTreeUI() {
     }
 
@@ -229,7 +217,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         Layer rootLayer = psv.getRootLayer();
         final Product avhrrProduct = psv.getProduct();
         final File avhrrFileLocation = avhrrProduct.getFileLocation();
-        if(avhrrFileLocation == null) {
+        if (avhrrFileLocation == null) {
             // might be a subset - subsets are not yet supported
             return;
         }
@@ -247,12 +235,15 @@ public class IasiFootprintVPI implements VisatPlugIn {
         FilenameFilter iasiTimeFilter = new IasiFile.NameFilter(avhrrInfo.avhrrFilename);
         FilenameFilter amsuTimeFilter = new AmsuFile.NameFilter(avhrrInfo.avhrrFilename);
         FilenameFilter mhsTimeFilter = new MhsFile.NameFilter(avhrrInfo.avhrrFilename);
-        
-        addOverlayLayer(rootLayer, avhrrInfo, amsuTimeFilter, AMSU_NAME_FILTER, AmsuSounderLayer.class, amsuFootprintLayerModelMap, "AMSU");
-        addOverlayLayer(rootLayer, avhrrInfo, mhsTimeFilter, MHS_NAME_FILTER, MhsSounderLayer.class, mhsFootprintLayerModelMap, "MHS");
-        addOverlayLayer(rootLayer, avhrrInfo, iasiTimeFilter, IASI_NAME_FILTER, IasiLayer.class, iasiFootprintLayerModelMap, "IASI");
+
+        addOverlayLayer(rootLayer, avhrrInfo, amsuTimeFilter, AMSU_NAME_FILTER, AmsuSounderLayer.class,
+                        amsuFootprintLayerModelMap, "AMSU");
+        addOverlayLayer(rootLayer, avhrrInfo, mhsTimeFilter, MHS_NAME_FILTER, MhsSounderLayer.class,
+                        mhsFootprintLayerModelMap, "MHS");
+        addOverlayLayer(rootLayer, avhrrInfo, iasiTimeFilter, IASI_NAME_FILTER, IasiLayer.class,
+                        iasiFootprintLayerModelMap, "IASI");
     }
-    
+
     private <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
         if (layerType.isAssignableFrom(rootLayer.getClass())) {
             return (T) rootLayer;
@@ -265,7 +256,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
         return null;
     }
-    
+
     private <T extends Layer> boolean hasLayer(Layer layer, Class<T> layerType) {
         if (layerType.isAssignableFrom(layer.getClass())) {
             return true;
@@ -277,7 +268,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
         return false;
     }
-    
+
     private <T extends Layer> void removeLayer(Layer layer, Class<T> layerType) {
         List<Layer> children = layer.getChildren();
         for (Layer childLayer : children) {
@@ -287,12 +278,13 @@ public class IasiFootprintVPI implements VisatPlugIn {
             }
         }
     }
-    
+
     private static class AvhrrProductInfo {
         private final Product avhrrProduct;
         private final String avhrrFilename;
         private final File avhrrDir;
         private final long avhrrStartTime;
+
         private AvhrrProductInfo(Product avhrrProduct, String avhrrFilename, File avhrrDir, long avhrrStartTime) {
             this.avhrrProduct = avhrrProduct;
             this.avhrrFilename = avhrrFilename;
@@ -304,7 +296,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, Map<Product, AvhrrOverlay> overlayMap, String type) {
         if (!hasLayer(rootLayer, layerType)) {
             AvhrrOverlay overlay = overlayMap.get(avhrrInfo.avhrrProduct);
-            if (overlay == null) { 
+            if (overlay == null) {
                 EpsFile epsFile = openEpsFile(avhrrInfo, timeFilter, nameFilter, type);
                 if (epsFile != null) {
                     overlay = epsFile.createOverlay(avhrrInfo.avhrrProduct);
@@ -321,15 +313,15 @@ public class IasiFootprintVPI implements VisatPlugIn {
             }
         }
     }
-    
+
     private EpsFile openEpsFile(AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, String type) {
         File file = EpsFile.findFile(avhrrInfo.avhrrStartTime, avhrrInfo.avhrrDir.listFiles(timeFilter));
         if (file == null) {
-            if (visatApp.showQuestionDialog(type +" Footprint Layer",
-                                            "No matching "+type+" file was found for this AVHRR scene.\n" +
+            if (visatApp.showQuestionDialog(type + " Footprint Layer",
+                                            "No matching " + type + " file was found for this AVHRR scene.\n" +
                                                     "Do you want to choose one manually?",
                                             FOOTPRINT_CHOOSE_OPTION_NAME) == JOptionPane.YES_OPTION) {
-                file = showOpenFileDialog("Open "+type+" File", nameFilter, avhrrInfo.avhrrDir);
+                file = showOpenFileDialog("Open " + type + " File", nameFilter, avhrrInfo.avhrrDir);
             }
         }
         if (file == null) {
@@ -338,8 +330,8 @@ public class IasiFootprintVPI implements VisatPlugIn {
         try {
             return EpsFormats.getInstance().openFile(file);
         } catch (IOException e) {
-            visatApp.showErrorDialog(type+" Footprint Layer",
-                                     "Not able to create "+type+" Footprint layer.");
+            visatApp.showErrorDialog(type + " Footprint Layer",
+                                     "Not able to create " + type + " Footprint layer.");
             return null;
         }
     }
@@ -371,7 +363,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
             removeLayer(rootLayer, layerType);
         }
     }
-    
+
     private void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
         AvhrrOverlay overlay = overlayMap.get(avhrrProduct);
         if (overlay != null) {
@@ -384,11 +376,12 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private static class PatternFileFilter extends FileFilter {
         private final String matchExpression;
         private final String description;
-        
+
         public PatternFileFilter(String typeIdentifier) {
             this.matchExpression = typeIdentifier + "_.*.nat";
             this.description = typeIdentifier + " Files (*.nat)";
         }
+
         @Override
         public boolean accept(File f) {
             return f.getName().matches(matchExpression);
@@ -423,30 +416,36 @@ public class IasiFootprintVPI implements VisatPlugIn {
     }
 
     private class ProductTreeHandler implements ProductTreeListener {
+        @Override
         public void productAdded(Product product) {
         }
 
+        @Override
         public void productRemoved(Product avhrrProduct) {
             removeOverlay(avhrrProduct, iasiFootprintLayerModelMap);
             removeOverlay(avhrrProduct, amsuFootprintLayerModelMap);
             removeOverlay(avhrrProduct, mhsFootprintLayerModelMap);
         }
-        
+
+        @Override
         public void productSelected(Product product, int clickCount) {
         }
 
+        @Override
         public void metadataElementSelected(MetadataElement group, int clickCount) {
         }
 
+        @Override
         public void tiePointGridSelected(TiePointGrid tiePointGrid, int clickCount) {
         }
 
+        @Override
         public void bandSelected(Band band, int clickCount) {
         }
     }
-    
+
     private static class AbstractLayerUIExtension extends AbstractLayerUI {
-        
+
         @Override
         public void handleSelection(Layer layer, ProductSceneView view, Rectangle rectangle) {
             IasiLayer selectedIasiLayer = (IasiLayer) layer;
@@ -460,7 +459,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private static class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
 
         private static final AbstractLayerUI abstractLayerUI = new AbstractLayerUIExtension();
-        
+
         @Override
         public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
             return (E) abstractLayerUI;
@@ -468,7 +467,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
         @Override
         public Class<?>[] getExtensionTypes() {
-            return new Class<?>[] {LayerUI.class};
+            return new Class<?>[]{LayerUI.class};
         }
     }
 }
