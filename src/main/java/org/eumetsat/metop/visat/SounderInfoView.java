@@ -15,9 +15,9 @@
 package org.eumetsat.metop.visat;
 
 import com.bc.ceres.binio.CompoundData;
-import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.CompoundMember;
+import com.bc.ceres.binio.CompoundType;
+import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
@@ -25,22 +25,23 @@ import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
 import org.eumetsat.metop.sounder.*;
+import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleInsets;
 
 import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
@@ -48,7 +49,7 @@ import java.io.IOException;
 abstract class SounderInfoView extends AbstractToolView {
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
-    private XYSeriesCollection spectrum;
+    private XYSeriesCollection spectrumDataset;
     private JTextField latTextField;
     private JTextField lonTextField;
     private JTextField mdrIndexTextField;
@@ -115,7 +116,7 @@ abstract class SounderInfoView extends AbstractToolView {
     protected String getSceneRadianceSequenceName() {
         return "SCENE_RADIANCE";
     }
-    
+
     protected String getEarthLocationSequenceName() {
         return "EARTH_LOCATION";
     }
@@ -126,26 +127,43 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected abstract SounderLayer getSounderLayer();
 
-    protected abstract NumberAxis createSpectrumPlotXAxis();
-
-    protected abstract NumberAxis createSpectrumPlotYAxis();
-
     protected abstract XYSeries createSpectrumPlotXYSeries(double[] radiances);
 
-    protected XYItemRenderer createSpectrumPlotXYItemRenderer() {
-        final XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
-        renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
-
-        return renderer;
+    protected void configureSpectrumChart(JFreeChart chart) {
+        chart.setBackgroundPaint(Color.white);
     }
 
-    protected void configureSpectrumPlot(XYPlot spectrumPlot) {
-        spectrumPlot.setOrientation(PlotOrientation.VERTICAL);
-        spectrumPlot.setNoDataMessage("No data");
+    protected void configureSpectrumPlot(XYPlot plot) {
+        plot.setBackgroundPaint(Color.lightGray);
+        plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
+        plot.setDomainGridlinePaint(Color.white);
+        plot.setRangeGridlinePaint(Color.white);
+
+        plot.setDomainCrosshairVisible(true);
+        plot.setRangeCrosshairVisible(false);
+
+        plot.setNoDataMessage("No data");
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    protected void configureSpectrumChart(JFreeChart spectrumChart) {
+    protected void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
+        renderer.setBaseShapesVisible(false);
+        renderer.setBaseShapesFilled(true);
+    }
+
+    protected void configureSpectrumPlotXAxis(NumberAxis axis) {
+        axis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+    }
+
+    protected void configureSpectrumPlotYAxis(NumberAxis axis) {
+        axis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+    }
+
+    protected void configureSpectrumChartPanel(ChartPanel chartPanel) {
+        chartPanel.setMinimumDrawHeight(0);
+        chartPanel.setMaximumDrawHeight(20000);
+        chartPanel.setMinimumDrawWidth(0);
+        chartPanel.setMaximumDrawWidth(20000);
+        chartPanel.setPreferredSize(new Dimension(400, 200));
     }
 
     private Component createInfoComponent() {
@@ -206,34 +224,24 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private JComponent createSpectrumChartComponent() {
-        spectrum = new XYSeriesCollection();
+        spectrumDataset = new XYSeriesCollection();
 
-        final JFreeChart chart = createSpectrumChart();
+        final JFreeChart chart = createSpectrumChart(spectrumDataset);
+        configureSpectrumChart(chart);
+
+        final XYPlot plot = (XYPlot) chart.getPlot();
+        configureSpectrumPlot(plot);
+        configureSpectrumPlotRenderer((XYLineAndShapeRenderer) plot.getRenderer());
+        configureSpectrumPlotYAxis((NumberAxis) plot.getRangeAxis());
+        configureSpectrumPlotXAxis((NumberAxis) plot.getDomainAxis());
+
         final ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setMinimumDrawHeight(0);
-        chartPanel.setMaximumDrawHeight(20000);
-        chartPanel.setMinimumDrawWidth(0);
-        chartPanel.setMaximumDrawWidth(20000);
-        chartPanel.setPreferredSize(new Dimension(400, 200));
+        configureSpectrumChartPanel(chartPanel);
 
         final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
         containerPanel.add(chartPanel);
 
         return containerPanel;
-    }
-
-    private JFreeChart createSpectrumChart() {
-        final NumberAxis xAxis = createSpectrumPlotXAxis();
-        final NumberAxis yAxis = createSpectrumPlotYAxis();
-        final XYItemRenderer renderer = createSpectrumPlotXYItemRenderer();
-
-        final XYPlot plot = new XYPlot(spectrum, xAxis, yAxis, renderer);
-        configureSpectrumPlot(plot);
-
-        final JFreeChart chart = new JFreeChart("Sounder IFOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
-        configureSpectrumChart(chart);
-
-        return chart;
     }
 
     private void update(SounderOverlay overlay) {
@@ -283,7 +291,7 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private void updateSpectrumDataset(SounderOverlay overlay) {
-        spectrum.removeAllSeries();
+        spectrumDataset.removeAllSeries();
         final SounderIfov selectedIfov = overlay.getSelectedIfov();
         if (selectedIfov == null) {
             return;
@@ -298,7 +306,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
         final XYSeries series = createSpectrumPlotXYSeries(radiances);
 
-        spectrum.addSeries(series);
+        spectrumDataset.addSeries(series);
     }
 
     private AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
@@ -335,6 +343,21 @@ abstract class SounderInfoView extends AbstractToolView {
         return radiances;
     }
 
+    private static JFreeChart createSpectrumChart(XYSeriesCollection dataset) {
+        return ChartFactory.createXYLineChart(
+                "Sounder IFOV Spectrum",         // chart title
+                "Channel",                       // x axis label
+                "Brightness Temperature (K)",    // y axis label
+                dataset,
+                PlotOrientation.VERTICAL,
+                false,                           // include legend
+                true,                            // tooltips
+                false                            // urls
+        );
+    }
+
+    // useful for getting scaling factors
+    @SuppressWarnings({"UnusedDeclaration"})
     private static EpsMetaData getMetaData(EpsFile sounderFile, String sequenceName) throws IOException {
         final CompoundData compoundData = getCompoundData(sounderFile, 0);
         final CompoundType compoundType = compoundData.getCompoundType();

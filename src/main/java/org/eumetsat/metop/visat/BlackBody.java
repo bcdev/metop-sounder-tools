@@ -66,8 +66,6 @@ class BlackBody {
         final double c1 = 4.9183999150233067E-14;
         final double c2 = 4.7992373449498874E-02;
         final double a = c2 * f;
-        // if the spectral radiance were given in W/m2/sr/Hz-1 we would
-        // multiply with f^3 instead of f^5
         final double b = c1 * f * f * f * f * f;
 
         return a / (log(1.0 + (b / i)));

@@ -49,24 +49,8 @@ public class MhsInfoView extends SounderInfoView {
     }
 
     @Override
-    protected NumberAxis createSpectrumPlotXAxis() {
-        final NumberAxis axis = new NumberAxis("Channel");
-        axis.setRange(0.0, CHANNEL_FREQUENCIES.length + 1);
-
-        return axis;
-    }
-
-    @Override
-    protected NumberAxis createSpectrumPlotYAxis() {
-        final NumberAxis axis = new NumberAxis("Brightness Temperature (K)");
-        axis.setRange(new Range(175.0, 325.0));
-
-        return axis;
-    }
-
-    @Override
     protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
-        final XYSeries series = new XYSeries("Sample Values");
+        final XYSeries series = new XYSeries(0);
 
         for (int i = 0; i < CHANNEL_FREQUENCIES.length; i++) {
             series.add(i + 1, BlackBody.temperatureAtFrequency(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
@@ -76,7 +60,8 @@ public class MhsInfoView extends SounderInfoView {
     }
 
     @Override
-    protected void configureSpectrumChart(JFreeChart spectrumChart) {
-        spectrumChart.setTitle("MHS IFOV Spectrum");
+    protected void configureSpectrumChart(JFreeChart chart) {
+        super.configureSpectrumChart(chart);
+        chart.setTitle("MHS IFOV Spectrum");
     }
 }

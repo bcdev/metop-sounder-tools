@@ -20,6 +20,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 
 /**
@@ -55,22 +56,6 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
-    protected NumberAxis createSpectrumPlotXAxis() {
-        final NumberAxis axis = new NumberAxis("Channel");
-        axis.setRange(0, CHANNEL_FREQUENCIES.length + 1);
-
-        return axis;
-    }
-
-    @Override
-    protected NumberAxis createSpectrumPlotYAxis() {
-        final NumberAxis axis = new NumberAxis("Brightness Temperature (K)");
-        axis.setRange(new Range(175.0, 325.0));
-
-        return axis;
-    }
-
-    @Override
     protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
         final XYSeries series = new XYSeries("Sample Values");
 
@@ -82,7 +67,8 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
-    protected void configureSpectrumChart(JFreeChart spectrumChart) {
-        spectrumChart.setTitle("AMSU IFOV Spectrum");
+    protected void configureSpectrumChart(JFreeChart chart) {
+        super.configureSpectrumChart(chart);
+        chart.setTitle("AMSU IFOV Spectrum");
     }
 }
