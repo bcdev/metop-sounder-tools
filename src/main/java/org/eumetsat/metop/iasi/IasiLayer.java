@@ -8,8 +8,8 @@ package org.eumetsat.metop.iasi;
 
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.Scaling;
-import org.esa.beam.framework.ui.tool.AbstractTool;
-import org.esa.beam.framework.ui.tool.ToolInputEvent;
+import org.esa.beam.framework.ui.AbstractLayerUI;
+import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
 
@@ -22,11 +22,13 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
 import javax.swing.SwingWorker;
 
+import com.bc.ceres.core.ExtensionFactory;
 import com.bc.ceres.glayer.Layer;
 import com.bc.ceres.grender.Rendering;
 import com.bc.ceres.grender.Viewport;
@@ -46,14 +48,14 @@ public class IasiLayer extends Layer {
     private ColorInfo colorInfo;
     private boolean loadingColorInfo;
     
-    private final LayerModelHandler modelListener;
+    private final OverlayListener overlayListener;
     private final IasiOverlay iasiOverlay;
 
     public IasiLayer(IasiOverlay iasiOverlay) {
         this.iasiOverlay = iasiOverlay;
         
-        modelListener = new LayerModelHandler();
-        iasiOverlay.addListener(modelListener);
+        overlayListener = new OverlayListener();
+        iasiOverlay.addListener(overlayListener);
       
         // Set default layer style properties
         this.borderStroke = new BasicStroke(0.4f);
@@ -76,7 +78,7 @@ public class IasiLayer extends Layer {
         }
     }
 
-    public Ifov getIfovForLocation(int pixelX, int pixelY) {
+    private Ifov getIfovForLocation(int pixelX, int pixelY) {
         Efov[] efovs = iasiOverlay.getEfovs();
         for (final Efov efov : efovs) {
             for (final Ifov ifov : efov.getIfovs()) {
@@ -290,17 +292,36 @@ public class IasiLayer extends Layer {
         }
     }
 
-    private class IfovSelectTool extends AbstractTool {
+    private static class LayerUI extends AbstractLayerUI {
+
+        protected LayerUI(Layer layer) {
+            super(layer);
+        }
+
         @Override
-        public void mousePressed(ToolInputEvent event) {
-            final Ifov clickedIfov = getIfovForLocation(event.getPixelX(), event.getPixelY());
-            if (clickedIfov != null) {
-                iasiOverlay.setSelectedIfov(clickedIfov);
-            }
+        public void handleSelection(ProductSceneView view, Rectangle rectangle) {
+            IasiLayer selectedIasiLayer = (IasiLayer) getLayer();
+            Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
+            view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
+            Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+            selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
         }
     }
 
-    private class LayerModelHandler implements IasiOverlayListener {
+    public static class LayerUIFactory implements ExtensionFactory<IasiLayer> {
+
+        @Override
+        public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
+            return (E) new LayerUI(iasiLayer);
+        }
+
+        @Override
+        public Class<?>[] getExtensionTypes() {
+            return new Class<?>[]{LayerUI.class};
+        }
+    }
+
+    private class OverlayListener implements IasiOverlayListener {
         @Override
         public void selectionChanged(IasiOverlay overlay) {
             fireLayerDataChanged(null);

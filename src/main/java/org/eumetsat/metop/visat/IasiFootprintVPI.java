@@ -6,13 +6,11 @@
  */
 package org.eumetsat.metop.visat;
 
-import com.bc.ceres.core.ExtensionFactory;
-import com.bc.ceres.core.ExtensionManager;
-import com.bc.ceres.glayer.Layer;
-import com.jidesoft.action.DockableBar;
-import org.esa.beam.framework.datamodel.*;
-import org.esa.beam.framework.ui.AbstractLayerUI;
-import org.esa.beam.framework.ui.LayerUI;
+import org.esa.beam.framework.datamodel.Band;
+import org.esa.beam.framework.datamodel.MetadataElement;
+import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.datamodel.RasterDataNode;
+import org.esa.beam.framework.datamodel.TiePointGrid;
 import org.esa.beam.framework.ui.command.Command;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.framework.ui.product.ProductTreeListener;
@@ -25,18 +23,12 @@ import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsFormats;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.iasi.IasiLayer;
-import org.eumetsat.metop.iasi.Ifov;
 import org.eumetsat.metop.mhs.MhsFile;
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
+import org.eumetsat.metop.sounder.SounderLayer;
 
-import javax.swing.*;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-import javax.swing.filechooser.FileFilter;
 import java.awt.Container;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -44,6 +36,19 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.AbstractButton;
+import javax.swing.Box;
+import javax.swing.JFileChooser;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.filechooser.FileFilter;
+
+import com.bc.ceres.core.ExtensionManager;
+import com.bc.ceres.glayer.Layer;
+import com.jidesoft.action.DockableBar;
 
 public class IasiFootprintVPI implements VisatPlugIn {
 
@@ -89,7 +94,8 @@ public class IasiFootprintVPI implements VisatPlugIn {
         registerProductTreeListener();
         registerInternalFrameHandler();
 
-        ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayerUIFactory());
+        ExtensionManager.getInstance().register(IasiLayer.class, new IasiLayer.LayerUIFactory());
+        ExtensionManager.getInstance().register(SounderLayer.class, new SounderLayer.LayerUIFactory());
     }
 
     public void addCommandsToToolBar(VisatApp myVisatApp, DockableBar toolBar, String commandID) {
@@ -248,20 +254,6 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
     }
 
-    private static class AvhrrProductInfo {
-        private final Product avhrrProduct;
-        private final String avhrrFilename;
-        private final File avhrrDir;
-        private final long avhrrStartTime;
-
-        private AvhrrProductInfo(Product avhrrProduct, String avhrrFilename, File avhrrDir, long avhrrStartTime) {
-            this.avhrrProduct = avhrrProduct;
-            this.avhrrFilename = avhrrFilename;
-            this.avhrrDir = avhrrDir;
-            this.avhrrStartTime = avhrrStartTime;
-        }
-    }
-
     private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, Map<Product, AvhrrOverlay> overlayMap, String type) {
         if (!hasLayer(rootLayer, layerType)) {
             AvhrrOverlay overlay = overlayMap.get(avhrrInfo.avhrrProduct);
@@ -342,6 +334,20 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
     }
 
+    private static class AvhrrProductInfo {
+        private final Product avhrrProduct;
+        private final String avhrrFilename;
+        private final File avhrrDir;
+        private final long avhrrStartTime;
+
+        private AvhrrProductInfo(Product avhrrProduct, String avhrrFilename, File avhrrDir, long avhrrStartTime) {
+            this.avhrrProduct = avhrrProduct;
+            this.avhrrFilename = avhrrFilename;
+            this.avhrrDir = avhrrDir;
+            this.avhrrStartTime = avhrrStartTime;
+        }
+    }
+
     private static class PatternFileFilter extends FileFilter {
         private final String matchExpression;
         private final String description;
@@ -381,7 +387,6 @@ public class IasiFootprintVPI implements VisatPlugIn {
                 removeLayer(psv, MhsSounderLayer.class);
             }
         }
-
     }
 
     private class ProductTreeHandler implements ProductTreeListener {
@@ -410,35 +415,6 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
         @Override
         public void bandSelected(Band band, int clickCount) {
-        }
-    }
-
-    private static class AbstractLayerUIExtension extends AbstractLayerUI {
-
-        protected AbstractLayerUIExtension(Layer layer) {
-            super(layer);
-        }
-
-        @Override
-        public void handleSelection(ProductSceneView view, Rectangle rectangle) {
-            IasiLayer selectedIasiLayer = (IasiLayer) getLayer();
-            Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
-            view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
-            Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
-            selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
-        }
-    }
-
-    private static class IasiLayerUIFactory implements ExtensionFactory<IasiLayer> {
-
-        @Override
-        public <E> E getExtension(IasiLayer iasiLayer, Class<E> extensionType) {
-            return (E) new AbstractLayerUIExtension(iasiLayer);
-        }
-
-        @Override
-        public Class<?>[] getExtensionTypes() {
-            return new Class<?>[]{LayerUI.class};
         }
     }
 }

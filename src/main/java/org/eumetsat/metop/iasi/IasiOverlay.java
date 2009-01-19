@@ -122,8 +122,10 @@ public class IasiOverlay implements AvhrrOverlay {
     }
     
     public void setSelectedIfov(Ifov selectedIfov) {
-        this.selectedIfov = selectedIfov;
-        fireSelectionChanged();
+        if (selectedIfov != this.selectedIfov) {
+            this.selectedIfov = selectedIfov;
+            fireSelectionChanged();
+        }
     }
     
     public void addListener(IasiOverlayListener listener) {

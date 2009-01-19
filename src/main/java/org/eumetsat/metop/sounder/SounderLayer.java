@@ -16,17 +16,13 @@
  */
 package org.eumetsat.metop.sounder;
 
-import com.bc.ceres.core.ProgressMonitor;
-import com.bc.ceres.glayer.Layer;
-import com.bc.ceres.grender.Rendering;
-import com.bc.ceres.grender.Viewport;
-
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.framework.ui.AbstractLayerUI;
+import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
-import org.eumetsat.metop.iasi.Efov;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -37,14 +33,22 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.IOException;
 
 import javax.swing.SwingWorker;
+
+import com.bc.ceres.core.ExtensionFactory;
+import com.bc.ceres.core.ProgressMonitor;
+import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.grender.Rendering;
+import com.bc.ceres.grender.Viewport;
 
 
 public class SounderLayer extends Layer {
 
     private final SounderOverlay overlay;
+    private final SounderOverlayListener listener;
     
     private ColorInfo colorInfo;
     private boolean loadingColorInfo;
@@ -59,12 +63,15 @@ public class SounderLayer extends Layer {
 
     public SounderLayer(SounderOverlay overlay, int productWidth) throws IOException {
         this.overlay = overlay;
-        width = productWidth;
         
         borderStroke = new BasicStroke(0.0f);
         ifovSelectedColor = Color.GREEN;
 
+        width = productWidth;
         height = overlay.getEpsFile().getMdrCount();
+        
+        listener = new OverlayListener();
+        overlay.addListener(listener);
     }
     
     public BandInfo getBandInfo() {
@@ -141,6 +148,16 @@ public class SounderLayer extends Layer {
         }
     }
     
+    public SounderIfov getIfovForLocation(int pixelX, int pixelY) {
+        SounderIfov[] ifovs = overlay.getIfovs();
+        for (SounderIfov ifov : ifovs) {
+            if (ifov.shape.contains(pixelX + 0.5f, pixelY + 0.5f)) {
+                return ifov;
+            }
+        }
+        return null;
+    }
+    
     private synchronized ColorInfo getColorInfo() {
         if (colorInfo != null) {
             return colorInfo;
@@ -169,7 +186,6 @@ public class SounderLayer extends Layer {
                     Debug.trace(e);
                 }
             }
-            
         }; 
         worker.execute();
         return null;
@@ -204,6 +220,48 @@ public class SounderLayer extends Layer {
             }
             paletteDef = new ColorPaletteDef(valueMin, valueMax);
             colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
+        }
+    }
+    
+    private class OverlayListener implements SounderOverlayListener {
+
+        @Override
+        public void dataChanged(SounderOverlay overlay) {
+            fireLayerDataChanged(null);
+        }
+
+        @Override
+        public void selectionChanged(SounderOverlay overlay) {
+            fireLayerDataChanged(null);
+        }
+    }
+    
+    private static class LayerUI extends AbstractLayerUI {
+
+        protected LayerUI(Layer layer) {
+            super(layer);
+        }
+
+        @Override
+        public void handleSelection(ProductSceneView view, Rectangle rectangle) {
+            SounderLayer selectedSounderLayer = (SounderLayer) getLayer();
+            Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
+            view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
+            SounderIfov ifov = selectedSounderLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+            selectedSounderLayer.getOverlay().setSelectedIfov(ifov);
+        }
+    }
+
+    public static class LayerUIFactory implements ExtensionFactory<SounderLayer> {
+
+        @Override
+        public <E> E getExtension(SounderLayer sounderLayer, Class<E> extensionType) {
+            return (E) new LayerUI(sounderLayer);
+        }
+
+        @Override
+        public Class<?>[] getExtensionTypes() {
+            return new Class<?>[]{LayerUI.class};
         }
     }
 }
