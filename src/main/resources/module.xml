@@ -17,18 +17,22 @@
 
     <dependency>
         <module>ceres-binio</module>
+        <version>0.9-SNAPSHOT</version>
     </dependency>
     <dependency>
         <module>beam-core</module>
+        <version>4.5.1-SNAPSHOT</version>
     </dependency>
     <dependency>
         <module>beam-gpf</module>
     </dependency>
     <dependency>
         <module>beam-ui</module>
+        <version>4.5.1-SNAPSHOT</version>
     </dependency>
     <dependency>
         <module>beam-visat</module>
+        <version>4.5.1-SNAPSHOT</version>
     </dependency>
     <dependency>
         <module>beam-metop-avhrr-reader</module>
