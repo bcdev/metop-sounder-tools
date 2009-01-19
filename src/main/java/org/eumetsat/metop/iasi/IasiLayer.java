@@ -6,14 +6,11 @@
  */
 package org.eumetsat.metop.iasi;
 
-import com.bc.ceres.glayer.Layer;
-import com.bc.ceres.grender.Rendering;
-import com.bc.ceres.grender.Viewport;
-
 import org.esa.beam.framework.datamodel.ColorPaletteDef;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.framework.ui.tool.AbstractTool;
 import org.esa.beam.framework.ui.tool.ToolInputEvent;
+import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
 
 import java.awt.BasicStroke;
@@ -28,6 +25,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
+import javax.swing.SwingWorker;
+
+import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.grender.Rendering;
+import com.bc.ceres.grender.Viewport;
+
 public class IasiLayer extends Layer {
 
     public static final int EFOV_SIZE = 50;
@@ -40,10 +43,9 @@ public class IasiLayer extends Layer {
     private final Color ifovSelectedColor;
     private final Color ifovAnomalousColor;
 
-    private double[][][] allBts;
-    private ColorPaletteDef paletteDef;
-    private Color[] colorPalette;
-
+    private ColorInfo colorInfo;
+    private boolean loadingColorInfo;
+    
     private final LayerModelHandler modelListener;
     private final IasiOverlay iasiOverlay;
 
@@ -74,12 +76,9 @@ public class IasiLayer extends Layer {
         }
     }
 
-    public Efov[] getEfovs() {
-        return iasiOverlay.getEfovs();
-    }
-
     public Ifov getIfovForLocation(int pixelX, int pixelY) {
-        for (final Efov efov : getEfovs()) {
+        Efov[] efovs = iasiOverlay.getEfovs();
+        for (final Efov efov : efovs) {
             for (final Ifov ifov : efov.getIfovs()) {
                 final boolean renderAnomalousIfovs = "true".equals(System.getProperty("iasi.renderAnomalousIfovs", "true"));
                 if (!ifov.isAnomalous() || renderAnomalousIfovs) {
@@ -94,9 +93,15 @@ public class IasiLayer extends Layer {
 
     @Override
     public void renderLayer(Rendering rendering) {
-        if (getEfovs().length == 0) {
+        Efov[] efovs = iasiOverlay.getEfovs();
+        if (efovs.length == 0) {
             return;
         }
+        ColorInfo cInfo = getColorInfo();
+        if (cInfo == null) {
+            return;
+        }
+        
         final Graphics2D g2d = rendering.getGraphics();
         final Viewport vp = rendering.getViewport();
         final AffineTransform transformSave = g2d.getTransform();
@@ -122,10 +127,6 @@ public class IasiLayer extends Layer {
             final boolean efovBigEnough = scale * IasiLayer.EFOV_SIZE > 10;
             final boolean ifovBigEnough = scale * IasiLayer.IFOV_SIZE > 5;
 
-            final Efov[] efovs = iasiOverlay.getEfovs();
-            
-            ensureDataLoaded();
-
             if (efovBigEnough) {
                 for (final Efov efov : efovs) {
                     final Rectangle2D efovBounds = efov.getShape().getBounds2D();
@@ -140,7 +141,7 @@ public class IasiLayer extends Layer {
                                         int mdrIndex = IasiFile.computeMdrIndex(ifov.getIndex());
                                         int efovIndex = IasiFile.computeEfovIndex(ifov.getIndex());
                                         int ifovIndex = IasiFile.computeIfovIndex(ifov.getIndex());
-                                        renderIfov(g2d, ifov, allBts[mdrIndex] [efovIndex][ifovIndex]);
+                                        renderIfov(g2d, ifov, cInfo.getColor(mdrIndex, efovIndex, ifovIndex));
                                     }
                                 }
                             }
@@ -161,41 +162,55 @@ public class IasiLayer extends Layer {
         }
     }
     
-    private synchronized void ensureDataLoaded() {
-        if (allBts != null) {
-            return;
+    private synchronized ColorInfo getColorInfo() {
+        if (colorInfo != null) {
+            return colorInfo;
         }
-        try {
-            allBts = iasiOverlay.getIasiFile().readAllBts(42);
-        } catch (IOException e) {
-            return;
+        if (loadingColorInfo) {
+            return null;
         }
-        final Efov[] efovs = iasiOverlay.getEfovs();
-        double min = Double.MAX_VALUE;
-        double max = 0;
-        int efovIndex = 0;
-        for (int i = 0; i < allBts.length; i++) {
-            for (int j = 0; j < allBts[i].length; j++) {
-                Efov efov = efovs[efovIndex];
-                for (int k = 0; k < allBts[i][j].length; k++) {
-                    if (!efov.getIfovs()[k].isAnomalous()) {
-                        min = Math.min(min, allBts[i][j][k]);
-                        max = Math.max(min, allBts[i][j][k]);
+        loadingColorInfo = true;
+        SwingWorker<ColorInfo, Object> worker = new SwingWorker<ColorInfo, Object>() {
+
+            @Override
+            protected ColorInfo doInBackground() throws Exception {
+                double[][][] allBts = iasiOverlay.getIasiFile().readAllBts(42);
+                final Efov[] efovs = iasiOverlay.getEfovs();
+                double min = Double.MAX_VALUE;
+                double max = 0;
+                int efovIndex = 0;
+                for (int i = 0; i < allBts.length; i++) {
+                    for (int j = 0; j < allBts[i].length; j++) {
+                        Efov efov = efovs[efovIndex];
+                        for (int k = 0; k < allBts[i][j].length; k++) {
+                            if (!efov.getIfovs()[k].isAnomalous()) {
+                                min = Math.min(min, allBts[i][j][k]);
+                                max = Math.max(min, allBts[i][j][k]);
+                            }
+                        }
+                        efovIndex++;
                     }
                 }
-                efovIndex++;
+                ColorPaletteDef paletteDef = new ColorPaletteDef(min, max);
+                Color[] colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
+                return new ColorInfo(allBts, paletteDef, colorPalette);
             }
-        }
-        paletteDef = new ColorPaletteDef(min, max);
-        colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
-    }
-
-    private Color getColor(double sample) {
-        int numColors = colorPalette.length;
-        double min = paletteDef.getMinDisplaySample();
-        double max = paletteDef.getMaxDisplaySample();
-        int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
-        return colorPalette[index];
+            
+            @Override
+            protected void done() {
+                try {
+                    colorInfo = get();
+                    loadingColorInfo = false;
+                    fireLayerDataChanged(null);
+                } catch (Exception e) {
+                    loadingColorInfo = false;
+                    Debug.trace(e);
+                }
+            }
+            
+        }; 
+        worker.execute();
+        return null;
     }
 
     private boolean shouldRenderEfov(Efov efov) {
@@ -222,10 +237,10 @@ public class IasiLayer extends Layer {
         g2d.draw(efov.getShape());
     }
 
-    private void renderIfov(Graphics2D g2d, Ifov ifov, double bt) {
+    private void renderIfov(Graphics2D g2d, Ifov ifov, Color color) {
         final Shape ifovShape = ifov.getShape();
         if (!ifov.isAnomalous()) {
-            g2d.setPaint(getColor(bt));
+            g2d.setPaint(color);
             g2d.fill(ifovShape);
         }
         
@@ -243,19 +258,39 @@ public class IasiLayer extends Layer {
     
     @Override
     public void regenerate() {
-        allBts = null;
+        colorInfo = null;
     }
 
     public Color[] getColorPalette() {
-        return colorPalette;
+        return colorInfo.colorPalette;
     }
     
     public ColorPaletteDef getColorPaletteDef() {
-        return paletteDef;
+        return colorInfo.paletteDef;
+    }
+    
+    private class ColorInfo {
+        private final double[][][] allBts;
+        private ColorPaletteDef paletteDef;
+        private Color[] colorPalette;
+        
+        public ColorInfo(double[][][] allBts, ColorPaletteDef paletteDef, Color[] colorPalette) {
+            this.allBts = allBts;
+            this.paletteDef = paletteDef;
+            this.colorPalette = colorPalette;
+        }
+        
+        public Color getColor(int mdrIndex, int efovIndex, int ifovIndex) {
+            double sample = allBts[mdrIndex][efovIndex][ifovIndex];
+            int numColors = colorPalette.length;
+            double min = paletteDef.getMinDisplaySample();
+            double max = paletteDef.getMaxDisplaySample();
+            int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
+            return colorPalette[index];
+        }
     }
 
     private class IfovSelectTool extends AbstractTool {
-
         @Override
         public void mousePressed(ToolInputEvent event) {
             final Ifov clickedIfov = getIfovForLocation(event.getPixelX(), event.getPixelY());
@@ -266,7 +301,13 @@ public class IasiLayer extends Layer {
     }
 
     private class LayerModelHandler implements IasiOverlayListener {
+        @Override
         public void selectionChanged(IasiOverlay overlay) {
+            fireLayerDataChanged(null);
+        }
+
+        @Override
+        public void dataChanged(IasiOverlay overlay) {
             fireLayerDataChanged(null);
         }
     }

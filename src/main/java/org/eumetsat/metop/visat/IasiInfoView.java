@@ -350,8 +350,13 @@ public class IasiInfoView extends AbstractToolView {
 
     private class IasiListener implements IasiOverlayListener {
         @Override
-        public void selectionChanged(IasiOverlay model) {
-            update(model.getSelectedIfov());
+        public void selectionChanged(IasiOverlay overlay) {
+            update(overlay.getSelectedIfov());
+        }
+
+        @Override
+        public void dataChanged(IasiOverlay overlay) {
+            update(overlay.getSelectedIfov());
         }
     }
 

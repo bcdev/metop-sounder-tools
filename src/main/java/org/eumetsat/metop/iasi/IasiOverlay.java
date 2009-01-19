@@ -20,6 +20,7 @@ import com.bc.ceres.binio.CompoundData;
 
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.util.Debug;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 
@@ -33,6 +34,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
+
+import javax.swing.SwingWorker;
 
 
 public class IasiOverlay implements AvhrrOverlay {
@@ -58,6 +62,8 @@ public class IasiOverlay implements AvhrrOverlay {
     public static final float IFOV_DIST = 18;
 
     
+    private static final Efov[] NO_DATA = new Efov[0];
+    
     private final IasiFile iasiFile;
     private final Product avhrrProduct;
     private final long avhrrStartMillis;
@@ -66,6 +72,7 @@ public class IasiOverlay implements AvhrrOverlay {
     private final int avhrrTrimLeft;
     
     private Efov[] efovs;
+    private boolean computingEfovs;
     private Ifov selectedIfov;
     private final Map<IasiOverlayListener, Object> listenerMap;
     private int mdrCount;
@@ -83,10 +90,31 @@ public class IasiOverlay implements AvhrrOverlay {
     
     public synchronized Efov[] getEfovs() {
         if (efovs == null) {
-            System.out.println("createing EFOVs");
-            efovs = createEfovs("norman");
-            
-            setSelectedIfov(efovs[0].getIfovs()[0]);
+            if (computingEfovs) {
+                return NO_DATA;
+            }
+            computingEfovs = true;
+            SwingWorker<Efov[], Object> worker = new SwingWorker<Efov[], Object>() {
+
+                @Override
+                protected Efov[] doInBackground() throws Exception {
+                    return createEfovs("norman");
+                }
+                
+                @Override
+                protected void done() {
+                    try {
+                        efovs = get();
+                        computingEfovs = false;
+                        fireDataChanged();
+                    } catch (Exception e) {
+                        computingEfovs = false;
+                        Debug.trace(e);
+                    }
+                }
+            };
+            worker.execute();
+            return NO_DATA;
         }
         return efovs;
     }
@@ -117,10 +145,17 @@ public class IasiOverlay implements AvhrrOverlay {
             }
         }
     }
+    
+    protected void fireDataChanged() {
+        final Set<IasiOverlayListener> listenerSet = listenerMap.keySet();
 
-    public Ifov getIfov(int index) {
-        return getEfovs()[index / PN].getIfovs()[computeIfovIndex(index)];
+        synchronized (listenerMap) {
+            for (final IasiOverlayListener listener : listenerSet) {
+                listener.dataChanged(this);
+            }
+        }
     }
+
 
     public Product getAvhrrProduct() {
         return avhrrProduct;
