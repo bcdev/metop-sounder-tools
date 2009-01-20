@@ -59,6 +59,7 @@
         <toolView>
             <id>org.eumetsat.metop.visat.AmsuInfoView</id>
             <class>org.eumetsat.metop.visat.AmsuInfoView</class>
+            <toolBarId>Metop Tools</toolBarId>
             <title>AMSU - Info</title>
             <mnemonic/>
             <accelerator/>
@@ -73,6 +74,7 @@
         <toolView>
             <id>org.eumetsat.metop.visat.MhsInfoView</id>
             <class>org.eumetsat.metop.visat.MhsInfoView</class>
+            <toolBarId>Metop Tools</toolBarId>
             <title>MHS - Info</title>
             <mnemonic/>
             <accelerator/>
