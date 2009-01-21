@@ -122,10 +122,10 @@ public class IasiInfoView extends AbstractToolView {
             iasiOverlay = null;
             iasiFile = null;
         }
-        this.psv = pvs;
-        if (this.psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(this.psv)) {
+        if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
             IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
             if (layer != null) {
+                this.psv = pvs;
                 iasiOverlay = layer.getOverlay();
                 iasiOverlay.addListener(modelListener);
                 iasiFile = iasiOverlay.getIasiFile();
