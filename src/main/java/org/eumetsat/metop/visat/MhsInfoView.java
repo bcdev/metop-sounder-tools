@@ -18,6 +18,7 @@ import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
 
@@ -49,6 +50,24 @@ public class MhsInfoView extends SounderInfoView {
     }
 
     @Override
+    protected void configureSpectrumPlotXAxis(NumberAxis axis) {
+        super.configureSpectrumPlotXAxis(axis);
+        axis.setRange(new Range(0.5, CHANNEL_FREQUENCIES.length + 0.5), true, false);
+    }
+
+    @Override
+    protected void configureSpectrumPlotYAxis(NumberAxis axis) {
+        super.configureSpectrumPlotYAxis(axis);
+        axis.setRange(new Range(0.0, 50.0), true, false);
+    }
+
+    @Override
+    protected void configureSpectrumChart(JFreeChart chart) {
+        super.configureSpectrumChart(chart);
+        chart.setTitle("MHS IFOV Spectrum");
+    }
+
+    @Override
     protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
         final XYSeries series = new XYSeries(0);
 
@@ -57,11 +76,5 @@ public class MhsInfoView extends SounderInfoView {
         }
 
         return series;
-    }
-
-    @Override
-    protected void configureSpectrumChart(JFreeChart chart) {
-        super.configureSpectrumChart(chart);
-        chart.setTitle("MHS IFOV Spectrum");
     }
 }
