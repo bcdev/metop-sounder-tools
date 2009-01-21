@@ -100,6 +100,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
                 }
                 
             };
+            loadingIfovs = true;
             worker.execute();
             return NO_DATA;
         }
