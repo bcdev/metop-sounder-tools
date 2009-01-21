@@ -173,6 +173,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
         final IasiFootprintVPI vpi = getInstance();
         final VisatApp app = vpi.getVisatApp();
         final ProductSceneView psv = app.getSelectedProductSceneView();
+        if (psv == null) {
+            return null;
+        }
         Layer rootLayer = psv.getRootLayer();
         return vpi.getLayer(rootLayer, layerType);
     }
