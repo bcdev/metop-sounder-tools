@@ -16,11 +16,16 @@ package org.eumetsat.metop.visat;
 
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
-import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.JFreeChart;
-import org.jfree.data.Range;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ChartMouseListener;
+import org.jfree.chart.ChartMouseEvent;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.event.PlotChangeEvent;
+import org.jfree.chart.event.PlotChangeListener;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.data.Range;
 
 
 /**
@@ -56,7 +61,25 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
-    protected XYSeries createSpectrumPlotXYSeries(double[] radiances) {
+    protected void configureSpectrumPlotXAxis(NumberAxis axis) {
+        super.configureSpectrumPlotXAxis(axis);
+        axis.setRange(new Range(0.5, CHANNEL_FREQUENCIES.length + 0.5), true, false);
+    }
+
+    @Override
+    protected void configureSpectrumPlotYAxis(NumberAxis axis) {
+        super.configureSpectrumPlotYAxis(axis);
+        axis.setRange(new Range(0.0, 500.0), true, false);
+    }
+
+    @Override
+    protected void configureSpectrumChart(final JFreeChart chart) {
+        super.configureSpectrumChart(chart);
+        chart.setTitle("AMSU IFOV Spectrum");
+    }
+
+    @Override
+    protected XYSeries createSpectrumPlotXYSeries(final double[] radiances) {
         final XYSeries series = new XYSeries("Sample Values");
 
         for (int i = 0; i < CHANNEL_FREQUENCIES.length; i++) {
@@ -64,11 +87,5 @@ public class AmsuInfoView extends SounderInfoView {
         }
 
         return series;
-    }
-
-    @Override
-    protected void configureSpectrumChart(JFreeChart chart) {
-        super.configureSpectrumChart(chart);
-        chart.setTitle("AMSU IFOV Spectrum");
     }
 }
