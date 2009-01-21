@@ -398,12 +398,12 @@ public class IasiFile extends EpsFile {
 
         Geometry geometry = new Geometry();
         CompoundData mdr = getMdr(mdrIndex);
-        geometry.vza = mdr.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getSequence(0).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.vaa = mdr.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getSequence(1).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-//        geometry.vaa = mdr.getSequence("GGeoIISAnglesMETOP").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.sza = mdr.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getSequence(0).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-        geometry.saa = mdr.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getSequence(1).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
-//        geometry.saa = mdr.getSequence("GGeoIISAnglesSUN").getSequence(efovIndex).getInt(ifovIndex) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        SequenceData viewData = mdr.getSequence("GGeoSondAnglesMETOP").getSequence(efovIndex).getSequence(ifovIndex);
+        geometry.vza = viewData.getInt(0) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        geometry.vaa = viewData.getInt(1) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        SequenceData sunData = mdr.getSequence("GGeoSondAnglesSUN").getSequence(efovIndex).getSequence(ifovIndex);
+        geometry.sza = sunData.getInt(0) * G_GEO_SOND_LOC_SCALING_FACTOR;
+        geometry.saa = sunData.getInt(1) * G_GEO_SOND_LOC_SCALING_FACTOR;
         return geometry;
     }
 
