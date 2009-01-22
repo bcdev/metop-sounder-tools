@@ -127,7 +127,7 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Info", createInfoComponent());
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
-
+        
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
@@ -161,18 +161,6 @@ abstract class SounderInfoView extends AbstractToolView {
         editor = null;
 
         super.dispose();
-    }
-
-    protected String getSceneRadianceSequenceName() {
-        return "SCENE_RADIANCE";
-    }
-
-    protected String getEarthLocationSequenceName() {
-        return "EARTH_LOCATION";
-    }
-
-    protected String getAngularRelationSequenceName() {
-        return "ANGULAR_RELATION";
     }
 
     protected abstract SounderLayer getSounderLayer();
@@ -285,7 +273,16 @@ abstract class SounderInfoView extends AbstractToolView {
     private JComponent createSpectrumChartComponent() {
         spectrumDataset = new XYSeriesCollection();
 
-        final JFreeChart chart = createSpectrumChart(spectrumDataset);
+        final JFreeChart chart = ChartFactory.createXYLineChart(
+                "Sounder IFOV Spectrum",         // chart title
+                "Channel",                       // x axis label
+                "Brightness Temperature (K)",    // y axis label
+                spectrumDataset,
+                PlotOrientation.VERTICAL,
+                false,                           // include legend
+                true,                            // tooltips
+                false                            // urls
+        );
         configureSpectrumChart(chart);
 
         final XYPlot plot = chart.getXYPlot();
@@ -330,7 +327,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return editorModel;
     }
 
-    private void updateUI(final SounderOverlay overlay) {
+    protected void updateUI(final SounderOverlay overlay) {
         assert overlay != null;
         final SounderIfov selectedIfov = overlay.getSelectedIfov();
         if (selectedIfov != null) {
@@ -438,10 +435,26 @@ abstract class SounderInfoView extends AbstractToolView {
         worker.execute();
     }
 
-    private AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, getAngularRelationSequenceName(), ifov);
+    protected abstract GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException;
 
-        final double factor = getScalingFactor(sounderFile, getEarthLocationSequenceName()).doubleValue();
+    protected abstract AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException;
+
+    protected abstract double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException;
+
+    protected static GeoPos readEarthLocation(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
+
+        final float factor = getScalingFactor(sounderFile, sequenceName).floatValue();
+        final float lat = numberData.getNumber(0).floatValue() / factor;
+        final float lon = numberData.getNumber(1).floatValue() / factor;
+
+        return new GeoPos(lat, lon);
+    }
+
+    protected static AngularRelation readAngularRelation(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
+
+        final double factor = getScalingFactor(sounderFile, sequenceName).doubleValue();
         final double sza = numberData.getNumber(0).doubleValue() / factor;
         final double vza = numberData.getNumber(1).doubleValue() / factor;
         final double saa = numberData.getNumber(2).doubleValue() / factor;
@@ -450,20 +463,10 @@ abstract class SounderInfoView extends AbstractToolView {
         return new AngularRelation(sza, vza, saa, vaa);
     }
 
-    private GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, getEarthLocationSequenceName(), ifov);
+    protected static double[] readSceneRadiances(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+        final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
 
-        final float factor = getScalingFactor(sounderFile, getEarthLocationSequenceName()).floatValue();
-        final float lat = numberData.getNumber(0).floatValue() / factor;
-        final float lon = numberData.getNumber(1).floatValue() / factor;
-
-        return new GeoPos(lat, lon);
-    }
-
-    private double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
-        final NumberData numberData = getNumberData(sounderFile, getSceneRadianceSequenceName(), ifov);
-
-        final double factor = getScalingFactor(sounderFile, getSceneRadianceSequenceName()).doubleValue();
+        final double factor = getScalingFactor(sounderFile, sequenceName).doubleValue();
         final double[] radiances = new double[numberData.getElementCount()];
         for (int i = 0; i < radiances.length; i++) {
             radiances[i] = numberData.getNumber(i).doubleValue() / factor;
@@ -472,20 +475,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return radiances;
     }
 
-    private static JFreeChart createSpectrumChart(XYSeriesCollection dataset) {
-        return ChartFactory.createXYLineChart(
-                "Sounder IFOV Spectrum",         // chart title
-                "Channel",                       // x axis label
-                "Brightness Temperature (K)",    // y axis label
-                dataset,
-                PlotOrientation.VERTICAL,
-                false,                           // include legend
-                true,                            // tooltips
-                false                            // urls
-        );
-    }
-
-    private static EpsMetaData getMetaData(EpsFile sounderFile, String sequenceName) throws IOException {
+    protected static EpsMetaData getMetaData(EpsFile sounderFile, String sequenceName) throws IOException {
         final CompoundData compoundData = getCompoundData(sounderFile, 0);
         final CompoundType compoundType = compoundData.getCompoundType();
         final CompoundMember compoundMember = compoundType.getMember(compoundType.getMemberIndex(sequenceName));
@@ -493,7 +483,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return (EpsMetaData) compoundMember.getMetadata();
     }
 
-    private static Number getScalingFactor(EpsFile sounderFile, String sequenceName) throws IOException {
+    protected static Number getScalingFactor(EpsFile sounderFile, String sequenceName) throws IOException {
         try {
             return Double.valueOf(getMetaData(sounderFile, sequenceName).getScalingFactor().replace("10^", "1.0E"));
         } catch (NumberFormatException e) {
@@ -501,19 +491,19 @@ abstract class SounderInfoView extends AbstractToolView {
         }
     }
 
-    private static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
         return NumberData.of(getSequenceData(sounderFile, sequenceName, ifov));
     }
 
-    private static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
         return getCompoundData(sounderFile, ifov.mdrIndex).getSequence(sequenceName).getSequence(ifov.ifovInMdrIndex);
     }
 
-    private static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {
+    protected static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {
         return sounderFile.getMdrData().getCompound(mdrIndex).getCompound(1);
     }
 
-    private static class AngularRelation {
+    protected static class AngularRelation {
         // solar-zenith
         public final double vza;
         // sat-zenith
@@ -530,5 +520,4 @@ abstract class SounderInfoView extends AbstractToolView {
             this.vaa = vaa;
         }
     }
-
 }

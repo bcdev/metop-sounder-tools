@@ -16,6 +16,8 @@ package org.eumetsat.metop.visat;
 
 import org.eumetsat.metop.amsu.AmsuSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderIfov;
+import org.eumetsat.metop.eps.EpsFile;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartMouseListener;
@@ -26,6 +28,9 @@ import org.jfree.chart.event.PlotChangeListener;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.Range;
+import org.esa.beam.framework.datamodel.GeoPos;
+
+import java.io.IOException;
 
 
 /**
@@ -92,5 +97,20 @@ public class AmsuInfoView extends SounderInfoView {
     protected void configureSpectrumChart(final JFreeChart chart) {
         super.configureSpectrumChart(chart);
         chart.setTitle("AMSU IFOV Spectrum");
+    }
+
+    @Override
+    protected final GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readEarthLocation(sounderFile, "EARTH_LOCATION", ifov);
+    }
+
+    @Override
+    protected final AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readAngularRelation(sounderFile, "ANGULAR_RELATION", ifov);
+    }
+
+    @Override
+    protected final double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readSceneRadiances(sounderFile, "SCENE_RADIANCE", ifov);
     }
 }

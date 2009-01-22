@@ -16,11 +16,15 @@ package org.eumetsat.metop.visat;
 
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderIfov;
+import org.eumetsat.metop.eps.EpsFile;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
+import org.esa.beam.framework.datamodel.GeoPos;
+
+import java.io.IOException;
 
 /**
  * Tool view for showing information on the selected MHS field-of-view.
@@ -37,11 +41,6 @@ public class MhsInfoView extends SounderInfoView {
         CHANNEL_FREQUENCIES[2] = 183.311;
         CHANNEL_FREQUENCIES[3] = 183.311;
         CHANNEL_FREQUENCIES[4] = 190.311;
-    }
-
-    @Override
-    protected String getSceneRadianceSequenceName() {
-        return "SCENE_RADIANCES";
     }
 
     @Override
@@ -81,5 +80,20 @@ public class MhsInfoView extends SounderInfoView {
     protected void configureSpectrumChart(JFreeChart chart) {
         super.configureSpectrumChart(chart);
         chart.setTitle("MHS IFOV Spectrum");
+    }
+
+    @Override
+    protected final GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readEarthLocation(sounderFile, "EARTH_LOCATION", ifov);
+    }
+
+    @Override
+    protected final AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readAngularRelation(sounderFile, "ANGULAR_RELATION", ifov);
+    }
+
+    @Override
+    protected final double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+        return readSceneRadiances(sounderFile, "SCENE_RADIANCES", ifov);
     }
 }
