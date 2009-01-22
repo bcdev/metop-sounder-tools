@@ -4,6 +4,7 @@
 
 <toc version="2.0"  categoryclosedimage="folder" categoryopenimage="folder" topicimage="doc">
     <tocitem text="METOP Sounder Tools (PlugIn)" target="metopSounderTools">
+        <tocitem text="Sounder Tool View" target="sounderToolView"/>
         <tocitem text="IASI Sounder" target="iasiSounder"/>
         <tocitem text="AMSU Sounder" target="amsuSounder"/>
         <tocitem text="MHS Sounder" target="mhsSounder"/>
