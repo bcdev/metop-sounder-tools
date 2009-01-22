@@ -24,8 +24,7 @@ import java.io.IOException;
 public class MhsSounderLayer extends SounderLayer {
 
     public MhsSounderLayer(MhsSounderOverlay overlay) throws IOException {
-        super(overlay, MhsFile.PRODUCT_WIDTH);
-        setBandInfo(MhsBandInfo.RADIANCE01);
+        super(overlay, MhsBandInfo.values(), MhsFile.PRODUCT_WIDTH);
     }
     
     @Override
