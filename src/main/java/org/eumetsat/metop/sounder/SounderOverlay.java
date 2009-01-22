@@ -20,26 +20,24 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.util.Debug;
 import org.eumetsat.metop.eps.EpsFile;
 
+import javax.swing.SwingWorker;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-
-import javax.swing.SwingWorker;
 
 
 public abstract class SounderOverlay implements AvhrrOverlay {
 
     private static final SounderIfov[] NO_DATA = new SounderIfov[0];
-    
+
     private final EpsFile epsfile;
     private final Product avhrrProduct;
     private final Map<SounderOverlayListener, Object> listenerMap;
-    
+
     private SounderIfov[] ifovs;
     private boolean loadingIfovs;
     private SounderIfov selectedIfov;
 
-    public SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
+    protected SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
         this.epsfile = epsfile;
         this.avhrrProduct = avhrrProduct;
         // avoid memory leaks (Bloch 2008, Effective Java, Item 6)
@@ -86,7 +84,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
                 protected SounderIfov[] doInBackground() throws Exception {
                     return readIfovs();
                 }
-                
+
                 @Override
                 protected void done() {
                     try {
@@ -98,7 +96,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
                         Debug.trace(e);
                     }
                 }
-                
+
             };
             loadingIfovs = true;
             worker.execute();
@@ -106,9 +104,9 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         }
         return ifovs;
     }
-    
+
     protected abstract SounderIfov[] readIfovs() throws IOException;
-    
+
     protected void fireSelectionChanged() {
         final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
@@ -118,7 +116,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
             listener.selectionChanged(this);
         }
     }
-    
+
     protected void fireDataChanged() {
         final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
