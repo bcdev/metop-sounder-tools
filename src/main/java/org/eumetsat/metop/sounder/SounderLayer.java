@@ -160,28 +160,15 @@ public class SounderLayer extends Layer {
     }
 
     public ImageInfo getImageInfo() {
-        final LayerData data = layerDataMap.get(selectedChannel);
-
-        return data.imageInfo;
+        return layerDataMap.get(selectedChannel).imageInfo;
     }
 
     public Stx getStx() {
-        final LayerData data = layerDataMap.get(selectedChannel);
-
-//        if (data == null) {
-//            return null;
-//        }
-
-        return data.stx;
+        return layerDataMap.get(selectedChannel).stx;
     }
 
     public Scaling getScaling() {
-        final LayerData data = layerDataMap.get(selectedChannel);
-
-//        if (data == null) {
-//            return null;
-//        }
-        return data.band;
+        return layerDataMap.get(selectedChannel).band;
     }
 
     public int getSelectedChannel() {
@@ -205,6 +192,7 @@ public class SounderLayer extends Layer {
                 final Band band = new Band(bandInfo.getName(), bandInfo.getType(), ifovInMdrCount, mdrCount);
                 band.setRasterData(data);
                 band.setSynthetic(true);
+                // todo - scaling
                 final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
 
                 layerDataMap.put(channel, new LayerData(band, stx));
