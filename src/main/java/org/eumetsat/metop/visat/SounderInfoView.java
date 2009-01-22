@@ -19,16 +19,26 @@ import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
+import org.esa.beam.framework.datamodel.ImageInfo;
+import org.esa.beam.framework.datamodel.Stx;
+import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
+import org.esa.beam.framework.ui.ImageInfoEditor;
+import org.esa.beam.framework.ui.ImageInfoEditorModel;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
-import org.eumetsat.metop.sounder.*;
+import org.eumetsat.metop.sounder.SounderIfov;
+import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.event.ChartProgressEvent;
+import org.jfree.chart.event.ChartProgressListener;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -44,6 +54,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 
 abstract class SounderInfoView extends AbstractToolView {
@@ -58,18 +69,19 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField saaTextField;
     private JTextField vzaTextField;
     private JTextField vaaTextField;
+    private ImageInfoEditor editor;
 
     @Override
     protected JComponent createControl() {
         overlayListener = new SounderOverlayListener() {
             @Override
             public void selectionChanged(SounderOverlay overlay) {
-                update(overlay);
+                updateUI(overlay);
             }
 
             @Override
             public void dataChanged(SounderOverlay overlay) {
-                update(overlay);
+                updateUI(overlay);
             }
         };
         internalFrameListener = new InternalFrameAdapter() {
@@ -98,23 +110,63 @@ abstract class SounderInfoView extends AbstractToolView {
         final JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Sounder Info", createInfoComponent());
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
+        tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
                 final SounderOverlay overlay = layer.getOverlay();
                 overlay.addListener(overlayListener);
-                update(overlay);
+                updateUI(overlay);
             }
         }
 
-
         return tabbedPane;
+    }
+
+    private Component createSounderLayerComponent() {
+        editor = new ImageInfoEditor();
+
+        final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
+        containerPanel.add(editor, BorderLayout.NORTH);
+
+        return containerPanel;
+    }
+
+    private void setEditorModel() {
+        final ImageInfo imageInfo = getSounderLayer().getImageInfo();
+        if (imageInfo != null) {
+            editor.setModel(createEditorModel(imageInfo));
+        }
+    }
+
+    private static ImageInfoEditorModel createEditorModel(ImageInfo imageInfo) {
+        final DefaultImageInfoEditorModel model = new DefaultImageInfoEditorModel(imageInfo);
+        // todo - set display properties
+
+        return model;
     }
 
     @Override
     public void dispose() {
         VisatApp.getApp().removeInternalFrameListener(internalFrameListener);
+
+        internalFrameListener = null;
+        overlayListener = null;
+        spectrumDataset = null;
+
+        latTextField = null;
+        lonTextField = null;
+
+        mdrIndexTextField = null;
+        ifovInMdrIndexTextField = null;
+
+        szaTextField = null;
+        saaTextField = null;
+        vzaTextField = null;
+        vaaTextField = null;
+        editor = null;
+
         super.dispose();
     }
 
@@ -136,6 +188,22 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected void configureSpectrumChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.white);
+        chart.addProgressListener(new ChartProgressListener() {
+            @Override
+            public void chartProgress(ChartProgressEvent event) {
+                if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
+                    return;
+                }
+                final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
+                if (value > 0.0) {
+                    final SounderLayer layer = getSounderLayer();
+                    if (layer != null) {
+                        layer.setSelectedChannel((int) (value - 1.0));
+                        setEditorModel();
+                    }
+                }
+            }
+        });
     }
 
     protected void configureSpectrumPlot(XYPlot plot) {
@@ -145,14 +213,16 @@ abstract class SounderInfoView extends AbstractToolView {
         plot.setRangeGridlinePaint(Color.white);
 
         plot.setDomainCrosshairVisible(true);
+        plot.setDomainCrosshairLockedOnData(true);
+        plot.setDomainCrosshairValue(1);
         plot.setRangeCrosshairVisible(false);
-
         plot.setNoDataMessage("No data");
     }
 
     protected void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
-        renderer.setBaseShapesVisible(false);
-        renderer.setBaseShapesFilled(true);
+        renderer.setSeriesShape(0, new Ellipse2D.Double(-3.0, -3.0, 6.0, 6.0));
+        renderer.setSeriesShapesVisible(0, true);
+        renderer.setSeriesShapesFilled(0, true);
     }
 
     protected void configureSpectrumPlotXAxis(NumberAxis axis) {
@@ -234,7 +304,7 @@ abstract class SounderInfoView extends AbstractToolView {
         final JFreeChart chart = createSpectrumChart(spectrumDataset);
         configureSpectrumChart(chart);
 
-        final XYPlot plot = (XYPlot) chart.getPlot();
+        final XYPlot plot = chart.getXYPlot();
         configureSpectrumPlot(plot);
         configureSpectrumPlotRenderer((XYLineAndShapeRenderer) plot.getRenderer());
         configureSpectrumPlotYAxis((NumberAxis) plot.getRangeAxis());
@@ -249,7 +319,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return containerPanel;
     }
 
-    private void update(SounderOverlay overlay) {
+    private void updateUI(SounderOverlay overlay) {
         if (overlay != null) {
             updateInfoFields(overlay);
             updateSpectrumDataset(overlay);
@@ -317,11 +387,11 @@ abstract class SounderInfoView extends AbstractToolView {
     private AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, getAngularRelationSequenceName(), ifov);
 
-        final double factor = SounderConstants.ANGULAR_RELATION_SCALING_FACTOR;
-        final double sza = numberData.getNumber(0).doubleValue() * factor;
-        final double vza = numberData.getNumber(1).doubleValue() * factor;
-        final double saa = numberData.getNumber(2).doubleValue() * factor;
-        final double vaa = numberData.getNumber(3).doubleValue() * factor;
+        final double factor = getScalingFactor(sounderFile, getEarthLocationSequenceName()).doubleValue();
+        final double sza = numberData.getNumber(0).doubleValue() / factor;
+        final double vza = numberData.getNumber(1).doubleValue() / factor;
+        final double saa = numberData.getNumber(2).doubleValue() / factor;
+        final double vaa = numberData.getNumber(3).doubleValue() / factor;
 
         return new AngularRelation(sza, vza, saa, vaa);
     }
@@ -329,9 +399,9 @@ abstract class SounderInfoView extends AbstractToolView {
     private GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, getEarthLocationSequenceName(), ifov);
 
-        final float factor = (float) SounderConstants.EARTH_LOCATION_SCALING_FACTOR;
-        final float lat = numberData.getNumber(0).floatValue() * factor;
-        final float lon = numberData.getNumber(1).floatValue() * factor;
+        final float factor = getScalingFactor(sounderFile, getEarthLocationSequenceName()).floatValue();
+        final float lat = numberData.getNumber(0).floatValue() / factor;
+        final float lon = numberData.getNumber(1).floatValue() / factor;
 
         return new GeoPos(lat, lon);
     }
@@ -339,10 +409,10 @@ abstract class SounderInfoView extends AbstractToolView {
     private double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, getSceneRadianceSequenceName(), ifov);
 
-        final double factor = SounderConstants.SCENE_RADIANCE_SCALING_FACTOR;
+        final double factor = getScalingFactor(sounderFile, getSceneRadianceSequenceName()).doubleValue();
         final double[] radiances = new double[numberData.getElementCount()];
         for (int i = 0; i < radiances.length; i++) {
-            radiances[i] = numberData.getNumber(i).doubleValue() * factor;
+            radiances[i] = numberData.getNumber(i).doubleValue() / factor;
         }
 
         return radiances;
@@ -361,14 +431,20 @@ abstract class SounderInfoView extends AbstractToolView {
         );
     }
 
-    // useful for getting scaling factors
-    @SuppressWarnings({"UnusedDeclaration"})
     private static EpsMetaData getMetaData(EpsFile sounderFile, String sequenceName) throws IOException {
         final CompoundData compoundData = getCompoundData(sounderFile, 0);
         final CompoundType compoundType = compoundData.getCompoundType();
         final CompoundMember compoundMember = compoundType.getMember(compoundType.getMemberIndex(sequenceName));
 
         return (EpsMetaData) compoundMember.getMetadata();
+    }
+
+    private static Number getScalingFactor(EpsFile sounderFile, String sequenceName) throws IOException {
+        try {
+            return Double.valueOf(getMetaData(sounderFile, sequenceName).getScalingFactor().replace("10^", "1.0E"));
+        } catch (NumberFormatException e) {
+            throw new IOException(e.getMessage(), e);
+        }
     }
 
     private static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
