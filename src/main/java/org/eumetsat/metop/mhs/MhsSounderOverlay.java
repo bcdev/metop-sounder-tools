@@ -24,6 +24,7 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -32,7 +33,7 @@ import java.io.IOException;
 
 public class MhsSounderOverlay extends SounderOverlay {
 
-    private static final float ifovSize = 15.88f/1.1f;
+    private static final float ifovSize = 15.88f;
     
     public MhsSounderOverlay(MhsFile mhsFile, Product avhrrProduct) {
         super(mhsFile, avhrrProduct);
@@ -43,24 +44,32 @@ public class MhsSounderOverlay extends SounderOverlay {
         EpsFile mhsFile = getEpsFile();
         final int height = mhsFile.getMdrCount();
         final int width = MhsFile.PRODUCT_WIDTH;
-        final float scalingFactor = 1E-4f;
+        final double scalingFactor = MhsBandInfo.LAT.getScaleFactor();
         ProductData latitudes = mhsFile.readData(MhsBandInfo.LAT, height, width);
         ProductData longitudes = mhsFile.readData(MhsBandInfo.LON, height, width);
-        
         GeoCoding geoCoding = getAvhrrProduct().getGeoCoding();
         SounderIfov[] allIfovs = new SounderIfov[width * height];
+
+        SounderShapeScaleComputer scaleComputer = new SounderShapeScaleComputer(mhsFile,
+                                                                                width,
+                                                                                MhsBandInfo.LAT, 
+                                                                                MhsBandInfo.LON,
+                                                                                MhsBandInfo.VZA, 
+                                                                                getAvhrrProduct());
+        double[] shapeScale = scaleComputer.getIfovShapeScale();
         
         int index = 0;
         GeoPos geoPos = new GeoPos();
         PixelPos avhrrPixelPos = new PixelPos();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                geoPos.lat = latitudes.getElemIntAt(index) * scalingFactor;
-                geoPos.lon = longitudes.getElemIntAt(index) * scalingFactor;
+                geoPos.lat = (float) (latitudes.getElemIntAt(index) * scalingFactor);
+                geoPos.lon = (float) (longitudes.getElemIntAt(index) * scalingFactor);
                 geoCoding.getPixelPos(geoPos, avhrrPixelPos);
+                final float yScale = (float) shapeScale[x];
                 Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * ifovSize,
-                                                  avhrrPixelPos.y - 0.5f * ifovSize,
-                                                      ifovSize, ifovSize);
+                                                  avhrrPixelPos.y - 0.5f * ifovSize * yScale,
+                                                      ifovSize, ifovSize * yScale);
                 allIfovs[index] = new SounderIfov(y, x, shape);
                 index++;
             }

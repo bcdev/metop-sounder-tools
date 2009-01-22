@@ -391,6 +391,20 @@ public class IasiFile extends EpsFile {
         public double saa;
     }
 
+    public double[][] readVZA(int mdrIndex) throws IOException {
+        CompoundData mdr = getMdr(mdrIndex);
+        double[][] vza = new double[SNOT][PN]; 
+        SequenceData angles = mdr.getSequence("GGeoSondAnglesMETOP");
+        for (int efovIndex = 0; efovIndex < SNOT; efovIndex++) {
+            SequenceData efovData = angles.getSequence(efovIndex);
+            for (int ifovIndex = 0; ifovIndex < PN; ifovIndex++) {
+                SequenceData viewData = efovData.getSequence(ifovIndex);
+                vza[efovIndex][ifovIndex] = viewData.getInt(0) * G_GEO_SOND_LOC_SCALING_FACTOR;
+            }
+        }
+        return vza;
+    }
+    
     public Geometry readGeometry(int ifovId) throws IOException {
         final int mdrIndex = computeMdrIndex(ifovId);
         final int efovIndex = computeEfovIndex(ifovId);

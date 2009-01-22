@@ -45,7 +45,7 @@ enum AmsuBandInfo implements BandInfo {
     VAA("view_azimuth_angle", ProductData.TYPE_INT16, ANGULAR_RELATION_SCALING_FACTOR, new GeometryReader(3)),
     
     LAT("latitude", ProductData.TYPE_INT32, EARTH_LOCATION_SCALING_FACTOR, new LocationReader(0)),
-    LON("longitude", ProductData.TYPE_INT32, ANGULAR_RELATION_SCALING_FACTOR, new LocationReader(1)),
+    LON("longitude", ProductData.TYPE_INT32, EARTH_LOCATION_SCALING_FACTOR, new LocationReader(1)),
     
     SURFACE("surfave_type", ProductData.TYPE_INT16, 1.0, new FlagReader("SURFACE_PROPERTIES")),
     ELEVATION("elevation", ProductData.TYPE_INT16, 1.0, new FlagReader("TERRAIN_ELEVATION"));
