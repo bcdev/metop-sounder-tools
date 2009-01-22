@@ -61,6 +61,22 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
+    protected XYSeries createSpectrumPlotXYSeries(final double[] radiances) {
+        final XYSeries series = new XYSeries("Sample Values");
+
+        for (int i = 0; i < CHANNEL_FREQUENCIES.length; i++) {
+            series.add(i + 1, BlackBody.temperatureAtFrequency(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
+        }
+
+        return series;
+    }
+
+    @Override
+    protected int crosshairValueToSelectedChannel(double value) {
+        return (int) (value - 1.0);
+    }
+
+    @Override
     protected void configureSpectrumPlotXAxis(NumberAxis axis) {
         super.configureSpectrumPlotXAxis(axis);
         axis.setRange(new Range(0.5, CHANNEL_FREQUENCIES.length + 0.5), true, false);
@@ -76,16 +92,5 @@ public class AmsuInfoView extends SounderInfoView {
     protected void configureSpectrumChart(final JFreeChart chart) {
         super.configureSpectrumChart(chart);
         chart.setTitle("AMSU IFOV Spectrum");
-    }
-
-    @Override
-    protected XYSeries createSpectrumPlotXYSeries(final double[] radiances) {
-        final XYSeries series = new XYSeries("Sample Values");
-
-        for (int i = 0; i < CHANNEL_FREQUENCIES.length; i++) {
-            series.add(i + 1, BlackBody.temperatureAtFrequency(CHANNEL_FREQUENCIES[i], radiances[i] * 0.1));
-        }
-
-        return series;
     }
 }

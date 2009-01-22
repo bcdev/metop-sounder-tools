@@ -19,8 +19,6 @@ import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.ImageInfo;
-import org.esa.beam.framework.datamodel.Stx;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
 import org.esa.beam.framework.ui.ImageInfoEditorModel;
@@ -47,17 +45,18 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RectangleInsets;
 
 import javax.swing.*;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-import javax.swing.event.InternalFrameListener;
+import javax.swing.event.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 abstract class SounderInfoView extends AbstractToolView {
+    private static final String NO_IFOV_SELECTED = "No IFOV selected";
+
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
     private XYSeriesCollection spectrumDataset;
@@ -70,6 +69,23 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField vzaTextField;
     private JTextField vaaTextField;
     private ImageInfoEditor editor;
+
+    private class DomainCrosshairValueListener implements ChartProgressListener {
+        @Override
+        public void chartProgress(ChartProgressEvent event) {
+            if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
+                return;
+            }
+            final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
+            if (value > 0.0) {
+                final SounderLayer layer = getSounderLayer();
+                if (layer != null) {
+                    layer.setSelectedChannel(crosshairValueToSelectedChannel(value));
+                    editor.setModel(createImageInfoEditorModel(layer));
+                }
+            }
+        }
+    }
 
     @Override
     protected JComponent createControl() {
@@ -124,29 +140,6 @@ abstract class SounderInfoView extends AbstractToolView {
         return tabbedPane;
     }
 
-    private Component createSounderLayerComponent() {
-        editor = new ImageInfoEditor();
-
-        final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
-        containerPanel.add(editor, BorderLayout.NORTH);
-
-        return containerPanel;
-    }
-
-    private void setEditorModel() {
-        final ImageInfo imageInfo = getSounderLayer().getImageInfo();
-        if (imageInfo != null) {
-            editor.setModel(createEditorModel(imageInfo));
-        }
-    }
-
-    private static ImageInfoEditorModel createEditorModel(ImageInfo imageInfo) {
-        final DefaultImageInfoEditorModel model = new DefaultImageInfoEditorModel(imageInfo);
-        // todo - set display properties
-
-        return model;
-    }
-
     @Override
     public void dispose() {
         VisatApp.getApp().removeInternalFrameListener(internalFrameListener);
@@ -186,24 +179,11 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected abstract XYSeries createSpectrumPlotXYSeries(double[] radiances);
 
+    protected abstract int crosshairValueToSelectedChannel(double value);
+
     protected void configureSpectrumChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.white);
-        chart.addProgressListener(new ChartProgressListener() {
-            @Override
-            public void chartProgress(ChartProgressEvent event) {
-                if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
-                    return;
-                }
-                final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
-                if (value > 0.0) {
-                    final SounderLayer layer = getSounderLayer();
-                    if (layer != null) {
-                        layer.setSelectedChannel((int) (value - 1.0));
-                        setEditorModel();
-                    }
-                }
-            }
-        });
+        chart.addProgressListener(new DomainCrosshairValueListener());
     }
 
     protected void configureSpectrumPlot(XYPlot plot) {
@@ -216,7 +196,7 @@ abstract class SounderInfoView extends AbstractToolView {
         plot.setDomainCrosshairLockedOnData(true);
         plot.setDomainCrosshairValue(1);
         plot.setRangeCrosshairVisible(false);
-        plot.setNoDataMessage("No data");
+        plot.setNoDataMessage(NO_IFOV_SELECTED);
     }
 
     protected void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
@@ -295,6 +275,10 @@ abstract class SounderInfoView extends AbstractToolView {
         final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
         containerPanel.add(panel, BorderLayout.NORTH);
 
+        clearEarthLocationFields();
+        clearInfoFields();
+        clearAngularRelationFields();
+
         return containerPanel;
     }
 
@@ -319,69 +303,139 @@ abstract class SounderInfoView extends AbstractToolView {
         return containerPanel;
     }
 
-    private void updateUI(SounderOverlay overlay) {
-        if (overlay != null) {
-            updateInfoFields(overlay);
-            updateSpectrumDataset(overlay);
+    private Component createSounderLayerComponent() {
+        editor = new ImageInfoEditor();
+
+        final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
+        containerPanel.add(editor, BorderLayout.NORTH);
+
+        final SounderLayer layer = getSounderLayer();
+        if (layer != null) {
+            editor.setModel(createImageInfoEditorModel(layer));
+        }
+
+        return containerPanel;
+    }
+
+    private ImageInfoEditorModel createImageInfoEditorModel(final SounderLayer layer) {
+        final ImageInfoEditorModel editorModel = new DefaultImageInfoEditorModel(layer.getImageInfo());
+
+        editorModel.setDisplayProperties("Name", "unit", layer.getStx(), layer.getScaling());
+        editorModel.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                layer.regenerate();
+            }
+        });
+        return editorModel;
+    }
+
+    private void updateUI(final SounderOverlay overlay) {
+        assert overlay != null;
+        final SounderIfov selectedIfov = overlay.getSelectedIfov();
+        if (selectedIfov != null) {
+            updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
+            updateInfoFields(selectedIfov);
+            updateAngularRelationFields(selectedIfov, overlay.getEpsFile());
+            updateSpectrumDataset(overlay.getSelectedIfov(), overlay.getEpsFile());
+        } else {
+            clearInfoFields();
+            clearEarthLocationFields();
+            clearAngularRelationFields();
         }
     }
 
-    private void updateInfoFields(SounderOverlay overlay) {
-        final SounderIfov selectedIfov = overlay.getSelectedIfov();
-        if (selectedIfov == null) {
-            clearInfoFields();
-            return;
-        }
-
-        final GeoPos geoPos;
-        final AngularRelation angularRelation;
-        try {
-            geoPos = readEarthLocation(overlay.getEpsFile(), selectedIfov);
-            angularRelation = readAngularRelation(overlay.getEpsFile(), selectedIfov);
-        } catch (IOException e) {
-            clearInfoFields();
-            return;
-        }
-        lonTextField.setText(geoPos.getLonString());
-        latTextField.setText(geoPos.getLatString());
-
-        vzaTextField.setText(Double.toString(angularRelation.vza));
-        vaaTextField.setText(Double.toString(angularRelation.vaa));
-        szaTextField.setText(Double.toString(angularRelation.sza));
-        saaTextField.setText(Double.toString(angularRelation.saa));
-
+    private void updateInfoFields(SounderIfov selectedIfov) {
         mdrIndexTextField.setText(Integer.toString(selectedIfov.mdrIndex));
         ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.ifovInMdrIndex));
     }
 
-    private void clearInfoFields() {
-        lonTextField.setText("");
-        latTextField.setText("");
-        saaTextField.setText("");
-        vaaTextField.setText("");
-        szaTextField.setText("");
-        vzaTextField.setText("");
-        mdrIndexTextField.setText("");
-        ifovInMdrIndexTextField.setText("");
+    private void updateEarthLocationFields(final SounderIfov selectedIfov, final EpsFile epsFile) {
+        final SwingWorker<GeoPos, Object> worker = new SwingWorker<GeoPos, Object>() {
+            @Override
+            protected GeoPos doInBackground() throws Exception {
+                return readEarthLocation(epsFile, selectedIfov);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    final GeoPos geoPos = get();
+                    lonTextField.setText(geoPos.getLonString());
+                    latTextField.setText(geoPos.getLatString());
+                } catch (InterruptedException e) {
+                    clearEarthLocationFields();
+                } catch (ExecutionException e) {
+                    clearEarthLocationFields();
+                }
+            }
+        };
+        worker.execute();
     }
 
-    private void updateSpectrumDataset(SounderOverlay overlay) {
-        spectrumDataset.removeAllSeries();
-        final SounderIfov selectedIfov = overlay.getSelectedIfov();
-        if (selectedIfov == null) {
-            return;
-        }
+    private void updateAngularRelationFields(final SounderIfov selectedIfov, final EpsFile epsFile) {
+        final SwingWorker<AngularRelation, Object> worker = new SwingWorker<AngularRelation, Object>() {
+            @Override
+            protected AngularRelation doInBackground() throws Exception {
+                return readAngularRelation(epsFile, selectedIfov);
+            }
 
-        final double[] radiances;
-        try {
-            radiances = readSceneRadiances(overlay.getEpsFile(), selectedIfov);
-        } catch (IOException e) {
-            return;
-        }
+            @Override
+            protected void done() {
+                try {
+                    final AngularRelation angularRelation = get();
+                    vzaTextField.setText(Double.toString(angularRelation.vza));
+                    vaaTextField.setText(Double.toString(angularRelation.vaa));
+                    szaTextField.setText(Double.toString(angularRelation.sza));
+                    saaTextField.setText(Double.toString(angularRelation.saa));
+                } catch (InterruptedException e) {
+                    clearAngularRelationFields();
+                } catch (ExecutionException e) {
+                    clearAngularRelationFields();
+                }
+            }
+        };
+        worker.execute();
+    }
 
-        final XYSeries series = createSpectrumPlotXYSeries(radiances);
+    private void clearInfoFields() {
+        mdrIndexTextField.setText(NO_IFOV_SELECTED);
+        ifovInMdrIndexTextField.setText(NO_IFOV_SELECTED);
+    }
 
-        spectrumDataset.addSeries(series);
+    private void clearEarthLocationFields() {
+        lonTextField.setText(NO_IFOV_SELECTED);
+        latTextField.setText(NO_IFOV_SELECTED);
+    }
+
+    private void clearAngularRelationFields() {
+        saaTextField.setText(NO_IFOV_SELECTED);
+        vaaTextField.setText(NO_IFOV_SELECTED);
+        szaTextField.setText(NO_IFOV_SELECTED);
+        vzaTextField.setText(NO_IFOV_SELECTED);
+    }
+
+    private void updateSpectrumDataset(final SounderIfov selectedIfov, final EpsFile epsFile) {
+        final SwingWorker<XYSeries, Object> worker = new SwingWorker<XYSeries, Object>() {
+            @Override
+            protected XYSeries doInBackground() throws Exception {
+                return createSpectrumPlotXYSeries(readSceneRadiances(epsFile, selectedIfov));
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    spectrumDataset.removeAllSeries();
+                    final XYSeries series = get();
+                    spectrumDataset.addSeries(series);
+                } catch (InterruptedException e) {
+                    // ignore
+                } catch (ExecutionException e) {
+                    // ignore
+                }
+            }
+        };
+        worker.execute();
     }
 
     private AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
@@ -476,4 +530,5 @@ abstract class SounderInfoView extends AbstractToolView {
             this.vaa = vaa;
         }
     }
+
 }
