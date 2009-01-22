@@ -24,8 +24,7 @@ import java.io.IOException;
 public class AmsuSounderLayer extends SounderLayer {
 
     public AmsuSounderLayer(AmsuSounderOverlay overlay) throws IOException {
-        super(overlay, AmsuFile.PRODUCT_WIDTH);
-        setBandInfo(AmsuBandInfo.RADIANCE01);
+        super(overlay, AmsuBandInfo.values(), AmsuFile.PRODUCT_WIDTH);
     }
     
     @Override
