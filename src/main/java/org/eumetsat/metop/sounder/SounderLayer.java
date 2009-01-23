@@ -35,7 +35,7 @@ import java.util.Map;
 
 
 // todo - clean-up
-public class SounderLayer extends Layer {
+public class SounderLayer extends Layer implements SounderInfo {
 
     private final AbstractSounderOverlay overlay;
     private final BandInfo[] bandInfos;
@@ -175,6 +175,7 @@ public class SounderLayer extends Layer {
         return selectedChannel;
     }
 
+    @Override
     public synchronized void setSelectedChannel(final int channel) {
         if (selectedChannel != channel || layerDataMap.isEmpty()) {
             final LayerData layerData = layerDataMap.get(channel);

@@ -34,6 +34,7 @@ import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsReader;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderInfo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -97,13 +98,13 @@ public class AddAvhrrOverlayAction extends ExecCommand {
     }
     
     private boolean hasLayer(Layer layer, AvhrrOverlay overlay) {
-        if (SounderLayer.class.isAssignableFrom(layer.getClass()) &&
-                ((SounderLayer) layer).getOverlay() == overlay) {
+        if (SounderInfo.class.isAssignableFrom(layer.getClass()) &&
+                ((SounderInfo) layer).getOverlay() == overlay) {
             return true;
         }
         for (Layer childLayer : layer.getChildren()) {
-            if (SounderLayer.class.isAssignableFrom(childLayer.getClass()) &&
-                    ((SounderLayer) childLayer).getOverlay() == overlay) {
+            if (SounderInfo.class.isAssignableFrom(childLayer.getClass()) &&
+                    ((SounderInfo) childLayer).getOverlay() == overlay) {
                 return true;
             }
         }

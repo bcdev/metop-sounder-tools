@@ -6,14 +6,14 @@
  */
 package org.eumetsat.metop.iasi;
 
-import org.esa.beam.framework.datamodel.ColorPaletteDef;
-import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.framework.datamodel.*;
 import org.esa.beam.framework.ui.AbstractLayerUI;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
 import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderInfo;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -31,11 +31,12 @@ import java.io.IOException;
 import javax.swing.SwingWorker;
 
 import com.bc.ceres.core.ExtensionFactory;
+import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.glayer.Layer;
 import com.bc.ceres.grender.Rendering;
 import com.bc.ceres.grender.Viewport;
 
-public class IasiLayer extends Layer {
+public class IasiLayer extends Layer implements SounderInfo {
 
     public static final int EFOV_SIZE = 50;
     public static final int IFOV_SIZE = 12;
@@ -52,6 +53,7 @@ public class IasiLayer extends Layer {
     
     private final SounderOverlayListener overlayListener;
     private final IasiOverlay iasiOverlay;
+    private int selectedChannel;
 
     public IasiLayer(IasiOverlay iasiOverlay) {
         this.iasiOverlay = iasiOverlay;
@@ -67,8 +69,34 @@ public class IasiLayer extends Layer {
         ifovAnomalousColor = Color.RED;
     }
     
+    @Override
     public IasiOverlay getOverlay() {
         return iasiOverlay;
+    }
+
+    public ImageInfo getImageInfo() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public Stx getStx() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public Scaling getScaling() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public int getSelectedChannel() {
+        return selectedChannel;
+    }
+
+    @Override
+    public void setSelectedChannel(int channel) {
+        if (selectedChannel != channel) {
+            selectedChannel = channel;
+            regenerate();
+        }
     }
 
     @Override
@@ -198,6 +226,33 @@ public class IasiLayer extends Layer {
                 ColorPaletteDef paletteDef = new ColorPaletteDef(min, max);
                 Color[] colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
                 return new ColorInfo(allBts, paletteDef, colorPalette);
+
+                ////
+//                final int size = allBts.length * allBts[0].length * allBts[0][0].length;
+//                ProductData data = ProductData.createInstance(ProductData.TYPE_FLOAT64, size);
+//                int efovIndex = 0;
+//                int index = 0;
+//                for (int i = 0; i < allBts.length; i++) {
+//                    for (int j = 0; j < allBts[i].length; j++) {
+//                        Efov efov = efovs[efovIndex];
+//                        for (int k = 0; k < allBts[i][j].length; k++) {
+//                            if (!efov.getIfovs()[k].isAnomalous()) {
+//                                data.setElemDoubleAt(index, allBts[i][j][k]);
+//                            } else {
+//                                data.setElemDoubleAt(index, Double.NaN);
+//                            }
+//                            index++;
+//                        }
+//                        efovIndex++;
+//                    }
+//                }
+//                 final Band band = new Band("x", data.getType(), size, 1);
+//                band.setRasterData(data);
+//                band.setSynthetic(true);
+//                // todo - scaling
+//                final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
+//
+//                return null;
             }
             
             @Override
@@ -263,6 +318,7 @@ public class IasiLayer extends Layer {
     @Override
     public void regenerate() {
         colorInfo = null;
+        fireLayerDataChanged(null);
     }
 
     public Color[] getColorPalette() {

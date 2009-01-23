@@ -29,10 +29,7 @@ import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
-import org.eumetsat.metop.sounder.Ifov;
-import org.eumetsat.metop.sounder.SounderLayer;
-import org.eumetsat.metop.sounder.SounderOverlay;
-import org.eumetsat.metop.sounder.SounderOverlayListener;
+import org.eumetsat.metop.sounder.*;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -131,9 +128,9 @@ abstract class SounderInfoView extends AbstractToolView {
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
                 if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderLayer layer = getSounderLayer();
-                    if (layer != null) {
-                        layer.getOverlay().removeListener(overlayListener);
+                    final SounderInfo info = getSounderLayer();
+                    if (info != null) {
+                        info.getOverlay().removeListener(overlayListener);
                     }
                 }
             }
@@ -146,9 +143,9 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-            final SounderLayer layer = getSounderLayer();
-            if (layer != null) {
-                final SounderOverlay overlay = layer.getOverlay();
+            final SounderInfo info = getSounderLayer();
+            if (info != null) {
+                final SounderOverlay overlay = info.getOverlay();
                 overlay.addListener(overlayListener);
                 updateUI(overlay);
             }
@@ -161,8 +158,7 @@ abstract class SounderInfoView extends AbstractToolView {
     public void componentFocusGained() {
         ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
         if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
-            SounderLayer sounderLayer = getSounderLayer();
-            Layer layer = IasiFootprintVPI.getActiveFootprintLayer(sounderLayer.getClass());
+            SounderLayer layer = getSounderLayer();
             if (layer != null) {
                 productSceneView.setSelectedLayer(layer);
             }
