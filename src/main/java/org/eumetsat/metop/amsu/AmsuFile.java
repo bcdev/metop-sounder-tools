@@ -60,7 +60,7 @@ public class AmsuFile extends SounderFile {
         // TODO check for date
         return new AmsuSounderOverlay(this, avhrrProduct);
     }
-    
+
     @Override
     public Layer createLayer(AvhrrOverlay overlay) {
         if (overlay instanceof AmsuSounderOverlay) {
@@ -68,6 +68,7 @@ public class AmsuFile extends SounderFile {
             try {
                 return new AmsuSounderLayer(amsuSounderOverlay);
             } catch (IOException e) {
+                // ignore
             }
         }
         return null;
@@ -81,6 +82,7 @@ public class AmsuFile extends SounderFile {
             iasiFilenamePrefix = "AMSA" + avhrrFilename.substring(4, 15);
         }
 
+        @Override
         public boolean accept(File dir, String name) {
             return name.startsWith(iasiFilenamePrefix) && name.endsWith(".nat");
         }
