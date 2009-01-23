@@ -228,8 +228,4 @@ public class EpsFormats {
         }
         return epsXml.getFormat();
     }
-
-    public DataFormat getIasiDataFormat() {
-        return getDataFormat(new FormatDescriptor("IASI", "1C", 3, 0));
-    }
 }
