@@ -54,7 +54,6 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
         return epsfile;
     }
 
-    @Override
     public Ifov[] getAllIfovs() {
         synchronized (this) {
             if (ifovs != null) {

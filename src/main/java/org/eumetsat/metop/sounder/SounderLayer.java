@@ -37,7 +37,7 @@ import java.util.Map;
 // todo - clean-up
 public class SounderLayer extends Layer {
 
-    private final SounderOverlay overlay;
+    private final AbstractSounderOverlay overlay;
     private final BandInfo[] bandInfos;
 
     private final int mdrCount;
@@ -51,7 +51,7 @@ public class SounderLayer extends Layer {
 
     private volatile int selectedChannel;
 
-    protected SounderLayer(SounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
+    protected SounderLayer(AbstractSounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
         this.overlay = overlay;
         this.bandInfos = bandInfos;
 

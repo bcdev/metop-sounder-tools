@@ -37,6 +37,11 @@ public final class SounderIfov implements Ifov {
     }
 
     @Override
+    public final int getIfovIndex() {
+        return 0;
+    }
+
+    @Override
     public final int getIfovInMdrIndex() {
         return ifovInMdrIndex;
     }

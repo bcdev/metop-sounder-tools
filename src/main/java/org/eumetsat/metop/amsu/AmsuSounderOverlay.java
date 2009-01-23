@@ -18,10 +18,9 @@ package org.eumetsat.metop.amsu;
 
 import org.esa.beam.framework.datamodel.*;
 import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.AbstractSounderOverlay;
-import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -66,10 +65,42 @@ public class AmsuSounderOverlay extends AbstractSounderOverlay {
                 Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * ifovSize,
                                                   avhrrPixelPos.y - 0.5f * ifovSize * yScale,
                                                   ifovSize, ifovSize * yScale);
-                allIfovs[index] = new SounderIfov(y, x, shape);
+                allIfovs[index] = new AmsuIfov(x, y, shape);
                 index++;
             }
         }
         return allIfovs;
+    }
+
+    private static class AmsuIfov implements Ifov {
+        private final int y;
+        private final int x;
+        private final Shape shape;
+
+        private AmsuIfov(int x, int y, Shape shape) {
+            this.y = y;
+            this.x = x;
+            this.shape = shape;
+        }
+
+        @Override
+        public final int getMdrIndex() {
+            return y;
+        }
+
+        @Override
+        public final int getIfovIndex() {
+            return y * AmsuFile.PRODUCT_WIDTH + x;
+        }
+
+        @Override
+        public final int getIfovInMdrIndex() {
+            return x;
+        }
+
+        @Override
+        public final Shape getShape() {
+            return shape;
+        }
     }
 }

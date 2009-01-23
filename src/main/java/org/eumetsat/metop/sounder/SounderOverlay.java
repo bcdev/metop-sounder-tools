@@ -8,8 +8,6 @@ package org.eumetsat.metop.sounder;
  */
 public interface SounderOverlay extends AvhrrOverlay {
 
-    Ifov[] getAllIfovs();
-
     Ifov getSelectedIfov();
 
     void setSelectedIfov(Ifov ifov);

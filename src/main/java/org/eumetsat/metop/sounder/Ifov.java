@@ -13,6 +13,8 @@ public interface Ifov {
     
     int getMdrIndex();
 
+    int getIfovIndex();
+    
     int getIfovInMdrIndex();
 
     Shape getShape();

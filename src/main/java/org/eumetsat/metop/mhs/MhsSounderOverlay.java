@@ -22,7 +22,6 @@ import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.AbstractSounderOverlay;
 import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 import org.eumetsat.metop.sounder.Ifov;
@@ -71,10 +70,42 @@ public class MhsSounderOverlay extends AbstractSounderOverlay {
                 Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * ifovSize,
                                                   avhrrPixelPos.y - 0.5f * ifovSize * yScale,
                                                       ifovSize, ifovSize * yScale);
-                allIfovs[index] = new SounderIfov(y, x, shape);
+                allIfovs[index] = new MhsIfov(x, y, shape);
                 index++;
             }
         }
         return allIfovs;
+    }
+
+    private static class MhsIfov implements Ifov {
+        private final int y;
+        private final int x;
+        private final Shape shape;
+
+        private MhsIfov(int x, int y, Shape shape) {
+            this.y = y;
+            this.x = x;
+            this.shape = shape;
+        }
+
+        @Override
+        public final int getMdrIndex() {
+            return y;
+        }
+
+        @Override
+        public final int getIfovIndex() {
+            return y * MhsFile.PRODUCT_WIDTH + x;
+        }
+
+        @Override
+        public final int getIfovInMdrIndex() {
+            return x;
+        }
+
+        @Override
+        public final Shape getShape() {
+            return shape;
+        }
     }
 }

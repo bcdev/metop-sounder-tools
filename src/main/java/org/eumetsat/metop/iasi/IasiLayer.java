@@ -176,7 +176,7 @@ public class IasiLayer extends Layer {
 
             @Override
             protected ColorInfo doInBackground() throws Exception {
-                double[][][] allBts = iasiOverlay.getIasiFile().readAllBts(42);
+                double[][][] allBts = iasiOverlay.getEpsFile().readAllBts(42);
                 final Efov[] efovs = iasiOverlay.getEfovs();
                 double min = Double.MAX_VALUE;
                 double max = 0;

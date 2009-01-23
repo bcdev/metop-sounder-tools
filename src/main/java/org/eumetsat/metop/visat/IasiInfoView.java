@@ -125,7 +125,7 @@ public class IasiInfoView extends AbstractToolView {
                 this.psv = pvs;
                 iasiOverlay = layer.getOverlay();
                 iasiOverlay.addListener(modelListener);
-                iasiFile = iasiOverlay.getIasiFile();
+                iasiFile = iasiOverlay.getEpsFile();
                 update(iasiOverlay.getSelectedIfov());
             }
         } else {

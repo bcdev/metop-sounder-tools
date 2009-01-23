@@ -21,6 +21,9 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.util.Debug;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
+import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
 
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -38,7 +41,7 @@ import javax.swing.SwingWorker;
 import com.bc.ceres.binio.CompoundData;
 
 
-public class IasiOverlay implements AvhrrOverlay {
+public class IasiOverlay implements SounderOverlay {
 
     // IASI record parameters
     private static final int AMCO = 100;
@@ -85,7 +88,41 @@ public class IasiOverlay implements AvhrrOverlay {
         listenerMap = Collections.synchronizedMap(new WeakHashMap<IasiOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
     }
-    
+
+    @Override
+    public Product getAvhrrProduct() {
+        return avhrrProduct;
+    }
+
+    @Override
+    public IasiFile getEpsFile() {
+        return iasiFile;
+    }
+
+    @Override
+    public IasiIfov getSelectedIfov() {
+        return selectedIfov;
+    }
+
+    public void setSelectedIfov(Ifov ifov) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void addListener(SounderOverlayListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void removeListener(SounderOverlayListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void setSelectedIfov(IasiIfov selectedIfov) {
+        if (selectedIfov != this.selectedIfov) {
+            this.selectedIfov = selectedIfov;
+            fireSelectionChanged();
+        }
+    }
+
     public synchronized Efov[] getEfovs() {
         synchronized (this) {
             if (efovs != null) {
@@ -102,7 +139,7 @@ public class IasiOverlay implements AvhrrOverlay {
             protected Efov[] doInBackground() throws Exception {
                 return createEfovs("fast");
             }
-                
+
             @Override
             protected void done() {
                 try {
@@ -119,18 +156,7 @@ public class IasiOverlay implements AvhrrOverlay {
         worker.execute();
         return NO_DATA;
     }
-    
-    public IasiIfov getSelectedIfov() {
-        return selectedIfov;
-    }
-    
-    public void setSelectedIfov(IasiIfov selectedIfov) {
-        if (selectedIfov != this.selectedIfov) {
-            this.selectedIfov = selectedIfov;
-            fireSelectionChanged();
-        }
-    }
-    
+
     public void addListener(IasiOverlayListener listener) {
         listenerMap.put(listener, null);
     }
@@ -148,7 +174,7 @@ public class IasiOverlay implements AvhrrOverlay {
             }
         }
     }
-    
+
     protected void fireDataChanged() {
         final Set<IasiOverlayListener> listenerSet = listenerMap.keySet();
 
@@ -159,22 +185,6 @@ public class IasiOverlay implements AvhrrOverlay {
         }
     }
 
-    public Product getAvhrrProduct() {
-        return avhrrProduct;
-    }
-
-    public EpsFile getEpsFile() {
-        return iasiFile;
-    }
-    
-    public IasiFile getIasiFile() {
-        return iasiFile;
-    }
-    
-    public void close() {
-        iasiFile.close();
-    }
-    
     static int computeIfovId(int mdrIndex, int efovIndex, int ifovIndex) {
         return mdrIndex * SNOT * PN + efovIndex * PN + ifovIndex;
     }
