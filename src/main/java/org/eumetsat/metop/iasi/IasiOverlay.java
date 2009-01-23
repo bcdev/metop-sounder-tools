@@ -75,7 +75,7 @@ public class IasiOverlay implements SounderOverlay {
     private Efov[] efovs;
     private boolean computingEfovs;
     private IasiIfov selectedIfov;
-    private final Map<IasiOverlayListener, Object> listenerMap;
+    private final Map<SounderOverlayListener, Object> listenerMap;
     private int mdrCount;
     
     public IasiOverlay(IasiFile iasiFile, Product avhrrProduct) throws IOException {
@@ -85,7 +85,7 @@ public class IasiOverlay implements SounderOverlay {
         avhrrStartMillis = avhrrProduct.getStartTime().getAsCalendar().getTimeInMillis();
         avhrrTrimLeft = avhrrProduct.getMetadataRoot().getElement("READER_INFO").getAttributeInt("TRIM_LEFT", 0);
         avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
-        listenerMap = Collections.synchronizedMap(new WeakHashMap<IasiOverlayListener, Object>());
+        listenerMap = Collections.synchronizedMap(new WeakHashMap<SounderOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
     }
 
@@ -108,12 +108,14 @@ public class IasiOverlay implements SounderOverlay {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     public void addListener(SounderOverlayListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        listenerMap.put(listener, null);
     }
 
+    @Override
     public void removeListener(SounderOverlayListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        listenerMap.remove(listener);
     }
 
     public void setSelectedIfov(IasiIfov selectedIfov) {
@@ -157,29 +159,21 @@ public class IasiOverlay implements SounderOverlay {
         return NO_DATA;
     }
 
-    public void addListener(IasiOverlayListener listener) {
-        listenerMap.put(listener, null);
-    }
-
-    public void removeListener(IasiOverlayListener listener) {
-        listenerMap.remove(listener);
-    }
-
     protected void fireSelectionChanged() {
-        final Set<IasiOverlayListener> listenerSet = listenerMap.keySet();
+        final Set<SounderOverlayListener> listenerSet = listenerMap.keySet();
 
         synchronized (listenerMap) {
-            for (final IasiOverlayListener listener : listenerSet) {
+            for (final SounderOverlayListener listener : listenerSet) {
                 listener.selectionChanged(this);
             }
         }
     }
 
     protected void fireDataChanged() {
-        final Set<IasiOverlayListener> listenerSet = listenerMap.keySet();
+        final Set<SounderOverlayListener> listenerSet = listenerMap.keySet();
 
         synchronized (listenerMap) {
-            for (final IasiOverlayListener listener : listenerSet) {
+            for (final SounderOverlayListener listener : listenerSet) {
                 listener.dataChanged(this);
             }
         }

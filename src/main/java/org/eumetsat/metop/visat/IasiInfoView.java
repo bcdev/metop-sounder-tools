@@ -26,6 +26,9 @@ import org.eumetsat.metop.iasi.IasiIfov;
 import org.eumetsat.metop.iasi.*;
 import org.eumetsat.metop.iasi.IasiFile.Geometry;
 import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
+import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
+import org.eumetsat.metop.sounder.SounderOverlay;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -243,7 +246,7 @@ public class IasiInfoView extends AbstractToolView {
         return panel;
     }
 
-    private void update(IasiIfov selectedIfov) {
+    private void update(Ifov selectedIfov) {
         int ifovId = -1;
         if (iasiFile != null && selectedIfov != null) {
             ifovId = selectedIfov.getIfovIndex();
@@ -345,14 +348,14 @@ public class IasiInfoView extends AbstractToolView {
         dataset.addSeries(series);
     }
 
-    private class IasiListener implements IasiOverlayListener {
+    private class IasiListener implements SounderOverlayListener {
         @Override
-        public void selectionChanged(IasiOverlay overlay) {
+        public void selectionChanged(SounderOverlay overlay) {
             update(overlay.getSelectedIfov());
         }
 
         @Override
-        public void dataChanged(IasiOverlay overlay) {
+        public void dataChanged(SounderOverlay overlay) {
             update(overlay.getSelectedIfov());
         }
     }

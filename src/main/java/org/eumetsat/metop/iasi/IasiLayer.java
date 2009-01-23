@@ -12,6 +12,8 @@ import org.esa.beam.framework.ui.AbstractLayerUI;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.Debug;
 import org.esa.beam.util.math.MathUtils;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
+import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -48,7 +50,7 @@ public class IasiLayer extends Layer {
     private ColorInfo colorInfo;
     private boolean loadingColorInfo;
     
-    private final OverlayListener overlayListener;
+    private final SounderOverlayListener overlayListener;
     private final IasiOverlay iasiOverlay;
 
     public IasiLayer(IasiOverlay iasiOverlay) {
@@ -321,14 +323,14 @@ public class IasiLayer extends Layer {
         }
     }
 
-    private class OverlayListener implements IasiOverlayListener {
+    private class OverlayListener implements SounderOverlayListener {
         @Override
-        public void selectionChanged(IasiOverlay overlay) {
+        public void selectionChanged(SounderOverlay overlay) {
             fireLayerDataChanged(null);
         }
 
         @Override
-        public void dataChanged(IasiOverlay overlay) {
+        public void dataChanged(SounderOverlay overlay) {
             fireLayerDataChanged(null);
         }
     }
