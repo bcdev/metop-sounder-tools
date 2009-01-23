@@ -22,11 +22,8 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.metop.iasi.IasiFile;
-import org.eumetsat.metop.iasi.IasiLayer;
-import org.eumetsat.metop.iasi.IasiOverlay;
-import org.eumetsat.metop.iasi.IasiOverlayListener;
-import org.eumetsat.metop.iasi.Ifov;
+import org.eumetsat.metop.iasi.IasiIfov;
+import org.eumetsat.metop.iasi.*;
 import org.eumetsat.metop.iasi.IasiFile.Geometry;
 import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
 import org.jfree.chart.ChartPanel;
@@ -246,7 +243,7 @@ public class IasiInfoView extends AbstractToolView {
         return panel;
     }
 
-    private void update(Ifov selectedIfov) {
+    private void update(IasiIfov selectedIfov) {
         int ifovId = -1;
         if (iasiFile != null && selectedIfov != null) {
             ifovId = selectedIfov.getIndex();

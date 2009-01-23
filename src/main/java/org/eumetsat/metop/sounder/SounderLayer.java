@@ -127,7 +127,7 @@ public class SounderLayer extends Layer {
             final SounderIfov selectedIfov = overlay.getSelectedIfov();
 //            if (ifovBigEnough) {
             for (SounderIfov ifov : ifovs) {
-                final Shape ifovShape = ifov.shape;
+                final Shape ifovShape = ifov.getShape();
                 boolean isVisible = clip == null || ifovShape.intersects(clip);
                 if (isVisible) {
                     Color fillColor = getColor(layerData, ifov, colorPalette);
@@ -206,7 +206,7 @@ public class SounderLayer extends Layer {
     private SounderIfov getIfovForLocation(int pixelX, int pixelY) {
         final SounderIfov[] ifovs = overlay.getIfovs();
         for (final SounderIfov ifov : ifovs) {
-            if (ifov.shape.contains(pixelX + 0.5f, pixelY + 0.5f)) {
+            if (ifov.getShape().contains(pixelX + 0.5f, pixelY + 0.5f)) {
                 return ifov;
             }
         }
@@ -215,7 +215,7 @@ public class SounderLayer extends Layer {
 
     private Color getColor(LayerData layerData, SounderIfov ifov, Color[] colors) {
         final ColorPaletteDef def = layerData.imageInfo.getColorPaletteDef();
-        final double sample = layerData.band.getData().getElemDoubleAt(ifov.ifovInMdrIndex + ifov.mdrIndex * ifovInMdrCount);
+        final double sample = layerData.band.getData().getElemDoubleAt(ifov.getIfovInMdrIndex() + ifov.getMdrIndex() * ifovInMdrCount);
         final int numColors = colors.length;
 
         final double min = def.getMinDisplaySample();

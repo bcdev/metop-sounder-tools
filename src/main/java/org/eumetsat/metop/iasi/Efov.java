@@ -4,15 +4,15 @@ import java.awt.*;
 
 public class Efov {
     private final int index;
-    private final Ifov[] ifovs;
+    private final IasiIfov[] ifovs;
     private final Shape shape;
 
-    public Efov(int index, Ifov[] ifovs, Shape shape) {
+    public Efov(int index, IasiIfov[] ifovs, Shape shape) {
         this.index = index;
         this.ifovs = ifovs.clone();
         this.shape = shape;
 
-        for (Ifov ifov : this.ifovs) {
+        for (IasiIfov ifov : this.ifovs) {
             ifov.setEfov(this);
         }
     }
@@ -21,7 +21,7 @@ public class Efov {
         return index;
     }
 
-    public Ifov[] getIfovs() {
+    public IasiIfov[] getIfovs() {
         return ifovs;
     }
 
@@ -30,7 +30,7 @@ public class Efov {
     }
 
     public final boolean isAnyIfovAnomalous() {
-        for (final Ifov ifov : getIfovs()) {
+        for (final IasiIfov ifov : getIfovs()) {
             if (ifov.isAnomalous()) {
                 return true;
             }

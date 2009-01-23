@@ -1,10 +1,8 @@
 package org.eumetsat.metop.iasi;
 
 import java.awt.Shape;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
 
-public class Ifov {
+public final class IasiIfov {
 
     private volatile Efov efov;
     private final int index;
@@ -13,11 +11,11 @@ public class Ifov {
     private final Shape shape;
     private final boolean anomalous;
 
-    public Ifov(int index, float pixelX, float pixelY, Shape shape) {
+    public IasiIfov(int index, float pixelX, float pixelY, Shape shape) {
         this(index, pixelX, pixelY, shape, false);
     }
 
-    public Ifov(int index, float pixelX, float pixelY, Shape shape, boolean anomalous) {
+    public IasiIfov(int index, float pixelX, float pixelY, Shape shape, boolean anomalous) {
         this.index = index;
         this.pixelX = pixelX;
         this.pixelY = pixelY;
@@ -25,31 +23,31 @@ public class Ifov {
         this.anomalous = anomalous;
     }
 
-    public int getIndex() {
+    public final int getIndex() {
         return index;
     }
 
-    public Efov getEfov() {
+    public final Efov getEfov() {
         return efov;
     }
 
-    public void setEfov(Efov efov) {
+    public final void setEfov(Efov efov) {
         this.efov = efov;
     }
 
-    public float getPixelX() {
+    public final float getPixelX() {
         return pixelX;
     }
 
-    public float getPixelY() {
+    public final float getPixelY() {
         return pixelY;
     }
 
-    public Shape getShape() {
+    public final Shape getShape() {
         return shape;
     }
 
-    public boolean isAnomalous() {
+    public final boolean isAnomalous() {
         return anomalous;
     }
 }

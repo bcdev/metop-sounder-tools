@@ -71,7 +71,7 @@ public class IasiOverlay implements AvhrrOverlay {
     
     private Efov[] efovs;
     private boolean computingEfovs;
-    private Ifov selectedIfov;
+    private IasiIfov selectedIfov;
     private final Map<IasiOverlayListener, Object> listenerMap;
     private int mdrCount;
     
@@ -120,11 +120,11 @@ public class IasiOverlay implements AvhrrOverlay {
         return NO_DATA;
     }
     
-    public Ifov getSelectedIfov() {
+    public IasiIfov getSelectedIfov() {
         return selectedIfov;
     }
     
-    public void setSelectedIfov(Ifov selectedIfov) {
+    public void setSelectedIfov(IasiIfov selectedIfov) {
         if (selectedIfov != this.selectedIfov) {
             this.selectedIfov = selectedIfov;
             fireSelectionChanged();
@@ -229,7 +229,7 @@ public class IasiOverlay implements AvhrrOverlay {
                     ifovPos[ifovIndex] = calculateAvhrrPixelPos(mdrStartMillis, loc[1], loc[0]);
                 }
                 final Shape[] ifovShapes = createIfovShapes(ifovPos);
-                final Ifov[] ifovs = new Ifov[PN];
+                final IasiIfov[] ifovs = new IasiIfov[PN];
 
                 for (int ifovIndex = 0; ifovIndex < ifovs.length; ifovIndex++) {
                     final int ifovId = computeIfovId(mdrIndex, efovIndex, ifovIndex);
@@ -237,7 +237,7 @@ public class IasiOverlay implements AvhrrOverlay {
                     final Shape shape = ifovShapes[ifovIndex];
                     final boolean anomalous = anomalousFlags[efovIndex][ifovIndex];
 
-                    ifovs[ifovIndex] = new Ifov(ifovId, pos.x, pos.y, shape, anomalous);
+                    ifovs[ifovIndex] = new IasiIfov(ifovId, pos.x, pos.y, shape, anomalous);
                 }
 
                 final Shape efovShape = createEfovShape(efovStyle, mdrStartMillis, iisLocs[efovIndex], ifovs);
@@ -274,7 +274,7 @@ public class IasiOverlay implements AvhrrOverlay {
     }
 
     // todo - to Efov shape factory
-    private Shape createEfovShape(String efovStyle, long mdrStartMillis, double[][] iisLocs, Ifov[] ifovs) {
+    private Shape createEfovShape(String efovStyle, long mdrStartMillis, double[][] iisLocs, IasiIfov[] ifovs) {
         if ("grid".equals(efovStyle)) {
             return createIisGridShape(mdrStartMillis, iisLocs);
         } else if ("bounds".equals(efovStyle)) {
@@ -287,10 +287,10 @@ public class IasiOverlay implements AvhrrOverlay {
         return createIisEfovShape(mdrStartMillis, iisLocs);
     }
 
-    private Shape createFastShape(Ifov[] ifovs) {
+    private Shape createFastShape(IasiIfov[] ifovs) {
         boolean started = false;
         GeneralPath path = new GeneralPath();
-        for (Ifov ifov : ifovs) {
+        for (IasiIfov ifov : ifovs) {
             if (!started) {
                 path.moveTo(ifov.getPixelX(), ifov.getPixelY());
                 started = true;
@@ -319,11 +319,11 @@ public class IasiOverlay implements AvhrrOverlay {
     }
     
     // todo - to Efov shape factory
-    private Shape createNormanShape(Ifov[] ifovs) {
+    private Shape createNormanShape(IasiIfov[] ifovs) {
         final Area area = new Area();
         boolean started = false;
         GeneralPath path = new GeneralPath();
-        for (Ifov ifov : ifovs) {
+        for (IasiIfov ifov : ifovs) {
             if (!started) {
                 path.moveTo(ifov.getPixelX(), ifov.getPixelY());
                 started = true;
@@ -332,16 +332,16 @@ public class IasiOverlay implements AvhrrOverlay {
             }
         }
         area.add(new Area(path));
-        for (Ifov ifov : ifovs) {
+        for (IasiIfov ifov : ifovs) {
             area.subtract(new Area(ifov.getShape()));
         }
         return area;
     }
 
     // todo - to Efov shape factory
-    private Shape createEfovBoundShape(Ifov[] ifovs) {
+    private Shape createEfovBoundShape(IasiIfov[] ifovs) {
         final Area area = new Area();
-        for (Ifov ifov : ifovs) {
+        for (IasiIfov ifov : ifovs) {
             area.add(new Area(ifov.getShape()));
         }
         return area.getBounds2D();

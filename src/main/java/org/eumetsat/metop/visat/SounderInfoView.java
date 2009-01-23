@@ -361,8 +361,8 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private void updateInfoFields(SounderIfov selectedIfov) {
-        mdrIndexTextField.setText(Integer.toString(selectedIfov.mdrIndex));
-        ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.ifovInMdrIndex));
+        mdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
+        ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
     }
 
     private void updateEarthLocationFields(final SounderIfov selectedIfov, final EpsFile epsFile) {
@@ -514,7 +514,7 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
-        return getCompoundData(sounderFile, ifov.mdrIndex).getSequence(sequenceName).getSequence(ifov.ifovInMdrIndex);
+        return getCompoundData(sounderFile, ifov.getMdrIndex()).getSequence(sequenceName).getSequence(ifov.getIfovInMdrIndex());
     }
 
     protected static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {

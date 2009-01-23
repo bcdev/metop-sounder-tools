@@ -78,10 +78,10 @@ public class IasiLayer extends Layer {
         }
     }
 
-    private Ifov getIfovForLocation(int pixelX, int pixelY) {
+    private IasiIfov getIfovForLocation(int pixelX, int pixelY) {
         Efov[] efovs = iasiOverlay.getEfovs();
         for (final Efov efov : efovs) {
-            for (final Ifov ifov : efov.getIfovs()) {
+            for (final IasiIfov ifov : efov.getIfovs()) {
                 final boolean renderAnomalousIfovs = "true".equals(System.getProperty("iasi.renderAnomalousIfovs", "true"));
                 if (!ifov.isAnomalous() || renderAnomalousIfovs) {
                     if (ifov.getShape().contains(pixelX + 0.5f, pixelY + 0.5f)) {
@@ -138,7 +138,7 @@ public class IasiLayer extends Layer {
                         if (shouldRenderEfov(efov)) {
                             renderEfov(g2d, efov);
                             if (ifovBigEnough) {
-                                for (Ifov ifov : efov.getIfovs()) {
+                                for (IasiIfov ifov : efov.getIfovs()) {
                                     if (shouldRenderIfov(ifov)) {
                                         int mdrIndex = IasiFile.computeMdrIndex(ifov.getIndex());
                                         int efovIndex = IasiFile.computeEfovIndex(ifov.getIndex());
@@ -221,7 +221,7 @@ public class IasiLayer extends Layer {
         if (renderAnomalousIfovs) {
             return true;
         }
-        for (final Ifov ifov : efov.getIfovs()) {
+        for (final IasiIfov ifov : efov.getIfovs()) {
             if (!ifov.isAnomalous()) {
                 return true;
             }
@@ -230,7 +230,7 @@ public class IasiLayer extends Layer {
         return false;
     }
 
-    private boolean shouldRenderIfov(Ifov ifov) {
+    private boolean shouldRenderIfov(IasiIfov ifov) {
         return (!ifov.isAnomalous() || "true".equals(System.getProperty("iasi.renderAnomalousIfovs", "true")));
     }
 
@@ -239,7 +239,7 @@ public class IasiLayer extends Layer {
         g2d.draw(efov.getShape());
     }
 
-    private void renderIfov(Graphics2D g2d, Ifov ifov, Color color) {
+    private void renderIfov(Graphics2D g2d, IasiIfov ifov, Color color) {
         final Shape ifovShape = ifov.getShape();
         if (!ifov.isAnomalous()) {
             g2d.setPaint(color);
@@ -303,7 +303,7 @@ public class IasiLayer extends Layer {
             IasiLayer selectedIasiLayer = (IasiLayer) getLayer();
             Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
             view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
-            Ifov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+            IasiIfov ifov = selectedIasiLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
             selectedIasiLayer.getOverlay().setSelectedIfov(ifov);
         }
     }
