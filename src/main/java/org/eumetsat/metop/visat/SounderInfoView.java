@@ -19,7 +19,6 @@ import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
 import com.bc.ceres.glayer.Layer;
-
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
@@ -30,8 +29,10 @@ import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
-import org.eumetsat.metop.iasi.IasiLayer;
-import org.eumetsat.metop.sounder.*;
+import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -155,7 +156,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
         return tabbedPane;
     }
-    
+
     @Override
     public void componentFocusGained() {
         ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
@@ -377,7 +378,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
     private void updateInfoFields(Ifov selectedIfov) {
         mdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
-        ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
+        ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.getIfovInMdrIndex()));
     }
 
     private void updateEarthLocationFields(final Ifov selectedIfov, final EpsFile epsFile) {
@@ -529,7 +530,8 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
-        return getCompoundData(sounderFile, ifov.getMdrIndex()).getSequence(sequenceName).getSequence(ifov.getIfovInMdrIndex());
+        return getCompoundData(sounderFile, ifov.getMdrIndex()).getSequence(sequenceName).getSequence(
+                ifov.getIfovInMdrIndex());
     }
 
     protected static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {
