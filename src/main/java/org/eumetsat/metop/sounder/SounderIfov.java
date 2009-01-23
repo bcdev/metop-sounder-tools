@@ -24,7 +24,7 @@ public final class SounderIfov implements Ifov {
     private final int mdrIndex;
     private final int ifovInMdrIndex;
     private final Shape shape;
-    
+
     public SounderIfov(int mdrIndex, int ifovInMdrIndex, Shape shape) {
         this.mdrIndex = mdrIndex;
         this.ifovInMdrIndex = ifovInMdrIndex;
