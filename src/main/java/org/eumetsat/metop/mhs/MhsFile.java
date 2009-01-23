@@ -21,11 +21,8 @@ import com.bc.ceres.glayer.Layer;
 
 import org.esa.beam.framework.dataio.ProductReader;
 import org.esa.beam.framework.datamodel.Product;
-import org.eumetsat.metop.amsu.AmsuSounderLayer;
-import org.eumetsat.metop.amsu.AmsuSounderOverlay;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderFile;
-import org.eumetsat.metop.sounder.SounderOverlay;
 
 import java.io.File;
 import java.io.FilenameFilter;

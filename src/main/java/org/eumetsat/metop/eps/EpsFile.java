@@ -31,8 +31,6 @@ import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.BandInfo;
 import org.eumetsat.metop.sounder.MdrReader;
-import org.eumetsat.metop.sounder.SounderOverlay;
-import org.jfree.data.Range;
 
 import java.io.File;
 import java.io.IOException;

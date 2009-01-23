@@ -38,7 +38,7 @@ import java.util.Map;
 public class SounderLayer extends Layer {
 
     
-    private final SounderOverlay overlay;
+    private final AbstractSounderOverlay overlay;
     private final BandInfo[] bandInfos;
 
     private final int mdrCount;
@@ -52,7 +52,7 @@ public class SounderLayer extends Layer {
 
     private volatile int selectedChannel;
 
-    protected SounderLayer(SounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
+    protected SounderLayer(AbstractSounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
         this.overlay = overlay;
         this.bandInfos = bandInfos;
 
@@ -62,12 +62,12 @@ public class SounderLayer extends Layer {
         layerDataMap = new HashMap<Integer, LayerData>();
         listener = new SounderOverlayListener() {
             @Override
-            public void dataChanged(SounderOverlay overlay) {
+            public void dataChanged(AbstractSounderOverlay overlay) {
                 fireLayerDataChanged(null);
             }
 
             @Override
-            public void selectionChanged(SounderOverlay overlay) {
+            public void selectionChanged(AbstractSounderOverlay overlay) {
                 fireLayerDataChanged(null);
             }
         };
@@ -156,7 +156,7 @@ public class SounderLayer extends Layer {
         fireLayerDataChanged(getModelBounds());
     }
 
-    public SounderOverlay getOverlay() {
+    public AbstractSounderOverlay getOverlay() {
         return overlay;
     }
 

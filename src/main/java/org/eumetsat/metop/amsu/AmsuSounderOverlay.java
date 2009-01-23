@@ -19,7 +19,7 @@ package org.eumetsat.metop.amsu;
 import org.esa.beam.framework.datamodel.*;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
-import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.AbstractSounderOverlay;
 import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 import org.eumetsat.metop.sounder.Ifov;
 
@@ -28,7 +28,7 @@ import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 
 
-public class AmsuSounderOverlay extends SounderOverlay {
+public class AmsuSounderOverlay extends AbstractSounderOverlay {
 
     private static final float ifovSize = 47.63f;
 

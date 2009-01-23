@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.*;
 
 
-public abstract class SounderOverlay implements AvhrrOverlay {
+public abstract class AbstractSounderOverlay implements AvhrrOverlay {
 
     private static final Ifov[] NO_DATA = new Ifov[0];
 
@@ -37,7 +37,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
     private boolean loadingIfovs;
     private Ifov selectedIfov;
 
-    protected SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
+    protected AbstractSounderOverlay(EpsFile epsfile, Product avhrrProduct) {
         this.epsfile = epsfile;
         this.avhrrProduct = avhrrProduct;
         // avoid memory leaks (Bloch 2008, Effective Java, Item 6)
@@ -93,7 +93,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
             @Override
             protected void done() {
                 try {
-                    synchronized (SounderOverlay.this) {
+                    synchronized (AbstractSounderOverlay.this) {
                         loadingIfovs = false;
                         ifovs = get();
                     }
@@ -128,5 +128,4 @@ public abstract class SounderOverlay implements AvhrrOverlay {
             listener.dataChanged(this);
         }
     }
-
 }

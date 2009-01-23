@@ -23,7 +23,7 @@ import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
-import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.AbstractSounderOverlay;
 import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
 import org.eumetsat.metop.sounder.Ifov;
 
@@ -32,7 +32,7 @@ import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 
 
-public class MhsSounderOverlay extends SounderOverlay {
+public class MhsSounderOverlay extends AbstractSounderOverlay {
 
     private static final float ifovSize = 15.88f;
     
