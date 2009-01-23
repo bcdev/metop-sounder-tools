@@ -16,11 +16,7 @@
  */
 package org.eumetsat.metop.amsu;
 
-import org.esa.beam.framework.datamodel.GeoCoding;
-import org.esa.beam.framework.datamodel.GeoPos;
-import org.esa.beam.framework.datamodel.PixelPos;
-import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.framework.datamodel.ProductData;
+import org.esa.beam.framework.datamodel.*;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.SounderOverlay;
@@ -34,11 +30,11 @@ import java.io.IOException;
 public class AmsuSounderOverlay extends SounderOverlay {
 
     private static final float ifovSize = 47.63f;
-    
+
     public AmsuSounderOverlay(AmsuFile amsufile, Product avhrrProduct) {
         super(amsufile, avhrrProduct);
     }
-    
+
     @Override
     protected SounderIfov[] readIfovs() throws IOException {
         EpsFile amsufile = getEpsFile();
@@ -49,12 +45,12 @@ public class AmsuSounderOverlay extends SounderOverlay {
         ProductData longitudes = amsufile.readData(AmsuBandInfo.LON, height, width);
         GeoCoding geoCoding = getAvhrrProduct().getGeoCoding();
         SounderIfov[] allIfovs = new SounderIfov[width * height];
-        
+
         SounderShapeScaleComputer scaleComputer = new SounderShapeScaleComputer(amsufile,
                                                                                 width,
-                                                                                AmsuBandInfo.LAT, 
+                                                                                AmsuBandInfo.LAT,
                                                                                 AmsuBandInfo.LON,
-                                                                                AmsuBandInfo.VZA, 
+                                                                                AmsuBandInfo.VZA,
                                                                                 getAvhrrProduct());
         double[] shapeScale = scaleComputer.getIfovShapeScale();
         int index = 0;
@@ -68,7 +64,7 @@ public class AmsuSounderOverlay extends SounderOverlay {
                 final float yScale = (float) shapeScale[x];
                 Shape shape = new Ellipse2D.Float(avhrrPixelPos.x - 0.5f * ifovSize,
                                                   avhrrPixelPos.y - 0.5f * ifovSize * yScale,
-                                                      ifovSize, ifovSize * yScale);
+                                                  ifovSize, ifovSize * yScale);
                 allIfovs[index] = new SounderIfov(y, x, shape);
                 index++;
             }
