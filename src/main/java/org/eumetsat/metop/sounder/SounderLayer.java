@@ -37,6 +37,7 @@ import java.util.Map;
 // todo - clean-up
 public class SounderLayer extends Layer {
 
+    
     private final SounderOverlay overlay;
     private final BandInfo[] bandInfos;
 
