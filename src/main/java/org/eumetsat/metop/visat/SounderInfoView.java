@@ -34,6 +34,7 @@ import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.event.ChartProgressEvent;
 import org.jfree.chart.event.ChartProgressListener;
@@ -56,6 +57,7 @@ import java.util.concurrent.ExecutionException;
 
 abstract class SounderInfoView extends AbstractToolView {
     private static final String NO_IFOV_SELECTED = "No IFOV selected";
+    private static final String ACCESS_ERROR = "Access error";
 
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
@@ -69,6 +71,7 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField vzaTextField;
     private JTextField vaaTextField;
     private ImageInfoEditor editor;
+    private XYPlot spectrumPlot;
 
     private class DomainCrosshairValueListener implements ChartProgressListener {
         @Override
@@ -80,8 +83,15 @@ abstract class SounderInfoView extends AbstractToolView {
             if (value > 0.0) {
                 final SounderLayer layer = getSounderLayer();
                 if (layer != null) {
-                    layer.setSelectedChannel(crosshairValueToSelectedChannel(value));
-                    editor.setModel(createImageInfoEditorModel(layer));
+                    final int channel = crosshairValueToChannel(value);
+                    if (channel != layer.getSelectedChannel()) {
+                        layer.setSelectedChannel(channel);
+                        editor.setModel(createImageInfoEditorModel(layer));
+                    } else {
+                        if (editor.getModel() == null) {
+                            editor.setModel(createImageInfoEditorModel(layer));
+                        }
+                    }
                 }
             }
         }
@@ -167,7 +177,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected abstract XYSeries createSpectrumPlotXYSeries(double[] radiances);
 
-    protected abstract int crosshairValueToSelectedChannel(double value);
+    protected abstract int crosshairValueToChannel(double value);
 
     protected void configureSpectrumChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.white);
@@ -188,6 +198,8 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
+        renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
+        
         renderer.setSeriesShape(0, new Ellipse2D.Double(-3.0, -3.0, 6.0, 6.0));
         renderer.setSeriesShapesVisible(0, true);
         renderer.setSeriesShapesFilled(0, true);
@@ -263,9 +275,9 @@ abstract class SounderInfoView extends AbstractToolView {
         final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
         containerPanel.add(panel, BorderLayout.NORTH);
 
-        clearEarthLocationFields();
-        clearInfoFields();
-        clearAngularRelationFields();
+        clearEarthLocationFields(NO_IFOV_SELECTED);
+        clearInfoFields(NO_IFOV_SELECTED);
+        clearAngularRelationFields(NO_IFOV_SELECTED);
 
         return containerPanel;
     }
@@ -285,11 +297,11 @@ abstract class SounderInfoView extends AbstractToolView {
         );
         configureSpectrumChart(chart);
 
-        final XYPlot plot = chart.getXYPlot();
-        configureSpectrumPlot(plot);
-        configureSpectrumPlotRenderer((XYLineAndShapeRenderer) plot.getRenderer());
-        configureSpectrumPlotYAxis((NumberAxis) plot.getRangeAxis());
-        configureSpectrumPlotXAxis((NumberAxis) plot.getDomainAxis());
+        spectrumPlot = chart.getXYPlot();
+        configureSpectrumPlot(spectrumPlot);
+        configureSpectrumPlotRenderer((XYLineAndShapeRenderer) spectrumPlot.getRenderer());
+        configureSpectrumPlotYAxis((NumberAxis) spectrumPlot.getRangeAxis());
+        configureSpectrumPlotXAxis((NumberAxis) spectrumPlot.getDomainAxis());
 
         final ChartPanel chartPanel = new ChartPanel(chart);
         configureSpectrumChartPanel(chartPanel);
@@ -336,9 +348,11 @@ abstract class SounderInfoView extends AbstractToolView {
             updateAngularRelationFields(selectedIfov, overlay.getEpsFile());
             updateSpectrumDataset(overlay.getSelectedIfov(), overlay.getEpsFile());
         } else {
-            clearInfoFields();
-            clearEarthLocationFields();
-            clearAngularRelationFields();
+            clearInfoFields(NO_IFOV_SELECTED);
+            clearEarthLocationFields(NO_IFOV_SELECTED);
+            clearAngularRelationFields(NO_IFOV_SELECTED);
+            spectrumDataset.removeAllSeries();
+            spectrumPlot.setNoDataMessage(NO_IFOV_SELECTED);
         }
     }
 
@@ -361,9 +375,9 @@ abstract class SounderInfoView extends AbstractToolView {
                     lonTextField.setText(geoPos.getLonString());
                     latTextField.setText(geoPos.getLatString());
                 } catch (InterruptedException e) {
-                    clearEarthLocationFields();
+                    clearEarthLocationFields(ACCESS_ERROR);
                 } catch (ExecutionException e) {
-                    clearEarthLocationFields();
+                    clearEarthLocationFields(ACCESS_ERROR);
                 }
             }
         };
@@ -386,30 +400,30 @@ abstract class SounderInfoView extends AbstractToolView {
                     szaTextField.setText(Double.toString(angularRelation.sza));
                     saaTextField.setText(Double.toString(angularRelation.saa));
                 } catch (InterruptedException e) {
-                    clearAngularRelationFields();
+                    clearAngularRelationFields(ACCESS_ERROR);
                 } catch (ExecutionException e) {
-                    clearAngularRelationFields();
+                    clearAngularRelationFields(ACCESS_ERROR);
                 }
             }
         };
         worker.execute();
     }
 
-    private void clearInfoFields() {
-        mdrIndexTextField.setText(NO_IFOV_SELECTED);
-        ifovInMdrIndexTextField.setText(NO_IFOV_SELECTED);
+    private void clearInfoFields(String text) {
+        mdrIndexTextField.setText(text);
+        ifovInMdrIndexTextField.setText(text);
     }
 
-    private void clearEarthLocationFields() {
-        lonTextField.setText(NO_IFOV_SELECTED);
-        latTextField.setText(NO_IFOV_SELECTED);
+    private void clearEarthLocationFields(String text) {
+        lonTextField.setText(text);
+        latTextField.setText(text);
     }
 
-    private void clearAngularRelationFields() {
-        saaTextField.setText(NO_IFOV_SELECTED);
-        vaaTextField.setText(NO_IFOV_SELECTED);
-        szaTextField.setText(NO_IFOV_SELECTED);
-        vzaTextField.setText(NO_IFOV_SELECTED);
+    private void clearAngularRelationFields(String text) {
+        saaTextField.setText(text);
+        vaaTextField.setText(text);
+        szaTextField.setText(text);
+        vzaTextField.setText(text);
     }
 
     private void updateSpectrumDataset(final SounderIfov selectedIfov, final EpsFile epsFile) {
@@ -426,9 +440,9 @@ abstract class SounderInfoView extends AbstractToolView {
                     final XYSeries series = get();
                     spectrumDataset.addSeries(series);
                 } catch (InterruptedException e) {
-                    // ignore
+                    spectrumPlot.setNoDataMessage(ACCESS_ERROR);
                 } catch (ExecutionException e) {
-                    // ignore
+                    spectrumPlot.setNoDataMessage(ACCESS_ERROR);
                 }
             }
         };

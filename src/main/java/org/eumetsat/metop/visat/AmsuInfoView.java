@@ -77,7 +77,7 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
-    protected int crosshairValueToSelectedChannel(double value) {
+    protected int crosshairValueToChannel(double value) {
         return (int) (value - 1.0);
     }
 
