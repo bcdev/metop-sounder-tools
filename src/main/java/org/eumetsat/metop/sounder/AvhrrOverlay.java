@@ -22,8 +22,7 @@ import org.eumetsat.metop.eps.EpsFile;
 
 public interface AvhrrOverlay {
 
-    public abstract Product getAvhrrProduct();
+    Product getAvhrrProduct();
 
-    public abstract EpsFile getEpsFile();
-
+    EpsFile getEpsFile();
 }
