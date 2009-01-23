@@ -87,34 +87,37 @@ public class IasiOverlay implements AvhrrOverlay {
     }
     
     public synchronized Efov[] getEfovs() {
-        if (efovs == null) {
+        synchronized (this) {
+            if (efovs != null) {
+                return efovs;
+            }
             if (computingEfovs) {
                 return NO_DATA;
             }
             computingEfovs = true;
-            SwingWorker<Efov[], Object> worker = new SwingWorker<Efov[], Object>() {
-
-                @Override
-                protected Efov[] doInBackground() throws Exception {
-                    return createEfovs("fast");
-                }
-                
-                @Override
-                protected void done() {
-                    try {
-                        efovs = get();
-                        computingEfovs = false;
-                        fireDataChanged();
-                    } catch (Exception e) {
-                        computingEfovs = false;
-                        Debug.trace(e);
-                    }
-                }
-            };
-            worker.execute();
-            return NO_DATA;
         }
-        return efovs;
+        SwingWorker<Efov[], Object> worker = new SwingWorker<Efov[], Object>() {
+
+            @Override
+            protected Efov[] doInBackground() throws Exception {
+                return createEfovs("fast");
+            }
+                
+            @Override
+            protected void done() {
+                try {
+                    synchronized (IasiOverlay.this) {
+                        computingEfovs = false;
+                        efovs = get();
+                    }
+                    fireDataChanged();
+                } catch (Exception e) {
+                    Debug.trace(e);
+                }
+            }
+        };
+        worker.execute();
+        return NO_DATA;
     }
     
     public Ifov getSelectedIfov() {

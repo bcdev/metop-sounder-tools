@@ -73,36 +73,38 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         listenerMap.remove(listener);
     }
 
-    public synchronized SounderIfov[] getIfovs() {
-        if (ifovs == null) {
+    public SounderIfov[] getIfovs() {
+        synchronized (this) {
+            if (ifovs != null) {
+                return ifovs;
+            }
             if (loadingIfovs) {
                 return NO_DATA;
             }
-            SwingWorker<SounderIfov[], Object> worker = new SwingWorker<SounderIfov[], Object>() {
-
-                @Override
-                protected SounderIfov[] doInBackground() throws Exception {
-                    return readIfovs();
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        ifovs = get();
-                        loadingIfovs = false;
-                        fireDataChanged();
-                    } catch (Exception e) {
-                        loadingIfovs = false;
-                        Debug.trace(e);
-                    }
-                }
-
-            };
             loadingIfovs = true;
-            worker.execute();
-            return NO_DATA;
         }
-        return ifovs;
+        SwingWorker<SounderIfov[], Object> worker = new SwingWorker<SounderIfov[], Object>() {
+
+            @Override
+            protected SounderIfov[] doInBackground() throws Exception {
+                return readIfovs();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    synchronized (SounderOverlay.this) {
+                        loadingIfovs = false;
+                        ifovs = get();
+                    }
+                    fireDataChanged();
+                } catch (Exception e) {
+                    Debug.trace(e);
+                }
+            }
+        };
+        worker.execute();
+        return NO_DATA;
     }
 
     protected abstract SounderIfov[] readIfovs() throws IOException;
