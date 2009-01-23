@@ -4,7 +4,7 @@ import java.awt.Shape;
 
 /**
  * Interface representing the instantaneous field of view (IFOV) of a
- * sounder.
+ * sounder instrument.
  *
  * @author Ralf Quast
  * @version $Revision$ $Date$

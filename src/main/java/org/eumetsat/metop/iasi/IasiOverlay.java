@@ -74,7 +74,7 @@ public class IasiOverlay implements SounderOverlay {
     
     private Efov[] efovs;
     private boolean computingEfovs;
-    private IasiIfov selectedIfov;
+    private Ifov selectedIfov;
     private final Map<SounderOverlayListener, Object> listenerMap;
     private int mdrCount;
     
@@ -100,12 +100,16 @@ public class IasiOverlay implements SounderOverlay {
     }
 
     @Override
-    public IasiIfov getSelectedIfov() {
+    public Ifov getSelectedIfov() {
         return selectedIfov;
     }
 
+    @Override
     public void setSelectedIfov(Ifov ifov) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if (ifov != selectedIfov) {
+            selectedIfov = ifov;
+            fireSelectionChanged();
+        }
     }
 
     @Override
@@ -116,13 +120,6 @@ public class IasiOverlay implements SounderOverlay {
     @Override
     public void removeListener(SounderOverlayListener listener) {
         listenerMap.remove(listener);
-    }
-
-    public void setSelectedIfov(IasiIfov selectedIfov) {
-        if (selectedIfov != this.selectedIfov) {
-            this.selectedIfov = selectedIfov;
-            fireSelectionChanged();
-        }
     }
 
     public synchronized Efov[] getEfovs() {

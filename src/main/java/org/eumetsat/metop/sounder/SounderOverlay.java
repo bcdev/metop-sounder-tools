@@ -15,4 +15,6 @@ public interface SounderOverlay extends AvhrrOverlay {
     void addListener(SounderOverlayListener listener);
 
     void removeListener(SounderOverlayListener listener);
+
+    
 }

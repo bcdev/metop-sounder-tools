@@ -54,6 +54,29 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
         return epsfile;
     }
 
+    @Override
+    public Ifov getSelectedIfov() {
+        return selectedIfov;
+    }
+
+    @Override
+    public void setSelectedIfov(Ifov ifov) {
+        if (ifov != this.selectedIfov) {
+            this.selectedIfov = ifov;
+            fireSelectionChanged();
+        }
+    }
+
+    @Override
+    public void addListener(SounderOverlayListener listener) {
+        listenerMap.put(listener, null);
+    }
+
+    @Override
+    public void removeListener(SounderOverlayListener listener) {
+        listenerMap.remove(listener);
+    }
+
     public Ifov[] getAllIfovs() {
         synchronized (this) {
             if (ifovs != null) {
@@ -87,32 +110,9 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
         return NO_DATA;
     }
 
-    @Override
-    public Ifov getSelectedIfov() {
-        return selectedIfov;
-    }
-
-    @Override
-    public void setSelectedIfov(Ifov ifov) {
-        if (ifov != this.selectedIfov) {
-            this.selectedIfov = ifov;
-            fireSelectionChanged();
-        }
-    }
-
-    @Override
-    public void addListener(SounderOverlayListener listener) {
-        listenerMap.put(listener, null);
-    }
-
-    @Override
-    public void removeListener(SounderOverlayListener listener) {
-        listenerMap.remove(listener);
-    }
-
     protected abstract Ifov[] readIfovs() throws IOException;
 
-    protected void fireSelectionChanged() {
+    private void fireSelectionChanged() {
         final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
             listenerSet = new HashSet<SounderOverlayListener>(listenerMap.keySet());
@@ -122,7 +122,7 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
         }
     }
 
-    protected void fireDataChanged() {
+    private void fireDataChanged() {
         final Set<SounderOverlayListener> listenerSet;
         synchronized (listenerMap) {
             listenerSet = new HashSet<SounderOverlayListener>(listenerMap.keySet());
