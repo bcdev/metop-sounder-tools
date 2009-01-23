@@ -39,7 +39,7 @@ import com.bc.ceres.binio.CompoundData;
 
 
 public class IasiOverlay implements AvhrrOverlay {
-    
+
     // IASI record parameters
     private static final int AMCO = 100;
     private static final int AMLI = 100;
@@ -162,6 +162,7 @@ public class IasiOverlay implements AvhrrOverlay {
     public Product getAvhrrProduct() {
         return avhrrProduct;
     }
+
     public EpsFile getEpsFile() {
         return iasiFile;
     }
