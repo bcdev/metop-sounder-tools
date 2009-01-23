@@ -27,15 +27,15 @@ import java.util.*;
 
 public abstract class SounderOverlay implements AvhrrOverlay {
 
-    private static final SounderIfov[] NO_DATA = new SounderIfov[0];
+    private static final Ifov[] NO_DATA = new Ifov[0];
 
     private final EpsFile epsfile;
     private final Product avhrrProduct;
     private final Map<SounderOverlayListener, Object> listenerMap;
 
-    private SounderIfov[] ifovs;
+    private Ifov[] ifovs;
     private boolean loadingIfovs;
-    private SounderIfov selectedIfov;
+    private Ifov selectedIfov;
 
     protected SounderOverlay(EpsFile epsfile, Product avhrrProduct) {
         this.epsfile = epsfile;
@@ -54,11 +54,11 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         return epsfile;
     }
 
-    public SounderIfov getSelectedIfov() {
+    public Ifov getSelectedIfov() {
         return selectedIfov;
     }
 
-    public void setSelectedIfov(SounderIfov selectedIfov) {
+    public void setSelectedIfov(Ifov selectedIfov) {
         if (selectedIfov != this.selectedIfov) {
             this.selectedIfov = selectedIfov;
             fireSelectionChanged();
@@ -73,7 +73,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         listenerMap.remove(listener);
     }
 
-    public SounderIfov[] getIfovs() {
+    public Ifov[] getIfovs() {
         synchronized (this) {
             if (ifovs != null) {
                 return ifovs;
@@ -83,10 +83,10 @@ public abstract class SounderOverlay implements AvhrrOverlay {
             }
             loadingIfovs = true;
         }
-        SwingWorker<SounderIfov[], Object> worker = new SwingWorker<SounderIfov[], Object>() {
+        SwingWorker<Ifov[], Object> worker = new SwingWorker<Ifov[], Object>() {
 
             @Override
-            protected SounderIfov[] doInBackground() throws Exception {
+            protected Ifov[] doInBackground() throws Exception {
                 return readIfovs();
             }
 
@@ -107,7 +107,7 @@ public abstract class SounderOverlay implements AvhrrOverlay {
         return NO_DATA;
     }
 
-    protected abstract SounderIfov[] readIfovs() throws IOException;
+    protected abstract Ifov[] readIfovs() throws IOException;
 
     protected void fireSelectionChanged() {
         final Set<SounderOverlayListener> listenerSet;

@@ -16,7 +16,7 @@ package org.eumetsat.metop.visat;
 
 import org.eumetsat.metop.mhs.MhsSounderLayer;
 import org.eumetsat.metop.sounder.SounderLayer;
-import org.eumetsat.metop.sounder.SounderIfov;
+import org.eumetsat.metop.sounder.Ifov;
 import org.eumetsat.metop.eps.EpsFile;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.JFreeChart;
@@ -88,17 +88,17 @@ public class MhsInfoView extends SounderInfoView {
     }
 
     @Override
-    protected final GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+    protected final GeoPos readEarthLocation(EpsFile sounderFile, Ifov ifov) throws IOException {
         return readEarthLocation(sounderFile, "EARTH_LOCATION", ifov);
     }
 
     @Override
-    protected final AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+    protected final AngularRelation readAngularRelation(EpsFile sounderFile, Ifov ifov) throws IOException {
         return readAngularRelation(sounderFile, "ANGULAR_RELATION", ifov);
     }
 
     @Override
-    protected final double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException {
+    protected final double[] readSceneRadiances(EpsFile sounderFile, Ifov ifov) throws IOException {
         return readSceneRadiances(sounderFile, "SCENE_RADIANCES", ifov);
     }
 }

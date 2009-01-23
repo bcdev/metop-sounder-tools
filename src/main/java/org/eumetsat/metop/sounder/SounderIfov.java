@@ -19,7 +19,7 @@ package org.eumetsat.metop.sounder;
 import java.awt.Shape;
 
 
-public final class SounderIfov {
+public final class SounderIfov implements Ifov {
 
     private final int mdrIndex;
     private final int ifovInMdrIndex;
@@ -31,14 +31,17 @@ public final class SounderIfov {
         this.shape = shape;
     }
 
+    @Override
     public final int getMdrIndex() {
         return mdrIndex;
     }
 
+    @Override
     public final int getIfovInMdrIndex() {
         return ifovInMdrIndex;
     }
 
+    @Override
     public final Shape getShape() {
         return shape;
     }

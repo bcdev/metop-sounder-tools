@@ -25,6 +25,7 @@ import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.sounder.SounderIfov;
 import org.eumetsat.metop.sounder.SounderOverlay;
 import org.eumetsat.metop.sounder.SounderShapeScaleComputer;
+import org.eumetsat.metop.sounder.Ifov;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -40,7 +41,7 @@ public class MhsSounderOverlay extends SounderOverlay {
     }
 
     @Override
-    protected SounderIfov[] readIfovs() throws IOException {
+    protected Ifov[] readIfovs() throws IOException {
         EpsFile mhsFile = getEpsFile();
         final int height = mhsFile.getMdrCount();
         final int width = MhsFile.PRODUCT_WIDTH;
@@ -48,7 +49,7 @@ public class MhsSounderOverlay extends SounderOverlay {
         ProductData latitudes = mhsFile.readData(MhsBandInfo.LAT, height, width);
         ProductData longitudes = mhsFile.readData(MhsBandInfo.LON, height, width);
         GeoCoding geoCoding = getAvhrrProduct().getGeoCoding();
-        SounderIfov[] allIfovs = new SounderIfov[width * height];
+        Ifov[] allIfovs = new Ifov[width * height];
 
         SounderShapeScaleComputer scaleComputer = new SounderShapeScaleComputer(mhsFile,
                                                                                 width,

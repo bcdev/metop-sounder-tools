@@ -246,7 +246,7 @@ public class IasiInfoView extends AbstractToolView {
     private void update(IasiIfov selectedIfov) {
         int ifovId = -1;
         if (iasiFile != null && selectedIfov != null) {
-            ifovId = selectedIfov.getIndex();
+            ifovId = selectedIfov.getIfovIndex();
         }
         updateLocation(ifovId);
         updateSpectrum(ifovId);

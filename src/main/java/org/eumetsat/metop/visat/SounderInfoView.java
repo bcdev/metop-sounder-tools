@@ -196,7 +196,6 @@ abstract class SounderInfoView extends AbstractToolView {
 
         plot.setDomainCrosshairVisible(true);
         plot.setDomainCrosshairLockedOnData(true);
-//        plot.setDomainCrosshairValue(1);
         plot.setRangeCrosshairVisible(false);
         plot.setNoDataMessage(NO_IFOV_SELECTED);
     }
@@ -345,7 +344,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected void updateUI(final SounderOverlay overlay) {
         assert overlay != null;
-        final SounderIfov selectedIfov = overlay.getSelectedIfov();
+        final Ifov selectedIfov = overlay.getSelectedIfov();
         if (selectedIfov != null) {
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
             updateInfoFields(selectedIfov);
@@ -360,12 +359,12 @@ abstract class SounderInfoView extends AbstractToolView {
         }
     }
 
-    private void updateInfoFields(SounderIfov selectedIfov) {
+    private void updateInfoFields(Ifov selectedIfov) {
         mdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
         ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
     }
 
-    private void updateEarthLocationFields(final SounderIfov selectedIfov, final EpsFile epsFile) {
+    private void updateEarthLocationFields(final Ifov selectedIfov, final EpsFile epsFile) {
         final SwingWorker<GeoPos, Object> worker = new SwingWorker<GeoPos, Object>() {
             @Override
             protected GeoPos doInBackground() throws Exception {
@@ -388,7 +387,7 @@ abstract class SounderInfoView extends AbstractToolView {
         worker.execute();
     }
 
-    private void updateAngularRelationFields(final SounderIfov selectedIfov, final EpsFile epsFile) {
+    private void updateAngularRelationFields(final Ifov selectedIfov, final EpsFile epsFile) {
         final SwingWorker<AngularRelation, Object> worker = new SwingWorker<AngularRelation, Object>() {
             @Override
             protected AngularRelation doInBackground() throws Exception {
@@ -430,7 +429,7 @@ abstract class SounderInfoView extends AbstractToolView {
         vzaTextField.setText(text);
     }
 
-    private void updateSpectrumDataset(final SounderIfov selectedIfov, final EpsFile epsFile) {
+    private void updateSpectrumDataset(final Ifov selectedIfov, final EpsFile epsFile) {
         final SwingWorker<XYSeries, Object> worker = new SwingWorker<XYSeries, Object>() {
             @Override
             protected XYSeries doInBackground() throws Exception {
@@ -453,13 +452,13 @@ abstract class SounderInfoView extends AbstractToolView {
         worker.execute();
     }
 
-    protected abstract GeoPos readEarthLocation(EpsFile sounderFile, SounderIfov ifov) throws IOException;
+    protected abstract GeoPos readEarthLocation(EpsFile sounderFile, Ifov ifov) throws IOException;
 
-    protected abstract AngularRelation readAngularRelation(EpsFile sounderFile, SounderIfov ifov) throws IOException;
+    protected abstract AngularRelation readAngularRelation(EpsFile sounderFile, Ifov ifov) throws IOException;
 
-    protected abstract double[] readSceneRadiances(EpsFile sounderFile, SounderIfov ifov) throws IOException;
+    protected abstract double[] readSceneRadiances(EpsFile sounderFile, Ifov ifov) throws IOException;
 
-    protected static GeoPos readEarthLocation(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static GeoPos readEarthLocation(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
 
         final float factor = getScalingFactor(sounderFile, sequenceName).floatValue();
@@ -469,7 +468,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return new GeoPos(lat, lon);
     }
 
-    protected static AngularRelation readAngularRelation(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static AngularRelation readAngularRelation(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
 
         final double factor = getScalingFactor(sounderFile, sequenceName).doubleValue();
@@ -481,7 +480,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return new AngularRelation(sza, vza, saa, vaa);
     }
 
-    protected static double[] readSceneRadiances(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static double[] readSceneRadiances(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
         final NumberData numberData = getNumberData(sounderFile, sequenceName, ifov);
 
         final double factor = getScalingFactor(sounderFile, sequenceName).doubleValue();
@@ -509,11 +508,11 @@ abstract class SounderInfoView extends AbstractToolView {
         }
     }
 
-    protected static NumberData getNumberData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static NumberData getNumberData(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
         return NumberData.of(getSequenceData(sounderFile, sequenceName, ifov));
     }
 
-    protected static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, SounderIfov ifov) throws IOException {
+    protected static SequenceData getSequenceData(EpsFile sounderFile, String sequenceName, Ifov ifov) throws IOException {
         return getCompoundData(sounderFile, ifov.getMdrIndex()).getSequence(sequenceName).getSequence(ifov.getIfovInMdrIndex());
     }
 

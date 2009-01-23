@@ -123,10 +123,10 @@ public class SounderLayer extends Layer {
 //            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
 //            final boolean ifovBigEnough = scale * 47 > 5; // TODO
 
-            final SounderIfov[] ifovs = overlay.getIfovs();
-            final SounderIfov selectedIfov = overlay.getSelectedIfov();
+            final Ifov[] ifovs = overlay.getIfovs();
+            final Ifov selectedIfov = overlay.getSelectedIfov();
 //            if (ifovBigEnough) {
-            for (SounderIfov ifov : ifovs) {
+            for (Ifov ifov : ifovs) {
                 final Shape ifovShape = ifov.getShape();
                 boolean isVisible = clip == null || ifovShape.intersects(clip);
                 if (isVisible) {
@@ -203,9 +203,9 @@ public class SounderLayer extends Layer {
         }
     }
 
-    private SounderIfov getIfovForLocation(int pixelX, int pixelY) {
-        final SounderIfov[] ifovs = overlay.getIfovs();
-        for (final SounderIfov ifov : ifovs) {
+    private Ifov getIfovForLocation(int pixelX, int pixelY) {
+        final Ifov[] ifovs = overlay.getIfovs();
+        for (final Ifov ifov : ifovs) {
             if (ifov.getShape().contains(pixelX + 0.5f, pixelY + 0.5f)) {
                 return ifov;
             }
@@ -213,7 +213,7 @@ public class SounderLayer extends Layer {
         return null;
     }
 
-    private Color getColor(LayerData layerData, SounderIfov ifov, Color[] colors) {
+    private Color getColor(LayerData layerData, Ifov ifov, Color[] colors) {
         final ColorPaletteDef def = layerData.imageInfo.getColorPaletteDef();
         final double sample = layerData.band.getData().getElemDoubleAt(ifov.getIfovInMdrIndex() + ifov.getMdrIndex() * ifovInMdrCount);
         final int numColors = colors.length;
@@ -249,7 +249,7 @@ public class SounderLayer extends Layer {
             SounderLayer selectedSounderLayer = (SounderLayer) getLayer();
             Point2D.Float point = new Point2D.Float(rectangle.x, rectangle.y);
             view.getLayerCanvas().getViewport().getViewToModelTransform().transform(point, point);
-            SounderIfov ifov = selectedSounderLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
+            Ifov ifov = selectedSounderLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
             selectedSounderLayer.getOverlay().setSelectedIfov(ifov);
         }
 

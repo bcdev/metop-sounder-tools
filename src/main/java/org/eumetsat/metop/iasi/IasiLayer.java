@@ -140,9 +140,9 @@ public class IasiLayer extends Layer {
                             if (ifovBigEnough) {
                                 for (IasiIfov ifov : efov.getIfovs()) {
                                     if (shouldRenderIfov(ifov)) {
-                                        int mdrIndex = IasiFile.computeMdrIndex(ifov.getIndex());
-                                        int efovIndex = IasiFile.computeEfovIndex(ifov.getIndex());
-                                        int ifovIndex = IasiFile.computeIfovIndex(ifov.getIndex());
+                                        int mdrIndex = IasiFile.computeMdrIndex(ifov.getIfovIndex());
+                                        int efovIndex = IasiFile.computeEfovIndex(ifov.getIfovIndex());
+                                        int ifovIndex = IasiFile.computeIfovIndex(ifov.getIfovIndex());
                                         renderIfov(g2d, ifov, cInfo.getColor(mdrIndex, efovIndex, ifovIndex));
                                     }
                                 }
