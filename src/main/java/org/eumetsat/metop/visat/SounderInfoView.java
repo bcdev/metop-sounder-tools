@@ -27,17 +27,14 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
-import org.eumetsat.metop.sounder.SounderIfov;
-import org.eumetsat.metop.sounder.SounderLayer;
-import org.eumetsat.metop.sounder.SounderOverlay;
-import org.eumetsat.metop.sounder.SounderOverlayListener;
+import org.eumetsat.metop.sounder.*;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.event.ChartProgressEvent;
 import org.jfree.chart.event.ChartProgressListener;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -117,6 +114,11 @@ abstract class SounderInfoView extends AbstractToolView {
                     final SounderLayer layer = getSounderLayer();
                     if (layer != null) {
                         layer.getOverlay().addListener(overlayListener);
+
+                        final int channel = layer.getSelectedChannel();
+                        final double crosshairValue = channelToCrosshairValue(channel);
+                        spectrumPlot.setDomainCrosshairValue(crosshairValue);
+                        editor.setModel(createImageInfoEditorModel(layer));
                     }
                 }
             }
@@ -137,7 +139,7 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Info", createInfoComponent());
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
-        
+
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
@@ -179,6 +181,8 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected abstract int crosshairValueToChannel(double value);
 
+    protected abstract double channelToCrosshairValue(int channel);
+
     protected void configureSpectrumChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.white);
         chart.addProgressListener(new DomainCrosshairValueListener());
@@ -192,14 +196,14 @@ abstract class SounderInfoView extends AbstractToolView {
 
         plot.setDomainCrosshairVisible(true);
         plot.setDomainCrosshairLockedOnData(true);
-        plot.setDomainCrosshairValue(1);
+//        plot.setDomainCrosshairValue(1);
         plot.setRangeCrosshairVisible(false);
         plot.setNoDataMessage(NO_IFOV_SELECTED);
     }
 
     protected void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
         renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
-        
+
         renderer.setSeriesShape(0, new Ellipse2D.Double(-3.0, -3.0, 6.0, 6.0));
         renderer.setSeriesShapesVisible(0, true);
         renderer.setSeriesShapesFilled(0, true);

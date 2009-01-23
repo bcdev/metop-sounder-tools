@@ -82,6 +82,11 @@ public class AmsuInfoView extends SounderInfoView {
     }
 
     @Override
+    protected double channelToCrosshairValue(int channel) {
+        return channel + 1.0;
+    }
+
+    @Override
     protected void configureSpectrumPlotXAxis(NumberAxis axis) {
         super.configureSpectrumPlotXAxis(axis);
         axis.setRange(new Range(0.5, CHANNEL_FREQUENCIES.length + 0.5), true, false);
