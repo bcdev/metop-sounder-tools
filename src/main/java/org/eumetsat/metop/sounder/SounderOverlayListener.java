@@ -21,6 +21,6 @@ package org.eumetsat.metop.sounder;
  * @version $Revision$ $Date$
  */
 public interface SounderOverlayListener {
-    void selectionChanged(AbstractSounderOverlay overlay);
-    void dataChanged(AbstractSounderOverlay overlay);
+    void selectionChanged(SounderOverlay overlay);
+    void dataChanged(SounderOverlay overlay);
 }

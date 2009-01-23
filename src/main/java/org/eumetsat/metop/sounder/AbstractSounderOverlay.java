@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.*;
 
 
-public abstract class AbstractSounderOverlay implements AvhrrOverlay {
+public abstract class AbstractSounderOverlay implements SounderOverlay {
 
     private static final Ifov[] NO_DATA = new Ifov[0];
 
@@ -54,26 +54,8 @@ public abstract class AbstractSounderOverlay implements AvhrrOverlay {
         return epsfile;
     }
 
-    public Ifov getSelectedIfov() {
-        return selectedIfov;
-    }
-
-    public void setSelectedIfov(Ifov selectedIfov) {
-        if (selectedIfov != this.selectedIfov) {
-            this.selectedIfov = selectedIfov;
-            fireSelectionChanged();
-        }
-    }
-
-    public void addListener(SounderOverlayListener listener) {
-        listenerMap.put(listener, null);
-    }
-
-    public void removeListener(SounderOverlayListener listener) {
-        listenerMap.remove(listener);
-    }
-
-    public Ifov[] getIfovs() {
+    @Override
+    public Ifov[] getAllIfovs() {
         synchronized (this) {
             if (ifovs != null) {
                 return ifovs;
@@ -105,6 +87,29 @@ public abstract class AbstractSounderOverlay implements AvhrrOverlay {
         };
         worker.execute();
         return NO_DATA;
+    }
+
+    @Override
+    public Ifov getSelectedIfov() {
+        return selectedIfov;
+    }
+
+    @Override
+    public void setSelectedIfov(Ifov ifov) {
+        if (ifov != this.selectedIfov) {
+            this.selectedIfov = ifov;
+            fireSelectionChanged();
+        }
+    }
+
+    @Override
+    public void addListener(SounderOverlayListener listener) {
+        listenerMap.put(listener, null);
+    }
+
+    @Override
+    public void removeListener(SounderOverlayListener listener) {
+        listenerMap.remove(listener);
     }
 
     protected abstract Ifov[] readIfovs() throws IOException;

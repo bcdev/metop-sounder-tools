@@ -98,12 +98,12 @@ abstract class SounderInfoView extends AbstractToolView {
     protected JComponent createControl() {
         overlayListener = new SounderOverlayListener() {
             @Override
-            public void selectionChanged(AbstractSounderOverlay overlay) {
+            public void selectionChanged(SounderOverlay overlay) {
                 updateUI(overlay);
             }
 
             @Override
-            public void dataChanged(AbstractSounderOverlay overlay) {
+            public void dataChanged(SounderOverlay overlay) {
                 updateUI(overlay);
             }
         };
@@ -143,7 +143,7 @@ abstract class SounderInfoView extends AbstractToolView {
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
-                final AbstractSounderOverlay overlay = layer.getOverlay();
+                final SounderOverlay overlay = layer.getOverlay();
                 overlay.addListener(overlayListener);
                 updateUI(overlay);
             }
@@ -342,7 +342,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return editorModel;
     }
 
-    protected void updateUI(final AbstractSounderOverlay overlay) {
+    protected void updateUI(final SounderOverlay overlay) {
         assert overlay != null;
         final Ifov selectedIfov = overlay.getSelectedIfov();
         if (selectedIfov != null) {

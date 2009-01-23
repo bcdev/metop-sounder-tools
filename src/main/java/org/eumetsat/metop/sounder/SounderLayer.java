@@ -36,9 +36,8 @@ import java.util.Map;
 
 // todo - clean-up
 public class SounderLayer extends Layer {
-
     
-    private final AbstractSounderOverlay overlay;
+    private final SounderOverlay overlay;
     private final BandInfo[] bandInfos;
 
     private final int mdrCount;
@@ -52,7 +51,7 @@ public class SounderLayer extends Layer {
 
     private volatile int selectedChannel;
 
-    protected SounderLayer(AbstractSounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
+    protected SounderLayer(SounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
         this.overlay = overlay;
         this.bandInfos = bandInfos;
 
@@ -62,12 +61,12 @@ public class SounderLayer extends Layer {
         layerDataMap = new HashMap<Integer, LayerData>();
         listener = new SounderOverlayListener() {
             @Override
-            public void dataChanged(AbstractSounderOverlay overlay) {
+            public void dataChanged(SounderOverlay overlay) {
                 fireLayerDataChanged(null);
             }
 
             @Override
-            public void selectionChanged(AbstractSounderOverlay overlay) {
+            public void selectionChanged(SounderOverlay overlay) {
                 fireLayerDataChanged(null);
             }
         };
@@ -88,7 +87,7 @@ public class SounderLayer extends Layer {
 
     @Override
     protected void renderLayer(Rendering rendering) {
-        if (overlay.getIfovs().length == 0) {
+        if (overlay.getAllIfovs().length == 0) {
             return;
         }
         final LayerData layerData = layerDataMap.get(selectedChannel);
@@ -123,7 +122,7 @@ public class SounderLayer extends Layer {
 //            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
 //            final boolean ifovBigEnough = scale * 47 > 5; // TODO
 
-            final Ifov[] ifovs = overlay.getIfovs();
+            final Ifov[] ifovs = overlay.getAllIfovs();
             final Ifov selectedIfov = overlay.getSelectedIfov();
 //            if (ifovBigEnough) {
             for (Ifov ifov : ifovs) {
@@ -156,7 +155,7 @@ public class SounderLayer extends Layer {
         fireLayerDataChanged(getModelBounds());
     }
 
-    public AbstractSounderOverlay getOverlay() {
+    public SounderOverlay getOverlay() {
         return overlay;
     }
 
@@ -204,7 +203,7 @@ public class SounderLayer extends Layer {
     }
 
     private Ifov getIfovForLocation(int pixelX, int pixelY) {
-        final Ifov[] ifovs = overlay.getIfovs();
+        final Ifov[] ifovs = overlay.getAllIfovs();
         for (final Ifov ifov : ifovs) {
             if (ifov.getShape().contains(pixelX + 0.5f, pixelY + 0.5f)) {
                 return ifov;
