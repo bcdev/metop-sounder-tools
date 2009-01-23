@@ -18,15 +18,19 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.glayer.Layer;
+
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
 import org.esa.beam.framework.ui.ImageInfoEditorModel;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
+import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
+import org.eumetsat.metop.iasi.IasiLayer;
 import org.eumetsat.metop.sounder.*;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -150,6 +154,18 @@ abstract class SounderInfoView extends AbstractToolView {
         }
 
         return tabbedPane;
+    }
+    
+    @Override
+    public void componentFocusGained() {
+        ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
+        if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
+            SounderLayer sounderLayer = getSounderLayer();
+            Layer layer = IasiFootprintVPI.getActiveFootprintLayer(sounderLayer.getClass());
+            if (layer != null) {
+                productSceneView.setSelectedLayer(layer);
+            }
+        }
     }
 
     @Override

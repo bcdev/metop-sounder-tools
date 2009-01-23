@@ -112,6 +112,17 @@ public class IasiInfoView extends AbstractToolView {
         return tabbedPane;
     }
     
+    @Override
+    public void componentFocusGained() {
+        ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
+        if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
+            IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+            if (layer != null) {
+                productSceneView.setSelectedLayer(layer);
+            }
+        }
+    }
+    
     public void setProductSceneView(final ProductSceneView pvs) {
         final ProductSceneView psvOld = this.psv;
         if (psvOld == pvs) {
