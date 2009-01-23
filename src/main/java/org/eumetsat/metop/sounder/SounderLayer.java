@@ -36,7 +36,7 @@ import java.util.Map;
 
 // todo - clean-up
 public class SounderLayer extends Layer {
-    
+
     private final SounderOverlay overlay;
     private final BandInfo[] bandInfos;
 
@@ -214,7 +214,8 @@ public class SounderLayer extends Layer {
 
     private Color getColor(LayerData layerData, Ifov ifov, Color[] colors) {
         final ColorPaletteDef def = layerData.imageInfo.getColorPaletteDef();
-        final double sample = layerData.band.getData().getElemDoubleAt(ifov.getIfovInMdrIndex() + ifov.getMdrIndex() * ifovInMdrCount);
+        final double sample = layerData.band.getData().getElemDoubleAt(
+                ifov.getIfovInMdrIndex() + ifov.getMdrIndex() * ifovInMdrCount);
         final int numColors = colors.length;
 
         final double min = def.getMinDisplaySample();

@@ -66,7 +66,6 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
             loadingIfovs = true;
         }
         SwingWorker<Ifov[], Object> worker = new SwingWorker<Ifov[], Object>() {
-
             @Override
             protected Ifov[] doInBackground() throws Exception {
                 return readIfovs();
