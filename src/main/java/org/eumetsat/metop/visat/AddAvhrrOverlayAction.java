@@ -45,13 +45,13 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 
-public class AddMetopOverlayAction extends ExecCommand {
+public class AddAvhrrOverlayAction extends ExecCommand {
 
-    private Map<Product, Map<EpsFile, AvhrrOverlay>> overlayMap;
+    private final Map<Product, Map<EpsFile, AvhrrOverlay>> overlayMap;
     private boolean handlerRegistered = false;
     
-    public AddMetopOverlayAction() {
-        overlayMap = new WeakHashMap<Product, Map<EpsFile,AvhrrOverlay>>(8);
+    public AddAvhrrOverlayAction() {
+        overlayMap = new WeakHashMap<Product, Map<EpsFile, AvhrrOverlay>>(8);
     }
     
     @Override

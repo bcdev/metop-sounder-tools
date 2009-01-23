@@ -138,7 +138,7 @@
         </action>
         <action>
             <id>addMetopOverlay2</id>
-            <class>org.eumetsat.metop.visat.AddMetopOverlayAction</class>
+            <class>org.eumetsat.metop.visat.AddAvhrrOverlayAction</class>
             <parent>view</parent>
             <mnemonic>I</mnemonic>
             <text>Add METOP Sounder Overlay</text>
