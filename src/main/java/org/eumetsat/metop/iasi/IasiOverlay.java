@@ -43,22 +43,8 @@ import com.bc.ceres.binio.CompoundData;
 
 public class IasiOverlay implements SounderOverlay {
 
-    // IASI record parameters
-    private static final int AMCO = 100;
-    private static final int AMLI = 100;
-    private static final int CCD = 2;
-    private static final int IMCO = 64;
-    private static final int IMLI = 64;
-    private static final int MAXBA = 3600;
-    private static final int NBK = 6;
-    private static final int NCL = 7;
-    private static final int NIM = 28;
     private static final int PN = 4;
-    private static final int SB = 3;
-    private static final int SGI = 25;
     private static final int SNOT = 30;
-    private static final int SS = 8700;
-    private static final int VP = 1;
     
     private static final int IFOV_SIZE = 12;
     private static final float IFOV_DIST = 18;
@@ -122,7 +108,7 @@ public class IasiOverlay implements SounderOverlay {
         listenerMap.remove(listener);
     }
 
-    public synchronized Efov[] getEfovs() {
+    synchronized Efov[] getEfovs() {
         synchronized (this) {
             if (efovs != null) {
                 return efovs;

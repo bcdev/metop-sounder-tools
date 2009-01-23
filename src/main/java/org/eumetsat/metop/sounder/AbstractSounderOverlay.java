@@ -77,7 +77,7 @@ public abstract class AbstractSounderOverlay implements SounderOverlay {
         listenerMap.remove(listener);
     }
 
-    public Ifov[] getAllIfovs() {
+    Ifov[] getAllIfovs() {
         synchronized (this) {
             if (ifovs != null) {
                 return ifovs;
