@@ -97,7 +97,7 @@ public class SounderLayer extends Layer implements SounderInfo {
             throw new IllegalStateException(msg);
         }
 
-        final Color[] colorPalette = layerData.imageInfo.getColorPaletteDef().createColorPalette(layerData.band);
+        final Color[] colorPalette = layerData.imageInfo.getColorPaletteDef().createColorPalette(layerData.scaling);
 
         final Graphics2D g2d = rendering.getGraphics();
         final Viewport vp = rendering.getViewport();
@@ -172,7 +172,7 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     @Override
     public Scaling getScaling() {
-        return layerDataMap.get(selectedChannel).band;
+        return layerDataMap.get(selectedChannel).scaling;
     }
 
     @Override
@@ -194,10 +194,9 @@ public class SounderLayer extends Layer implements SounderInfo {
                 final Band band = new Band(bandInfo.getName(), bandInfo.getType(), ifovInMdrCount, mdrCount);
                 band.setRasterData(data);
                 band.setSynthetic(true);
-                // todo - scaling
                 final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
 
-                layerDataMap.put(channel, new LayerData(band, stx));
+                layerDataMap.put(channel, new LayerData(data, stx, bandInfo));
             }
             selectedChannel = channel;
             fireLayerDataChanged(null);
@@ -216,8 +215,9 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     private Color getColor(LayerData layerData, Ifov ifov, Color[] colors) {
         final ColorPaletteDef def = layerData.imageInfo.getColorPaletteDef();
-        final double sample = layerData.band.getData().getElemDoubleAt(
-                ifov.getIfovInMdrIndex() + ifov.getMdrIndex() * ifovInMdrCount);
+        final int x = ifov.getIfovInMdrIndex();
+        final int y = ifov.getMdrIndex();
+        final double sample = layerData.scaling.scale(layerData.data.getElemDoubleAt(x + y * ifovInMdrCount));
         final int numColors = colors.length;
 
         final double min = def.getMinDisplaySample();
@@ -229,14 +229,30 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     private static class LayerData {
 
-        final Band band;
+        final ProductData data;
+        final Scaling scaling;
         final Stx stx;
         final ImageInfo imageInfo;
 
-        private LayerData(Band band, Stx stx) {
+        private LayerData(ProductData data, Stx stx, BandInfo info) {
+            final double scaleFactor = info.getScaleFactor();
+            assert scaleFactor != 0.0;
+
+            scaling = new Scaling() {
+                @Override
+                public double scale(double value) {
+                    return scaleFactor * value;
+                }
+
+                @Override
+                public double scaleInverse(double value) {
+                    return value / scaleFactor;
+                }
+            };
+
+            this.data = data;
             this.stx = stx;
-            this.band = band;
-            this.imageInfo = createImageInfo(stx);
+            this.imageInfo = createImageInfo(scaling, stx);
         }
     }
 
@@ -271,8 +287,12 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     }
 
-    private static ImageInfo createImageInfo(Stx stx) {
-        return new ImageInfo(new ColorPaletteDef(stx.getMin(), stx.getMean(), stx.getMax()));
+    private static ImageInfo createImageInfo(Scaling scaling, Stx stx) {
+        final double min = scaling.scale(stx.getMin());
+        final double max = scaling.scale(stx.getMax());
+        final double center = scaling.scale(stx.getMean());
+
+        return new ImageInfo(new ColorPaletteDef(min, center, max));
     }
 
 }

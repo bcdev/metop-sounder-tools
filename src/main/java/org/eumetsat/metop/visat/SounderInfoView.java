@@ -19,6 +19,9 @@ import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
 import org.esa.beam.framework.datamodel.GeoPos;
+import org.esa.beam.framework.datamodel.ImageInfo;
+import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.framework.datamodel.Stx;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
 import org.esa.beam.framework.ui.ImageInfoEditorModel;
@@ -70,41 +73,6 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField vaaTextField;
     private ImageInfoEditor editor;
     private XYPlot spectrumPlot;
-
-    private class DomainCrosshairValueListener implements ChartProgressListener {
-        @Override
-        public void chartProgress(ChartProgressEvent event) {
-            if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
-                return;
-            }
-            final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
-            if (value > 0.0) {
-                final SounderLayer layer = getSounderLayer();
-                if (layer != null) {
-                    final int channel = crosshairValueToChannel(value);
-                    if (channel != layer.getSelectedChannel()) {
-                        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
-                            @Override
-                            protected Object doInBackground() throws Exception {
-                                layer.setSelectedChannel(channel);
-                                return null;
-                            }
-
-                            @Override
-                            protected void done() {
-                                editor.setModel(createImageInfoEditorModel(layer));
-                            }
-                        };
-                        worker.execute();
-                    } else {
-                        if (editor.getModel() == null) {
-                            editor.setModel(createImageInfoEditorModel(layer));
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     @Override
     protected JComponent createControl() {
@@ -208,7 +176,6 @@ abstract class SounderInfoView extends AbstractToolView {
 
     protected void configureSpectrumChart(JFreeChart chart) {
         chart.setBackgroundPaint(Color.white);
-        chart.addProgressListener(new DomainCrosshairValueListener());
     }
 
     protected void configureSpectrumPlot(XYPlot plot) {
@@ -321,6 +288,8 @@ abstract class SounderInfoView extends AbstractToolView {
                 true,                            // tooltips
                 false                            // urls
         );
+        chart.addProgressListener(new DomainCrosshairListener());
+
         configureSpectrumChart(chart);
 
         spectrumPlot = chart.getXYPlot();
@@ -338,6 +307,41 @@ abstract class SounderInfoView extends AbstractToolView {
         return containerPanel;
     }
 
+    private class DomainCrosshairListener implements ChartProgressListener {
+        @Override
+            public void chartProgress(ChartProgressEvent event) {
+            if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
+                return;
+            }
+            final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
+            if (value > 0.0) {
+                final SounderLayer layer = getSounderLayer();
+                if (layer != null) {
+                    final int channel = crosshairValueToChannel(value);
+                    if (channel != layer.getSelectedChannel()) {
+                        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+                            @Override
+                            protected Object doInBackground() throws Exception {
+                                layer.setSelectedChannel(channel);
+                                return null;
+                            }
+
+                            @Override
+                            protected void done() {
+                                editor.setModel(createImageInfoEditorModel(layer));
+                            }
+                        };
+                        worker.execute();
+                    } else {
+                        if (editor.getModel() == null) {
+                            editor.setModel(createImageInfoEditorModel(layer));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private Component createSounderLayerComponent() {
         editor = new ImageInfoEditor();
 
@@ -353,15 +357,20 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     private ImageInfoEditorModel createImageInfoEditorModel(final SounderLayer layer) {
-        final ImageInfoEditorModel editorModel = new DefaultImageInfoEditorModel(layer.getImageInfo());
+        final ImageInfo imageInfo = layer.getImageInfo();
+        final ImageInfoEditorModel editorModel = new DefaultImageInfoEditorModel(imageInfo);
 
-        editorModel.setDisplayProperties("Name", "unit", layer.getStx(), layer.getScaling());
+        final Stx stx = layer.getStx();
+        final Scaling scaling = layer.getScaling();
+
+        editorModel.setDisplayProperties("", "", stx, scaling);
         editorModel.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 layer.regenerate();
             }
         });
+
         return editorModel;
     }
 
