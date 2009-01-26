@@ -158,12 +158,16 @@ public class IasiInfoView extends AbstractToolView {
                     public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
                         IasiLayer layer = getIasiLayer();
                         if (layer != null) {
-                            layer.getOverlay().addListener(modelListener);
-
-                            final int channel = layer.getSelectedChannel();
-                            final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
-                            spectrumPlot.setDomainCrosshairValue(crosshairValue);
-                            editor.setModel(createImageInfoEditorModel(layer));
+                            psv = newPsv;
+                            iasiOverlay = layer.getOverlay();
+                            iasiOverlay.addListener(modelListener);
+                            iasiFile = iasiOverlay.getEpsFile();
+                            updateUI(iasiOverlay.getSelectedIfov());
+//                            todo - make this work here & elsewhere
+//                            final int channel = layer.getSelectedChannel();
+//                            final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
+//                            spectrumPlot.setDomainCrosshairValue(crosshairValue);
+//                            editor.setModel(createImageInfoEditorModel(layer));
                             psv.getRootLayer().removeListener(this);
                         }
                     }
