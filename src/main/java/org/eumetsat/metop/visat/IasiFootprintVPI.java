@@ -42,6 +42,7 @@ import javax.swing.Box;
 import javax.swing.JFileChooser;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.filechooser.FileFilter;
@@ -258,7 +259,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
     }
 
-    private void addOverlayLayer(Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, Map<Product, AvhrrOverlay> overlayMap, String type) {
+    private void addOverlayLayer(final Layer rootLayer, AvhrrProductInfo avhrrInfo, FilenameFilter timeFilter, FileFilter nameFilter, Class<? extends Layer> layerType, Map<Product, AvhrrOverlay> overlayMap, String type) {
         if (!hasLayer(rootLayer, layerType)) {
             AvhrrOverlay overlay = overlayMap.get(avhrrInfo.avhrrProduct);
             if (overlay == null) {
@@ -269,12 +270,32 @@ public class IasiFootprintVPI implements VisatPlugIn {
                 }
             }
             if (overlay != null) {
-                EpsFile epsFile = overlay.getEpsFile();
-                Layer layer = epsFile.createLayer(overlay);
-                rootLayer.getChildren().add(0, layer);
-                // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
-                layer.setVisible(false);
-                layer.setVisible(true);
+                final EpsFile epsFile = overlay.getEpsFile();
+                final AvhrrOverlay theOverlay = overlay;
+                SwingWorker<Layer, Void> createLayerWorker = new SwingWorker<Layer, Void>() {
+
+                    @Override
+                    protected Layer doInBackground() throws Exception {
+                        return epsFile.createLayer(theOverlay);
+                    }
+
+                    @Override
+                    protected void done() {
+                        Layer layer = null;
+                        try {
+                            layer = get();
+                        } catch (Exception e) {
+                            return;
+                        }
+                        if (layer != null) {
+                            rootLayer.getChildren().add(0, layer);
+                            // TODO (mz, 11,11,2008) HACK, because there is something wrong with the change listener
+                            layer.setVisible(false);
+                            layer.setVisible(true);
+                        }
+                    }
+                };
+                createLayerWorker.execute();
             }
         }
     }
