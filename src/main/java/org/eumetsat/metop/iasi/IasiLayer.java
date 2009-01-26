@@ -47,7 +47,6 @@ public class IasiLayer extends Layer implements SounderInfo {
     private final Color ifovAnomalousColor;
 
     private LayerData layerData;
-//    private boolean loadingColorInfo;
     
     private final SounderOverlayListener overlayListener;
     private final IasiOverlay iasiOverlay;
