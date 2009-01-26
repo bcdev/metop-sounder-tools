@@ -18,9 +18,6 @@ package org.eumetsat.metop.iasi;
 
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.esa.beam.util.Debug;
-import org.eumetsat.metop.eps.EpsFile;
-import org.eumetsat.metop.sounder.AvhrrOverlay;
 import org.eumetsat.metop.sounder.SounderOverlay;
 import org.eumetsat.metop.sounder.Ifov;
 import org.eumetsat.metop.sounder.SounderOverlayListener;
@@ -35,8 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-
-import javax.swing.SwingWorker;
 
 import com.bc.ceres.binio.CompoundData;
 
