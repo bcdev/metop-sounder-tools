@@ -18,6 +18,9 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
+import com.bc.ceres.glayer.LayerListener;
+import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.glayer.support.AbstractLayerListener;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.ImageInfo;
 import org.esa.beam.framework.datamodel.Scaling;
@@ -58,7 +61,7 @@ import java.util.concurrent.ExecutionException;
 
 abstract class SounderInfoView extends AbstractToolView {
     private static final String NO_IFOV_SELECTED = "No IFOV selected";
-    private static final String ACCESS_ERROR = "Access error";
+    private static final String ACCESS_ERROR = "Data access error";
 
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
@@ -99,6 +102,24 @@ abstract class SounderInfoView extends AbstractToolView {
                         final double crosshairValue = channelToCrosshairValue(channel);
                         spectrumPlot.setDomainCrosshairValue(crosshairValue);
                         editor.setModel(createImageInfoEditorModel(layer));
+                    } else {
+                        final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+                        final LayerListener layerListener = new AbstractLayerListener() {
+                            @Override
+                            public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                                final SounderLayer layer = getSounderLayer();
+                                if (layer != null) {
+                                    layer.getOverlay().addListener(overlayListener);
+
+                                    final int channel = layer.getSelectedChannel();
+                                    final double crosshairValue = channelToCrosshairValue(channel);
+                                    spectrumPlot.setDomainCrosshairValue(crosshairValue);
+                                    editor.setModel(createImageInfoEditorModel(layer));
+                                    view.getRootLayer().removeListener(this);
+                                }
+                            }
+                        };
+                        view.getRootLayer().addListener(layerListener);
                     }
                 }
             }
@@ -106,9 +127,9 @@ abstract class SounderInfoView extends AbstractToolView {
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
                 if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderInfo info = getSounderLayer();
-                    if (info != null) {
-                        info.getOverlay().removeListener(overlayListener);
+                    final SounderLayer layer = getSounderLayer();
+                    if (layer != null) {
+                        layer.getOverlay().removeListener(overlayListener);
                     }
                 }
             }
@@ -131,7 +152,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
         return tabbedPane;
     }
-
+    
     @Override
     public void componentFocusGained() {
         ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
@@ -150,6 +171,7 @@ abstract class SounderInfoView extends AbstractToolView {
         internalFrameListener = null;
         overlayListener = null;
         spectrumDataset = null;
+        spectrumPlot = null;
 
         latTextField = null;
         lonTextField = null;
@@ -289,7 +311,6 @@ abstract class SounderInfoView extends AbstractToolView {
                 false                            // urls
         );
         chart.addProgressListener(new DomainCrosshairListener());
-
         configureSpectrumChart(chart);
 
         spectrumPlot = chart.getXYPlot();
@@ -309,7 +330,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
     private class DomainCrosshairListener implements ChartProgressListener {
         @Override
-            public void chartProgress(ChartProgressEvent event) {
+        public void chartProgress(ChartProgressEvent event) {
             if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
                 return;
             }
@@ -379,7 +400,7 @@ abstract class SounderInfoView extends AbstractToolView {
         final Ifov selectedIfov = overlay.getSelectedIfov();
         if (selectedIfov != null) {
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
-            updateInfoFields(selectedIfov);
+            updateIndexFields(selectedIfov);
             updateAngularRelationFields(selectedIfov, overlay.getEpsFile());
             updateSpectrumDataset(overlay.getSelectedIfov(), overlay.getEpsFile());
         } else {
@@ -391,7 +412,7 @@ abstract class SounderInfoView extends AbstractToolView {
         }
     }
 
-    private void updateInfoFields(Ifov selectedIfov) {
+    private void updateIndexFields(Ifov selectedIfov) {
         mdrIndexTextField.setText(Integer.toString(selectedIfov.getMdrIndex()));
         ifovInMdrIndexTextField.setText(Integer.toString(selectedIfov.getIfovInMdrIndex()));
     }
@@ -550,7 +571,12 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected static CompoundData getCompoundData(EpsFile sounderFile, int mdrIndex) throws IOException {
-        return sounderFile.getMdrData().getCompound(mdrIndex).getCompound(1);
+        final SequenceData data = sounderFile.getMdrData();
+        if (data != null) {
+            return data.getCompound(mdrIndex).getCompound(1);
+        }
+
+        throw new IOException("No MDR.");
     }
 
     protected static class AngularRelation {

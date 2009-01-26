@@ -14,6 +14,7 @@ import java.io.IOException;
  * @since BEAM 4.2
  */
 public interface SounderInfo {
+    
     SounderOverlay getOverlay();
 
     ImageInfo getImageInfo();

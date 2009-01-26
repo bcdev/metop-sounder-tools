@@ -14,24 +14,37 @@
  */
 package org.eumetsat.metop.visat;
 
+import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.glayer.LayerListener;
+import com.bc.ceres.glayer.support.AbstractLayerListener;
 import com.jidesoft.grid.ColorCellRenderer;
-
 import org.esa.beam.framework.datamodel.GeoPos;
+import org.esa.beam.framework.datamodel.ImageInfo;
+import org.esa.beam.framework.datamodel.Scaling;
+import org.esa.beam.framework.datamodel.Stx;
+import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
+import org.esa.beam.framework.ui.ImageInfoEditor;
+import org.esa.beam.framework.ui.ImageInfoEditorModel;
 import org.esa.beam.framework.ui.TableLayout;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.metop.iasi.IasiIfov;
-import org.eumetsat.metop.iasi.*;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.iasi.IasiFile.Geometry;
 import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
+import org.eumetsat.metop.iasi.IasiLayer;
+import org.eumetsat.metop.iasi.IasiOverlay;
 import org.eumetsat.metop.sounder.Ifov;
-import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
+import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.event.ChartProgressEvent;
+import org.jfree.chart.event.ChartProgressListener;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -40,30 +53,21 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleInsets;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
 import java.text.NumberFormat;
-
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 
 /**
  * Tool view for showing information on the selected IASI IFOV.
@@ -73,20 +77,24 @@ import javax.swing.table.TableCellRenderer;
  */
 public class IasiInfoView extends AbstractToolView {
 
+    private static final String NO_IFOV_SELECTED = "No IFOV selected";
+    private static final String ACCESS_ERROR = "Data access error";
+
     private static final String NO_DATA_MESSAGE = "no data";
     private static final int[] CLASS_COLORS = {
             0, Color.YELLOW.getRGB(), Color.ORANGE.getRGB(), Color.RED.getRGB(),
             Color.GREEN.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.BLACK.getRGB()
     };
 
-    private static final IndexColorModel CLASS_COLOR_MODEL = new IndexColorModel(8, 8, CLASS_COLORS, 0, DataBuffer.TYPE_USHORT, null);
+    private static final IndexColorModel CLASS_COLOR_MODEL = new IndexColorModel(8, 8, CLASS_COLORS, 0,
+                                                                                 DataBuffer.TYPE_USHORT, null);
 
     private IasiFile iasiFile;
     private IasiOverlay iasiOverlay;
     private IasiListener modelListener = new IasiListener();
     private ProductSceneView psv;
 
-    private XYSeriesCollection dataset;
+    private XYSeriesCollection spectrumDataset;
     private RadianceAnalysisTableModel radianceTableModel;
     private JLabel imageLabel;
 
@@ -99,33 +107,36 @@ public class IasiInfoView extends AbstractToolView {
     private JTextField saaTextField;
     private JTextField vzaTextField;
     private JTextField vaaTextField;
+    private ImageInfoEditor editor;
+    private XYPlot spectrumPlot;
 
     @Override
     protected JComponent createControl() {
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.add("Location and Geometry", createLocationComponent());
-        tabbedPane.add("IASI Spectrum", createSpectrumComponent());
-        tabbedPane.add("Radiance Analysis", createRadianceAnalysis());
+        tabbedPane.add("Sounder Info", createInfoComponent());
+        tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
+        tabbedPane.add("Radiance Analysis", createRadianceAnalysisComponent());
+        tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
         VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
         setProductSceneView(VisatApp.getApp().getSelectedProductSceneView());
         return tabbedPane;
     }
-    
+
     @Override
     public void componentFocusGained() {
         ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
         if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
-            IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+            IasiLayer layer = getIasiLayer();
             if (layer != null) {
                 productSceneView.setSelectedLayer(layer);
             }
         }
     }
-    
-    public void setProductSceneView(final ProductSceneView pvs) {
+
+    public void setProductSceneView(final ProductSceneView newPsv) {
         final ProductSceneView psvOld = this.psv;
-        if (psvOld == pvs) {
+        if (psvOld == newPsv) {
             return;
         }
         if (this.psv != null) {
@@ -134,21 +145,73 @@ public class IasiInfoView extends AbstractToolView {
             iasiFile = null;
         }
         if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-            IasiLayer layer = IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+            IasiLayer layer = getIasiLayer();
             if (layer != null) {
-                this.psv = pvs;
+                this.psv = newPsv;
                 iasiOverlay = layer.getOverlay();
                 iasiOverlay.addListener(modelListener);
                 iasiFile = iasiOverlay.getEpsFile();
-                update(iasiOverlay.getSelectedIfov());
+                updateUI(iasiOverlay.getSelectedIfov());
+            } else {
+                final LayerListener layerListener = new AbstractLayerListener() {
+                    @Override
+                    public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                        IasiLayer layer = getIasiLayer();
+                        if (layer != null) {
+                            layer.getOverlay().addListener(modelListener);
+
+                            final int channel = layer.getSelectedChannel();
+                            final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
+                            spectrumPlot.setDomainCrosshairValue(crosshairValue);
+                            editor.setModel(createImageInfoEditorModel(layer));
+                            psv.getRootLayer().removeListener(this);
+                        }
+                    }
+                };
+                psv.getRootLayer().addListener(layerListener);
             }
         } else {
-            update(null);
+            updateUI(null);
         }
     }
 
+    private Component createSounderLayerComponent() {
+        editor = new ImageInfoEditor();
 
-    private Component createLocationComponent() {
+        final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
+        containerPanel.add(editor, BorderLayout.NORTH);
+
+        final IasiLayer layer = getIasiLayer();
+        if (layer != null) {
+            editor.setModel(createImageInfoEditorModel(layer));
+        }
+
+        return containerPanel;
+    }
+
+    private static IasiLayer getIasiLayer() {
+        return IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+    }
+
+    private ImageInfoEditorModel createImageInfoEditorModel(final IasiLayer layer) {
+        final ImageInfo imageInfo = layer.getImageInfo();
+        final ImageInfoEditorModel editorModel = new DefaultImageInfoEditorModel(imageInfo);
+
+        final Stx stx = layer.getStx();
+        final Scaling scaling = layer.getScaling();
+
+        editorModel.setDisplayProperties("", "", stx, scaling);
+        editorModel.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                layer.regenerate();
+            }
+        });
+
+        return editorModel;
+    }
+
+    private Component createInfoComponent() {
         latTextField = new JTextField();
         lonTextField = new JTextField();
         mdrTextField = new JTextField();
@@ -210,7 +273,7 @@ public class IasiInfoView extends AbstractToolView {
         return jPanel;
     }
 
-    private Component createRadianceAnalysis() {
+    private Component createRadianceAnalysisComponent() {
         BorderLayout layout = new BorderLayout(4, 4);
         JPanel panel = new JPanel(layout);
 
@@ -232,7 +295,7 @@ public class IasiInfoView extends AbstractToolView {
         NumberAxis yAxis = new NumberAxis("Brightness Temperature (K)");
         yAxis.setRange(new Range(180.0, 305.0));
         XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
-        XYPlot plot = new XYPlot(dataset, xAxis, yAxis, renderer);
+        XYPlot plot = new XYPlot(spectrumDataset, xAxis, yAxis, renderer);
         plot.setOrientation(PlotOrientation.VERTICAL);
         plot.setNoDataMessage(NO_DATA_MESSAGE);
         renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
@@ -240,24 +303,126 @@ public class IasiInfoView extends AbstractToolView {
         return new JFreeChart("IASI IFOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
     }
 
-    // todo - default plot settings
-    private JComponent createSpectrumComponent() {
-        BorderLayout layout = new BorderLayout(4, 4);
-        JPanel panel = new JPanel(layout);
+    private JComponent createSpectrumChartComponent() {
+        spectrumDataset = new XYSeriesCollection();
 
-        dataset = new XYSeriesCollection();
-        JFreeChart chart = createXYLineChart();
+        final JFreeChart chart = ChartFactory.createXYLineChart(
+                "Sounder IFOV Spectrum",         // chart title
+                "Channel",                       // x axis label
+                "Brightness Temperature (K)",    // y axis label
+                spectrumDataset,
+                PlotOrientation.VERTICAL,
+                false,                           // include legend
+                true,                            // tooltips
+                false                            // urls
+        );
+        chart.addProgressListener(new DomainCrosshairListener());
+        configureSpectrumChart(chart);
+
+        spectrumPlot = chart.getXYPlot();
+        configureSpectrumPlot(spectrumPlot);
+        configureSpectrumPlotRenderer((XYLineAndShapeRenderer) spectrumPlot.getRenderer());
+        configureSpectrumPlotYAxis((NumberAxis) spectrumPlot.getRangeAxis());
+        configureSpectrumPlotXAxis((NumberAxis) spectrumPlot.getDomainAxis());
+
         final ChartPanel chartPanel = new ChartPanel(chart);
+        configureSpectrumChartPanel(chartPanel);
+
+        final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
+        containerPanel.add(chartPanel);
+
+        return containerPanel;
+    }
+
+    private class DomainCrosshairListener implements ChartProgressListener {
+        @Override
+        public void chartProgress(ChartProgressEvent event) {
+            if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
+                return;
+            }
+            final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
+            if (value > 0.0) {
+                final IasiLayer layer = getIasiLayer();
+                if (layer != null) {
+                    final IasiFile iasiFile = layer.getOverlay().getEpsFile();
+                    final double spect;
+                    final double first;
+
+                    try {
+                        spect = readIDefSpectDWn1b(iasiFile, 0);
+                        first = readIDefNsfirst1b(iasiFile, 0);
+                    } catch (IOException e) {
+                        return;
+                    }
+
+                    final int channel = (int) Math.round(value * 100.0 / spect - first + 1.0);
+
+                    if (channel != layer.getSelectedChannel()) {
+                        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+                            @Override
+                            protected Object doInBackground() throws Exception {
+                                layer.setSelectedChannel(channel);
+                                return null;
+                            }
+
+                            @Override
+                            protected void done() {
+                                editor.setModel(createImageInfoEditorModel(layer));
+                            }
+                        };
+                        worker.execute();
+                    } else {
+                        if (editor.getModel() == null) {
+                            editor.setModel(createImageInfoEditorModel(layer));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void configureSpectrumChart(JFreeChart chart) {
+        chart.setBackgroundPaint(Color.white);
+    }
+
+    private void configureSpectrumPlot(XYPlot plot) {
+        plot.setBackgroundPaint(Color.lightGray);
+        plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
+        plot.setDomainGridlinePaint(Color.white);
+        plot.setRangeGridlinePaint(Color.white);
+
+        plot.setDomainCrosshairVisible(true);
+        plot.setDomainCrosshairLockedOnData(true);
+        plot.setRangeCrosshairVisible(false);
+        plot.setNoDataMessage(NO_IFOV_SELECTED);
+    }
+
+    private void configureSpectrumPlotRenderer(XYLineAndShapeRenderer renderer) {
+        renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
+        renderer.setBaseShapesVisible(false);
+    }
+
+    private void configureSpectrumPlotXAxis(NumberAxis axis) {
+        axis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        axis.setLabel("Wavenumber (cm-1)");
+        axis.setRange(new Range(645.0, 2760.0), true, false);
+    }
+
+    private void configureSpectrumPlotYAxis(NumberAxis axis) {
+        axis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+        axis.setLabel("Brightness Temperature (K)");
+        axis.setRange(new Range(180.0, 320.0), true, false);
+    }
+
+    private void configureSpectrumChartPanel(ChartPanel chartPanel) {
         chartPanel.setMinimumDrawHeight(0);
         chartPanel.setMaximumDrawHeight(20000);
         chartPanel.setMinimumDrawWidth(0);
         chartPanel.setMaximumDrawWidth(20000);
-        chartPanel.setPreferredSize(new Dimension(200, 200));
-        panel.add(chartPanel);
-        return panel;
+        chartPanel.setPreferredSize(new Dimension(400, 200));
     }
 
-    private void update(Ifov selectedIfov) {
+    private void updateUI(Ifov selectedIfov) {
         int ifovId = -1;
         if (iasiFile != null && selectedIfov != null) {
             ifovId = selectedIfov.getIfovIndex();
@@ -341,7 +506,7 @@ public class IasiInfoView extends AbstractToolView {
 
     // todo - clean up
     private void updateSpectrum(int ifovId) {
-        dataset.removeAllSeries();
+        spectrumDataset.removeAllSeries();
         if (ifovId == -1) {
             return;
         }
@@ -356,23 +521,23 @@ public class IasiInfoView extends AbstractToolView {
         for (double[] aSpectrum : spectrum) {
             series.add(aSpectrum[0] / 100.0, aSpectrum[1]);
         }
-        dataset.addSeries(series);
+        spectrumDataset.addSeries(series);
     }
 
     private class IasiListener implements SounderOverlayListener {
         @Override
         public void selectionChanged(SounderOverlay overlay) {
-            update(overlay.getSelectedIfov());
+            updateUI(overlay.getSelectedIfov());
         }
 
         @Override
         public void dataChanged(SounderOverlay overlay) {
-            update(overlay.getSelectedIfov());
+            updateUI(overlay.getSelectedIfov());
         }
     }
 
     private class ProductSceneViewHook extends InternalFrameAdapter {
-        
+
         @Override
         public void internalFrameActivated(InternalFrameEvent e) {
             final Container content = getContent(e);
@@ -404,6 +569,16 @@ public class IasiInfoView extends AbstractToolView {
 
         return spectrum;
     }
+
+    public double readIDefSpectDWn1b(EpsFile iasiFile, int mdrIndex) throws IOException {
+        return EpsFile.readVInt4(
+                iasiFile.getMdrData().getCompound(mdrIndex).getCompound(1).getCompound("IDefSpectDWn1b"));
+    }
+
+    public double readIDefNsfirst1b(EpsFile iasiFile, int mdrIndex) throws IOException {
+        return iasiFile.getMdrData().getCompound(mdrIndex).getCompound(1).getInt("IDefNsfirst1b");
+    }
+
 
     private static class RadianceAnalysisTableModel extends DefaultTableModel {
 
@@ -448,34 +623,34 @@ public class IasiInfoView extends AbstractToolView {
         }
 
         public void setRadianceAnalysis(RadianceAnalysis radAnalysis) {
-            if(this.radAnalysis != radAnalysis) {
+            if (this.radAnalysis != radAnalysis) {
                 this.radAnalysis = radAnalysis;
                 fireTableDataChanged();
             }
         }
 
         @Override
-            public int getRowCount() {
+        public int getRowCount() {
             return rowNames.length;
         }
 
         @Override
-            public int getColumnCount() {
+        public int getColumnCount() {
             return columnNames.length;
         }
 
         @Override
-            public String getColumnName(int column) {
+        public String getColumnName(int column) {
             return columnNames[column];
         }
 
         @Override
-            public Object getValueAt(int rowIndex, int columnIndex) {
+        public Object getValueAt(int rowIndex, int columnIndex) {
 
-            if(columnIndex == 0) {
+            if (columnIndex == 0) {
                 return rowNames[rowIndex];
             }
-            if(rowIndex == 0) {
+            if (rowIndex == 0) {
                 return colors[columnIndex - 1];
             }
             if (radAnalysis != null) {
@@ -498,7 +673,7 @@ public class IasiInfoView extends AbstractToolView {
                     default:
                         return "";
                 }
-            }else {
+            } else {
                 return "";
             }
         }
@@ -516,9 +691,9 @@ public class IasiInfoView extends AbstractToolView {
         }
 
         @Override
-            public TableCellRenderer getCellRenderer(int row, int column) {
-            if(row == 0 && column >= 1) {
-               return colorRenderer;
+        public TableCellRenderer getCellRenderer(int row, int column) {
+            if (row == 0 && column >= 1) {
+                return colorRenderer;
             }
             return super.getCellRenderer(row, column);
         }
