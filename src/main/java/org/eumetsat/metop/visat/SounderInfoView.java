@@ -99,14 +99,7 @@ abstract class SounderInfoView extends AbstractToolView {
             public void internalFrameActivated(InternalFrameEvent e) {
                 final SounderLayer layer = getSounderLayer();
                 if (layer != null) {
-                    currentOverlay = layer.getOverlay();
-                    currentOverlay.addListener(overlayListener);
-
-                    final int channel = layer.getSelectedChannel();
-                    final double crosshairValue = channelToCrosshairValue(channel);
-                    spectrumPlot.setDomainCrosshairValue(crosshairValue);
-                    editor.setModel(createImageInfoEditorModel(layer));
-                    updateUI(currentOverlay);
+                    overlayChanged(layer);
                 } else {
                     final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
                     final LayerListener layerListener = new AbstractLayerListener() {
@@ -114,13 +107,7 @@ abstract class SounderInfoView extends AbstractToolView {
                         public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
                             final SounderLayer layer = getSounderLayer();
                             if (layer != null) {
-                                currentOverlay = layer.getOverlay();
-                                currentOverlay.addListener(overlayListener);
-                                final int channel = layer.getSelectedChannel();
-                                final double crosshairValue = channelToCrosshairValue(channel);
-                                spectrumPlot.setDomainCrosshairValue(crosshairValue);
-                                editor.setModel(createImageInfoEditorModel(layer));
-                                updateUI(currentOverlay);
+                                overlayChanged(layer);
                                 view.getRootLayer().removeListener(this);
                             }
                         }
@@ -148,13 +135,22 @@ abstract class SounderInfoView extends AbstractToolView {
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
-                currentOverlay = layer.getOverlay();
-                currentOverlay.addListener(overlayListener);
-                updateUI(currentOverlay);
+                overlayChanged(layer);
             }
         }
 
         return tabbedPane;
+    }
+    
+    private void overlayChanged(SounderLayer layer) {
+        currentOverlay = layer.getOverlay();
+        currentOverlay.addListener(overlayListener);
+
+        final int channel = layer.getSelectedChannel();
+        final double crosshairValue = channelToCrosshairValue(channel);
+        spectrumPlot.setDomainCrosshairValue(crosshairValue);
+        editor.setModel(createImageInfoEditorModel(layer));
+        updateUI(currentOverlay);
     }
     
     @Override
