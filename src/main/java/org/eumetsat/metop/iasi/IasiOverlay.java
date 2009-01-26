@@ -49,8 +49,6 @@ public class IasiOverlay implements SounderOverlay {
     private static final int IFOV_SIZE = 12;
     private static final float IFOV_DIST = 18;
 
-    private static final Efov[] NO_DATA = new Efov[0];
-    
     private final IasiFile iasiFile;
     private final Product avhrrProduct;
     private final long avhrrStartMillis;
@@ -58,11 +56,10 @@ public class IasiOverlay implements SounderOverlay {
     private final int avhrrRasterHeight;
     private final int avhrrTrimLeft;
     
-    private Efov[] efovs;
-    private boolean computingEfovs;
-    private Ifov selectedIfov;
+    private final int mdrCount;
+    private final Efov[] efovs;
     private final Map<SounderOverlayListener, Object> listenerMap;
-    private int mdrCount;
+    private Ifov selectedIfov;
     
     public IasiOverlay(IasiFile iasiFile, Product avhrrProduct) throws IOException {
         this.iasiFile = iasiFile;
@@ -73,6 +70,7 @@ public class IasiOverlay implements SounderOverlay {
         avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
         listenerMap = Collections.synchronizedMap(new WeakHashMap<SounderOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
+        efovs = createEfovs("fast");
     }
 
     @Override
@@ -108,38 +106,8 @@ public class IasiOverlay implements SounderOverlay {
         listenerMap.remove(listener);
     }
 
-    synchronized Efov[] getEfovs() {
-        synchronized (this) {
-            if (efovs != null) {
-                return efovs;
-            }
-            if (computingEfovs) {
-                return NO_DATA;
-            }
-            computingEfovs = true;
-        }
-        SwingWorker<Efov[], Object> worker = new SwingWorker<Efov[], Object>() {
-
-            @Override
-            protected Efov[] doInBackground() throws Exception {
-                return createEfovs("fast");
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    synchronized (IasiOverlay.this) {
-                        computingEfovs = false;
-                        efovs = get();
-                    }
-                    fireDataChanged();
-                } catch (Exception e) {
-                    Debug.trace(e);
-                }
-            }
-        };
-        worker.execute();
-        return NO_DATA;
+    Efov[] getEfovs() {
+        return efovs;
     }
 
     protected void fireSelectionChanged() {
