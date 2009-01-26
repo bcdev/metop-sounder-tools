@@ -93,6 +93,7 @@ public class IasiLayer extends Layer implements SounderInfo {
     public void setSelectedChannel(int channel) {
         if (selectedChannel != channel) {
             selectedChannel = channel;
+            computeLayerData();
             regenerate();
         }
     }
@@ -192,7 +193,7 @@ public class IasiLayer extends Layer implements SounderInfo {
     private void computeLayerData() {
         double[][][] allBts = null;
         try {
-            allBts = iasiOverlay.getEpsFile().readAllBts(42);
+            allBts = iasiOverlay.getEpsFile().readAllBts(selectedChannel);
         } catch (IOException e) {
             Debug.trace(e);
             return;
@@ -269,8 +270,7 @@ public class IasiLayer extends Layer implements SounderInfo {
     
     @Override
     public void regenerate() {
-        computeLayerData();
-        fireLayerDataChanged(null);
+        fireLayerDataChanged(getModelBounds());
     }
 
     private class LayerData {

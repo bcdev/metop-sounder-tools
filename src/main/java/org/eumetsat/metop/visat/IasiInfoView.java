@@ -60,6 +60,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.event.InternalFrameListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -89,10 +90,8 @@ public class IasiInfoView extends AbstractToolView {
     private static final IndexColorModel CLASS_COLOR_MODEL = new IndexColorModel(8, 8, CLASS_COLORS, 0,
                                                                                  DataBuffer.TYPE_USHORT, null);
 
-    private IasiFile iasiFile;
-    private IasiOverlay iasiOverlay;
-    private IasiListener modelListener = new IasiListener();
-    private ProductSceneView psv;
+    private IasiOverlay currentOverlay;
+    private IasiOverlayListener overlayListener = new IasiOverlayListener();
 
     private XYSeriesCollection spectrumDataset;
     private RadianceAnalysisTableModel radianceTableModel;
@@ -118,9 +117,58 @@ public class IasiInfoView extends AbstractToolView {
         tabbedPane.add("Radiance Analysis", createRadianceAnalysisComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
-        VisatApp.getApp().addInternalFrameListener(new ProductSceneViewHook());
-        setProductSceneView(VisatApp.getApp().getSelectedProductSceneView());
+        InternalFrameListener internalFrameListener = new InternalFrameAdapter() {
+
+            @Override
+            public void internalFrameActivated(InternalFrameEvent e) {
+                final IasiLayer layer = getIasiLayer();
+                if (layer != null) {
+                    modelChanged(layer);
+                } else {
+                    final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+                    final LayerListener layerListener = new AbstractLayerListener() {
+                        @Override
+                        public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                            final IasiLayer layer = getIasiLayer();
+                            if (layer != null) {
+                                modelChanged(layer);
+                                view.getRootLayer().removeListener(this);
+                            }
+                        }
+                    };
+                    view.getRootLayer().addListener(layerListener);
+                }
+            }
+
+            @Override
+            public void internalFrameDeactivated(InternalFrameEvent e) {
+                if (currentOverlay != null) {
+                    currentOverlay.removeListener(overlayListener);
+                }
+                updateUI(null);
+                editor.setModel(null);
+            }
+        };
+        
+        VisatApp.getApp().addInternalFrameListener(internalFrameListener);
+        if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
+            final IasiLayer layer = getIasiLayer();
+            if (layer != null) {
+                modelChanged(layer);
+            }
+        }
         return tabbedPane;
+    }
+    
+    private void modelChanged(IasiLayer layer) {
+        currentOverlay = layer.getOverlay();
+        currentOverlay.addListener(overlayListener);
+        updateUI(currentOverlay.getSelectedIfov());
+//        TODO - make this work here & elsewhere
+//        final int channel = layer.getSelectedChannel();
+//        final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
+//        spectrumPlot.setDomainCrosshairValue(crosshairValue);
+        editor.setModel(createImageInfoEditorModel(layer));
     }
 
     @Override
@@ -134,66 +182,14 @@ public class IasiInfoView extends AbstractToolView {
         }
     }
 
-    public void setProductSceneView(final ProductSceneView newPsv) {
-        final ProductSceneView psvOld = this.psv;
-        if (psvOld == newPsv) {
-            return;
-        }
-        if (this.psv != null) {
-            iasiOverlay.removeListener(modelListener);
-            iasiOverlay = null;
-            iasiFile = null;
-        }
-        if (psv != null && IasiFootprintVPI.isValidAvhrrProductSceneView(psv)) {
-            IasiLayer layer = getIasiLayer();
-            if (layer != null) {
-                this.psv = newPsv;
-                iasiOverlay = layer.getOverlay();
-                iasiOverlay.addListener(modelListener);
-                iasiFile = iasiOverlay.getEpsFile();
-                updateUI(iasiOverlay.getSelectedIfov());
-            } else {
-                final LayerListener layerListener = new AbstractLayerListener() {
-                    @Override
-                    public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
-                        IasiLayer layer = getIasiLayer();
-                        if (layer != null) {
-                            psv = newPsv;
-                            iasiOverlay = layer.getOverlay();
-                            iasiOverlay.addListener(modelListener);
-                            iasiFile = iasiOverlay.getEpsFile();
-                            updateUI(iasiOverlay.getSelectedIfov());
-//                            todo - make this work here & elsewhere
-//                            final int channel = layer.getSelectedChannel();
-//                            final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
-//                            spectrumPlot.setDomainCrosshairValue(crosshairValue);
-//                            editor.setModel(createImageInfoEditorModel(layer));
-                            psv.getRootLayer().removeListener(this);
-                        }
-                    }
-                };
-                psv.getRootLayer().addListener(layerListener);
-            }
-        } else {
-            updateUI(null);
-        }
-    }
-
     private Component createSounderLayerComponent() {
         editor = new ImageInfoEditor();
-
         final JPanel containerPanel = new JPanel(new BorderLayout(4, 4));
         containerPanel.add(editor, BorderLayout.NORTH);
-
-        final IasiLayer layer = getIasiLayer();
-        if (layer != null) {
-            editor.setModel(createImageInfoEditorModel(layer));
-        }
-
         return containerPanel;
     }
 
-    private static IasiLayer getIasiLayer() {
+    private IasiLayer getIasiLayer() {
         return IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
     }
 
@@ -428,7 +424,7 @@ public class IasiInfoView extends AbstractToolView {
 
     private void updateUI(Ifov selectedIfov) {
         int ifovId = -1;
-        if (iasiFile != null && selectedIfov != null) {
+        if (currentOverlay != null && selectedIfov != null) {
             ifovId = selectedIfov.getIfovIndex();
         }
         updateLocation(ifovId);
@@ -444,6 +440,7 @@ public class IasiInfoView extends AbstractToolView {
         final GeoPos geoPos;
         final Geometry readGeometry;
         try {
+            IasiFile iasiFile = currentOverlay.getEpsFile();
             geoPos = iasiFile.readGeoPos(ifovId);
             readGeometry = iasiFile.readGeometry(ifovId);
         } catch (IOException e) {
@@ -483,7 +480,7 @@ public class IasiInfoView extends AbstractToolView {
         }
         final RadianceAnalysis radianceAnalysis;
         try {
-            radianceAnalysis = iasiFile.readRadianceAnalysis(ifovId);
+            radianceAnalysis = currentOverlay.getEpsFile().readRadianceAnalysis(ifovId);
         } catch (IOException e) {
             cleanRadianceAnalysis();
             return;
@@ -528,7 +525,7 @@ public class IasiInfoView extends AbstractToolView {
         spectrumDataset.addSeries(series);
     }
 
-    private class IasiListener implements SounderOverlayListener {
+    private class IasiOverlayListener implements SounderOverlayListener {
         @Override
         public void selectionChanged(SounderOverlay overlay) {
             updateUI(overlay.getSelectedIfov());
@@ -540,32 +537,8 @@ public class IasiInfoView extends AbstractToolView {
         }
     }
 
-    private class ProductSceneViewHook extends InternalFrameAdapter {
-
-        @Override
-        public void internalFrameActivated(InternalFrameEvent e) {
-            final Container content = getContent(e);
-            if (content instanceof ProductSceneView) {
-                setProductSceneView((ProductSceneView) content);
-            } else {
-                setProductSceneView(null);
-            }
-        }
-
-        @Override
-        public void internalFrameDeactivated(InternalFrameEvent e) {
-            if (getContent(e) instanceof ProductSceneView) {
-                setProductSceneView(null);
-            }
-        }
-
-        private Container getContent(InternalFrameEvent e) {
-            return e.getInternalFrame().getContentPane();
-        }
-    }
-
     private double[][] readBrightnessTemperatureSpectrum(int ifovId) throws IOException {
-        final double[][] spectrum = iasiFile.readSpectrum(ifovId);
+        final double[][] spectrum = currentOverlay.getEpsFile().readSpectrum(ifovId);
 
         for (double[] sample : spectrum) {
             sample[1] = BlackBody.temperatureAtWavenumber(sample[0], sample[1]);

@@ -54,7 +54,6 @@ import javax.swing.event.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
@@ -99,7 +98,7 @@ abstract class SounderInfoView extends AbstractToolView {
             public void internalFrameActivated(InternalFrameEvent e) {
                 final SounderLayer layer = getSounderLayer();
                 if (layer != null) {
-                    overlayChanged(layer);
+                    modelChanged(layer);
                 } else {
                     final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
                     final LayerListener layerListener = new AbstractLayerListener() {
@@ -107,7 +106,7 @@ abstract class SounderInfoView extends AbstractToolView {
                         public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
                             final SounderLayer layer = getSounderLayer();
                             if (layer != null) {
-                                overlayChanged(layer);
+                                modelChanged(layer);
                                 view.getRootLayer().removeListener(this);
                             }
                         }
@@ -135,14 +134,14 @@ abstract class SounderInfoView extends AbstractToolView {
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
-                overlayChanged(layer);
+                modelChanged(layer);
             }
         }
 
         return tabbedPane;
     }
     
-    private void overlayChanged(SounderLayer layer) {
+    private void modelChanged(SounderLayer layer) {
         currentOverlay = layer.getOverlay();
         currentOverlay.addListener(overlayListener);
 
