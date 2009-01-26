@@ -52,7 +52,7 @@ public class IasiOverlay implements SounderOverlay {
     private final int avhrrTrimLeft;
     
     private final int mdrCount;
-    private final Efov[] efovs;
+    private Efov[] efovs;
     private final Map<SounderOverlayListener, Object> listenerMap;
     private Ifov selectedIfov;
     
@@ -65,7 +65,6 @@ public class IasiOverlay implements SounderOverlay {
         avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
         listenerMap = Collections.synchronizedMap(new WeakHashMap<SounderOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
-        efovs = createEfovs("fast");
     }
 
     @Override
@@ -101,7 +100,10 @@ public class IasiOverlay implements SounderOverlay {
         listenerMap.remove(listener);
     }
 
-    Efov[] getEfovs() {
+    synchronized Efov[] getEfovs() {
+        if (efovs == null) {
+            efovs = createEfovs("fast");
+        }
         return efovs;
     }
 
