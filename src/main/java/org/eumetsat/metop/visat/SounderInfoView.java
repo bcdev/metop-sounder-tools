@@ -54,6 +54,7 @@ import javax.swing.event.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
@@ -76,6 +77,8 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField vaaTextField;
     private ImageInfoEditor editor;
     private XYPlot spectrumPlot;
+    
+    private SounderOverlay currentOverlay;
 
     @Override
     protected JComponent createControl() {
@@ -91,47 +94,48 @@ abstract class SounderInfoView extends AbstractToolView {
             }
         };
         internalFrameListener = new InternalFrameAdapter() {
+
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderLayer layer = getSounderLayer();
-                    if (layer != null) {
-                        layer.getOverlay().addListener(overlayListener);
+                final SounderLayer layer = getSounderLayer();
+                if (layer != null) {
+                    currentOverlay = layer.getOverlay();
+                    currentOverlay.addListener(overlayListener);
 
-                        final int channel = layer.getSelectedChannel();
-                        final double crosshairValue = channelToCrosshairValue(channel);
-                        spectrumPlot.setDomainCrosshairValue(crosshairValue);
-                        editor.setModel(createImageInfoEditorModel(layer));
-                    } else {
-                        final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
-                        final LayerListener layerListener = new AbstractLayerListener() {
-                            @Override
-                            public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
-                                final SounderLayer layer = getSounderLayer();
-                                if (layer != null) {
-                                    layer.getOverlay().addListener(overlayListener);
-
-                                    final int channel = layer.getSelectedChannel();
-                                    final double crosshairValue = channelToCrosshairValue(channel);
-                                    spectrumPlot.setDomainCrosshairValue(crosshairValue);
-                                    editor.setModel(createImageInfoEditorModel(layer));
-                                    view.getRootLayer().removeListener(this);
-                                }
+                    final int channel = layer.getSelectedChannel();
+                    final double crosshairValue = channelToCrosshairValue(channel);
+                    spectrumPlot.setDomainCrosshairValue(crosshairValue);
+                    editor.setModel(createImageInfoEditorModel(layer));
+                    updateUI(currentOverlay);
+                } else {
+                    final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+                    final LayerListener layerListener = new AbstractLayerListener() {
+                        @Override
+                        public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                            final SounderLayer layer = getSounderLayer();
+                            if (layer != null) {
+                                currentOverlay = layer.getOverlay();
+                                currentOverlay.addListener(overlayListener);
+                                final int channel = layer.getSelectedChannel();
+                                final double crosshairValue = channelToCrosshairValue(channel);
+                                spectrumPlot.setDomainCrosshairValue(crosshairValue);
+                                editor.setModel(createImageInfoEditorModel(layer));
+                                updateUI(currentOverlay);
+                                view.getRootLayer().removeListener(this);
                             }
-                        };
-                        view.getRootLayer().addListener(layerListener);
-                    }
+                        }
+                    };
+                    view.getRootLayer().addListener(layerListener);
                 }
             }
 
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
-                if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-                    final SounderLayer layer = getSounderLayer();
-                    if (layer != null) {
-                        layer.getOverlay().removeListener(overlayListener);
-                    }
+                if (currentOverlay != null) {
+                    currentOverlay.removeListener(overlayListener);
                 }
+                updateUI(null);
+                editor.setModel(null);
             }
         };
         VisatApp.getApp().addInternalFrameListener(internalFrameListener);
@@ -142,11 +146,11 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
         if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-            final SounderInfo info = getSounderLayer();
-            if (info != null) {
-                final SounderOverlay overlay = info.getOverlay();
-                overlay.addListener(overlayListener);
-                updateUI(overlay);
+            final SounderLayer layer = getSounderLayer();
+            if (layer != null) {
+                currentOverlay = layer.getOverlay();
+                currentOverlay.addListener(overlayListener);
+                updateUI(currentOverlay);
             }
         }
 
@@ -396,9 +400,8 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected void updateUI(final SounderOverlay overlay) {
-        assert overlay != null;
-        final Ifov selectedIfov = overlay.getSelectedIfov();
-        if (selectedIfov != null) {
+        if (overlay != null && overlay.getSelectedIfov() != null) {
+            final Ifov selectedIfov = overlay.getSelectedIfov();
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
             updateIndexFields(selectedIfov);
             updateAngularRelationFields(selectedIfov, overlay.getEpsFile());
