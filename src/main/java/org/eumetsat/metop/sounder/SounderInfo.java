@@ -4,6 +4,8 @@ import org.esa.beam.framework.datamodel.ImageInfo;
 import org.esa.beam.framework.datamodel.Stx;
 import org.esa.beam.framework.datamodel.Scaling;
 
+import java.io.IOException;
+
 /**
  * todo - add API doc
  *
@@ -22,5 +24,5 @@ public interface SounderInfo {
 
     int getSelectedChannel();
 
-    void setSelectedChannel(int channel);
+    void setSelectedChannel(int channel) throws IOException;
 }

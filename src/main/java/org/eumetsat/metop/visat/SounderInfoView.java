@@ -18,7 +18,6 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.glayer.Layer;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
@@ -84,8 +83,19 @@ abstract class SounderInfoView extends AbstractToolView {
                 if (layer != null) {
                     final int channel = crosshairValueToChannel(value);
                     if (channel != layer.getSelectedChannel()) {
-                        layer.setSelectedChannel(channel);
-                        editor.setModel(createImageInfoEditorModel(layer));
+                        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+                            @Override
+                            protected Object doInBackground() throws Exception {
+                                layer.setSelectedChannel(channel);
+                                return null;
+                            }
+
+                            @Override
+                            protected void done() {
+                                editor.setModel(createImageInfoEditorModel(layer));
+                            }
+                        };
+                        worker.execute();
                     } else {
                         if (editor.getModel() == null) {
                             editor.setModel(createImageInfoEditorModel(layer));

@@ -155,28 +155,33 @@ public class SounderLayer extends Layer implements SounderInfo {
         fireLayerDataChanged(getModelBounds());
     }
 
+    @Override
     public SounderOverlay getOverlay() {
         return overlay;
     }
 
+    @Override
     public ImageInfo getImageInfo() {
         return layerDataMap.get(selectedChannel).imageInfo;
     }
 
+    @Override
     public Stx getStx() {
         return layerDataMap.get(selectedChannel).stx;
     }
 
+    @Override
     public Scaling getScaling() {
         return layerDataMap.get(selectedChannel).band;
     }
 
+    @Override
     public int getSelectedChannel() {
         return selectedChannel;
     }
 
     @Override
-    public synchronized void setSelectedChannel(final int channel) {
+    public synchronized void setSelectedChannel(final int channel) throws IOException {
         if (selectedChannel != channel || layerDataMap.isEmpty()) {
             final LayerData layerData = layerDataMap.get(channel);
             if (layerData == null) {
@@ -184,11 +189,7 @@ public class SounderLayer extends Layer implements SounderInfo {
                 final ProductData data = ProductData.createInstance(bandInfo.getType(),
                                                                     ifovInMdrCount * mdrCount);
                 final MdrReader reader = bandInfo.getReader();
-                try {
-                    overlay.getEpsFile().readData(reader, 0, 0, ifovInMdrCount, mdrCount, data, ProgressMonitor.NULL);
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
+                overlay.getEpsFile().readData(reader, 0, 0, ifovInMdrCount, mdrCount, data, ProgressMonitor.NULL);
 
                 final Band band = new Band(bandInfo.getName(), bandInfo.getType(), ifovInMdrCount, mdrCount);
                 band.setRasterData(data);
