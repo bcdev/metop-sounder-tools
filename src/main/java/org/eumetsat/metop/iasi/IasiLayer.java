@@ -28,8 +28,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
-import javax.swing.SwingWorker;
-
 import com.bc.ceres.core.ExtensionFactory;
 import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.glayer.Layer;
@@ -48,8 +46,8 @@ public class IasiLayer extends Layer implements SounderInfo {
     private final Color ifovSelectedColor;
     private final Color ifovAnomalousColor;
 
-    private ColorInfo colorInfo;
-    private boolean loadingColorInfo;
+    private LayerData layerData;
+//    private boolean loadingColorInfo;
     
     private final SounderOverlayListener overlayListener;
     private final IasiOverlay iasiOverlay;
@@ -67,6 +65,7 @@ public class IasiLayer extends Layer implements SounderInfo {
         ifovSelectedColor = Color.GREEN;
         //ifovNormalColor = Color.RED;
         ifovAnomalousColor = Color.RED;
+        computeLayerData();
     }
     
     @Override
@@ -75,15 +74,15 @@ public class IasiLayer extends Layer implements SounderInfo {
     }
 
     public ImageInfo getImageInfo() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return layerData.imageInfo;
     }
 
     public Stx getStx() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return layerData.stx;
     }
 
     public Scaling getScaling() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return Scaling.IDENTITY;
     }
 
     @Override
@@ -129,10 +128,6 @@ public class IasiLayer extends Layer implements SounderInfo {
         if (efovs.length == 0) {
             return;
         }
-        ColorInfo cInfo = getColorInfo();
-        if (cInfo == null) {
-            return;
-        }
         
         final Graphics2D g2d = rendering.getGraphics();
         final Viewport vp = rendering.getViewport();
@@ -154,6 +149,7 @@ public class IasiLayer extends Layer implements SounderInfo {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
             final Rectangle clip = g2d.getClipBounds();
+            Color[] colorPalette = layerData.getColorPalette();
 
             final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
             final boolean efovBigEnough = scale * IasiLayer.EFOV_SIZE > 10;
@@ -173,7 +169,7 @@ public class IasiLayer extends Layer implements SounderInfo {
                                         int mdrIndex = IasiFile.computeMdrIndex(ifov.getIfovIndex());
                                         int efovIndex = IasiFile.computeEfovIndex(ifov.getIfovIndex());
                                         int ifovIndex = IasiFile.computeIfovIndex(ifov.getIfovIndex());
-                                        renderIfov(g2d, ifov, cInfo.getColor(mdrIndex, efovIndex, ifovIndex));
+                                        renderIfov(g2d, ifov, layerData.getColor(colorPalette, mdrIndex, efovIndex, ifovIndex));
                                     }
                                 }
                             }
@@ -194,82 +190,39 @@ public class IasiLayer extends Layer implements SounderInfo {
         }
     }
     
-    private synchronized ColorInfo getColorInfo() {
-        if (colorInfo != null) {
-            return colorInfo;
+    private void computeLayerData() {
+        double[][][] allBts = null;
+        try {
+            allBts = iasiOverlay.getEpsFile().readAllBts(42);
+        } catch (IOException e) {
+            Debug.trace(e);
+            return;
         }
-        if (loadingColorInfo) {
-            return null;
-        }
-        loadingColorInfo = true;
-        SwingWorker<ColorInfo, Object> worker = new SwingWorker<ColorInfo, Object>() {
-
-            @Override
-            protected ColorInfo doInBackground() throws Exception {
-                double[][][] allBts = iasiOverlay.getEpsFile().readAllBts(42);
-                final Efov[] efovs = iasiOverlay.getEfovs();
-                double min = Double.MAX_VALUE;
-                double max = 0;
-                int efovIndex = 0;
-                for (int i = 0; i < allBts.length; i++) {
-                    for (int j = 0; j < allBts[i].length; j++) {
-                        Efov efov = efovs[efovIndex];
-                        for (int k = 0; k < allBts[i][j].length; k++) {
-                            if (!efov.getIfovs()[k].isAnomalous()) {
-                                min = Math.min(min, allBts[i][j][k]);
-                                max = Math.max(min, allBts[i][j][k]);
-                            }
-                        }
-                        efovIndex++;
+        final Efov[] efovs = iasiOverlay.getEfovs();
+        final int numBts = allBts.length * allBts[0].length * allBts[0][0].length;
+        ProductData data = ProductData.createInstance(ProductData.TYPE_FLOAT64, numBts);
+        int efovIndex = 0;
+        int index = 0;
+        for (int i = 0; i < allBts.length; i++) {
+            for (int j = 0; j < allBts[i].length; j++) {
+                Efov efov = efovs[efovIndex];
+                for (int k = 0; k < allBts[i][j].length; k++) {
+                    if (!efov.getIfovs()[k].isAnomalous()) {
+                        data.setElemDoubleAt(index, allBts[i][j][k]);
+                    } else {
+                        data.setElemDoubleAt(index, Double.NaN);
                     }
+                    index++;
                 }
-                ColorPaletteDef paletteDef = new ColorPaletteDef(min, max);
-                Color[] colorPalette = paletteDef.createColorPalette(Scaling.IDENTITY);
-                return new ColorInfo(allBts, paletteDef, colorPalette);
-
-                ////
-//                final int size = allBts.length * allBts[0].length * allBts[0][0].length;
-//                ProductData data = ProductData.createInstance(ProductData.TYPE_FLOAT64, size);
-//                int efovIndex = 0;
-//                int index = 0;
-//                for (int i = 0; i < allBts.length; i++) {
-//                    for (int j = 0; j < allBts[i].length; j++) {
-//                        Efov efov = efovs[efovIndex];
-//                        for (int k = 0; k < allBts[i][j].length; k++) {
-//                            if (!efov.getIfovs()[k].isAnomalous()) {
-//                                data.setElemDoubleAt(index, allBts[i][j][k]);
-//                            } else {
-//                                data.setElemDoubleAt(index, Double.NaN);
-//                            }
-//                            index++;
-//                        }
-//                        efovIndex++;
-//                    }
-//                }
-//                 final Band band = new Band("x", data.getType(), size, 1);
-//                band.setRasterData(data);
-//                band.setSynthetic(true);
-//                // todo - scaling
-//                final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
-//
-//                return null;
+                efovIndex++;
             }
-            
-            @Override
-            protected void done() {
-                try {
-                    colorInfo = get();
-                    loadingColorInfo = false;
-                    fireLayerDataChanged(null);
-                } catch (Exception e) {
-                    loadingColorInfo = false;
-                    Debug.trace(e);
-                }
-            }
-            
-        }; 
-        worker.execute();
-        return null;
+        }
+        final Band band = new Band("x", data.getType(), numBts, 1);
+        band.setRasterData(data);
+        band.setSynthetic(true);
+        final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
+        band.dispose();
+        layerData = new LayerData(allBts, stx);
     }
 
     private boolean shouldRenderEfov(Efov efov) {
@@ -317,37 +270,38 @@ public class IasiLayer extends Layer implements SounderInfo {
     
     @Override
     public void regenerate() {
-        colorInfo = null;
+        computeLayerData();
         fireLayerDataChanged(null);
     }
 
-    public Color[] getColorPalette() {
-        return colorInfo.colorPalette;
-    }
-    
-    public ColorPaletteDef getColorPaletteDef() {
-        return colorInfo.paletteDef;
-    }
-    
-    private class ColorInfo {
-        private final double[][][] allBts;
-        private ColorPaletteDef paletteDef;
-        private Color[] colorPalette;
-        
-        public ColorInfo(double[][][] allBts, ColorPaletteDef paletteDef, Color[] colorPalette) {
-            this.allBts = allBts;
-            this.paletteDef = paletteDef;
-            this.colorPalette = colorPalette;
+    private class LayerData {
+
+        final double[][][] bt;
+        final Stx stx;
+        final ImageInfo imageInfo;
+
+        private LayerData(double[][][] bt, Stx stx) {
+            this.bt = bt;
+            this.stx = stx;
+            this.imageInfo = new ImageInfo(new ColorPaletteDef(stx.getMin(), stx.getMean(), stx.getMax()));
         }
         
-        public Color getColor(int mdrIndex, int efovIndex, int ifovIndex) {
-            double sample = allBts[mdrIndex][efovIndex][ifovIndex];
-            int numColors = colorPalette.length;
-            double min = paletteDef.getMinDisplaySample();
-            double max = paletteDef.getMaxDisplaySample();
-            int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors-1);
+        private Color[] getColorPalette() {
+            return layerData.imageInfo.getColorPaletteDef().createColorPalette(Scaling.IDENTITY);
+        }
+        
+        private Color getColor(Color[] colorPalette, int mdrIndex, int efovIndex, int ifovIndex) {
+            final ColorPaletteDef def = imageInfo.getColorPaletteDef();
+            final double sample = bt[mdrIndex][efovIndex][ifovIndex];
+            final int numColors = colorPalette.length;
+
+            final double min = def.getMinDisplaySample();
+            final double max = def.getMaxDisplaySample();
+            final int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors - 1);
+
             return colorPalette[index];
         }
+        
     }
 
     private static class LayerUI extends AbstractLayerUI {
