@@ -130,14 +130,9 @@ abstract class SounderInfoView extends AbstractToolView {
 
             @Override
             public void internalFrameClosed(InternalFrameEvent e) {
-                final Container contentPane = e.getInternalFrame().getContentPane();
-                if (contentPane instanceof ProductSceneView) {
-                    final ProductSceneView view = (ProductSceneView) contentPane;
-                    final SounderLayer layer = getSounderLayer(view);
-                    if (layer != null) {
-                        clearUI();
-                        editor.setModel(null);
-                    }
+                if (getSounderLayer() == null) {
+                    clearUI();
+                    editor.setModel(null);
                 }
             }
         };
@@ -424,7 +419,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return editorModel;
     }
 
-    protected synchronized void updateUI(final SounderOverlay overlay) {
+    protected void updateUI(final SounderOverlay overlay) {
         if (overlay.getSelectedIfov() != null) {
             final Ifov selectedIfov = overlay.getSelectedIfov();
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
