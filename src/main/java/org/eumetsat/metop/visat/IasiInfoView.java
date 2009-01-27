@@ -22,6 +22,7 @@ import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.ImageInfo;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.framework.datamodel.Stx;
+import org.esa.beam.framework.help.HelpSys;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
 import org.esa.beam.framework.ui.ImageInfoEditorModel;
@@ -117,6 +118,10 @@ public class IasiInfoView extends AbstractToolView {
         tabbedPane.add("Radiance Analysis", createRadianceAnalysisComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
+        if (getDescriptor().getHelpId() != null) {
+            HelpSys.enableHelpKey(tabbedPane, getDescriptor().getHelpId());
+        }
+        
         InternalFrameListener internalFrameListener = new InternalFrameAdapter() {
 
             @Override

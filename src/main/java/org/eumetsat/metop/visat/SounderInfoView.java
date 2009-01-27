@@ -25,6 +25,7 @@ import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.ImageInfo;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.framework.datamodel.Stx;
+import org.esa.beam.framework.help.HelpSys;
 import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
 import org.esa.beam.framework.ui.ImageInfoEditor;
 import org.esa.beam.framework.ui.ImageInfoEditorModel;
@@ -143,6 +144,10 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
+        if (getDescriptor().getHelpId() != null) {
+            HelpSys.enableHelpKey(tabbedPane, getDescriptor().getHelpId());
+        }
+        
         final SounderLayer layer = getSounderLayer();
         if (layer != null) {
             layerChanged(layer);
