@@ -206,7 +206,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         long avhrrStartTime = 0;
         try {
             avhrrStartTime = IasiFile.extractStartTimeInMillis(avhrrFilename);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // wrong filename, do not try to add overlay
             return;
         }
