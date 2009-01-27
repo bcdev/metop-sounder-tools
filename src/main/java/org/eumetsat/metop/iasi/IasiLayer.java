@@ -90,7 +90,7 @@ public class IasiLayer extends Layer implements SounderInfo {
     }
 
     @Override
-    public void setSelectedChannel(int channel) {
+    public synchronized void setSelectedChannel(int channel) {
         if (selectedChannel != channel) {
             selectedChannel = channel;
             computeLayerData();

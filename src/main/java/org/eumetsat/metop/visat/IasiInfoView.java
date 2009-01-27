@@ -217,14 +217,23 @@ public class IasiInfoView extends AbstractToolView {
 
     private Component createInfoComponent() {
         latTextField = new JTextField();
+        latTextField.setEditable(false);
         lonTextField = new JTextField();
+        lonTextField.setEditable(false);
         mdrTextField = new JTextField();
+        mdrTextField.setEditable(false);
         efovTextField = new JTextField();
+        efovTextField.setEditable(false);
         ifovTextField = new JTextField();
+        ifovTextField.setEditable(false);
         szaTextField = new JTextField();
+        szaTextField.setEditable(false);
         saaTextField = new JTextField();
+        saaTextField.setEditable(false);
         vzaTextField = new JTextField();
+        vzaTextField.setEditable(false);
         vaaTextField = new JTextField();
+        vaaTextField.setEditable(false);
 
         TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.NORTHWEST);
