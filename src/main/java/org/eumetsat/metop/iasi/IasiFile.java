@@ -309,6 +309,14 @@ public class IasiFile extends EpsFile {
         return spectrum;
     }
 
+    public double readIDefSpectDWn1b(int mdrIndex) throws IOException {
+        return EpsFile.readVInt4(getMdrData().getCompound(mdrIndex).getCompound(1).getCompound("IDefSpectDWn1b"));
+    }
+
+    public double readIDefNsfirst1b(int mdrIndex) throws IOException {
+        return getMdrData().getCompound(mdrIndex).getCompound(1).getInt("IDefNsfirst1b");
+    }
+
     public static class RadianceAnalysis {
         public final int[] channels = new int[NBK];
         public int nbClass;

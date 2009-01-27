@@ -16,10 +16,11 @@
  */
 package org.eumetsat.metop.iasi;
 
+import com.bc.ceres.binio.CompoundData;
 import org.esa.beam.framework.datamodel.PixelPos;
 import org.esa.beam.framework.datamodel.Product;
-import org.eumetsat.metop.sounder.SounderOverlay;
 import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderOverlay;
 import org.eumetsat.metop.sounder.SounderOverlayListener;
 
 import java.awt.Shape;
@@ -27,20 +28,14 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-
-import com.bc.ceres.binio.CompoundData;
+import java.util.*;
 
 
 public class IasiOverlay implements SounderOverlay {
 
     private static final int PN = 4;
     private static final int SNOT = 30;
-    
+
     private static final int IFOV_SIZE = 12;
     private static final float IFOV_DIST = 18;
 
@@ -50,12 +45,14 @@ public class IasiOverlay implements SounderOverlay {
     private final long avhrrEndMillis;
     private final int avhrrRasterHeight;
     private final int avhrrTrimLeft;
-    
+
     private final int mdrCount;
     private Efov[] overlayEfovs;
     private final Map<SounderOverlayListener, Object> listenerMap;
     private Ifov selectedIfov;
-    
+    private double iDefSpectDWn1b;
+    private double iDefNFirst1b;
+
     public IasiOverlay(IasiFile iasiFile, Product avhrrProduct) throws IOException {
         this.iasiFile = iasiFile;
         this.avhrrProduct = avhrrProduct;
@@ -65,6 +62,8 @@ public class IasiOverlay implements SounderOverlay {
         avhrrRasterHeight = avhrrProduct.getSceneRasterHeight();
         listenerMap = Collections.synchronizedMap(new WeakHashMap<SounderOverlayListener, Object>());
         mdrCount = iasiFile.getMdrCount();
+        iDefSpectDWn1b = iasiFile.readIDefSpectDWn1b(0);
+        iDefNFirst1b = iasiFile.readIDefNsfirst1b(0);
     }
 
     @Override
@@ -98,6 +97,14 @@ public class IasiOverlay implements SounderOverlay {
     @Override
     public void removeListener(SounderOverlayListener listener) {
         listenerMap.remove(listener);
+    }
+
+    public int crosshairValueToChannel(double value) {
+        return (int) Math.round(value * 100.0 / iDefSpectDWn1b - iDefNFirst1b + 1.0);
+    }
+
+    public double channelToCrosshairValue(int channel) {
+        return (iDefSpectDWn1b * (iDefNFirst1b + channel - 1)) / 100.0;
     }
 
     synchronized Efov[] getEfovs() {
@@ -142,7 +149,7 @@ public class IasiOverlay implements SounderOverlay {
     public static int computeIfovIndex(int ifovId) {
         return ifovId % PN;
     }
-    
+
     private Efov[] createEfovs(String efovStyle) {
         final Efov[] newEfovs = new Efov[mdrCount * SNOT];
 
@@ -150,12 +157,12 @@ public class IasiOverlay implements SounderOverlay {
             try {
                 readEfovMdr(mdrIndex, efovStyle, newEfovs, mdrIndex * SNOT);
             } catch (IOException e) {
-                    return Arrays.copyOfRange(newEfovs, 0, mdrIndex * SNOT);
+                return Arrays.copyOfRange(newEfovs, 0, mdrIndex * SNOT);
             }
         }
         return newEfovs;
     }
-    
+
     private void readEfovMdr(int mdrIndex, String efovStyle, Efov[] efovs, int dest) throws IOException {
         CompoundData mdr = iasiFile.getMdr(mdrIndex);
         final byte mode = iasiFile.readMdrGEPSIasiMode(mdr);
@@ -165,7 +172,7 @@ public class IasiOverlay implements SounderOverlay {
             final double[][][] locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdr);
             final boolean[][] anomalousFlags = iasiFile.readGQisFlagQualMdr(mdr);
             final double[][][] iisLocs = null;// = iasiFile.readMdrGEPSLocIasiAvhrrIIS(mdr);
-            
+
             for (int efovIndex = 0; efovIndex < SNOT; efovIndex++) {
                 final PixelPos[] ifovPos = new PixelPos[PN];
                 for (int ifovIndex = 0; ifovIndex < PN; ifovIndex++) {
@@ -259,7 +266,7 @@ public class IasiOverlay implements SounderOverlay {
         }
         return path;
     }
-    
+
     // todo - to Efov shape factory
     private Shape createNormanShape(IasiIfov[] ifovs) {
         final Area area = new Area();
@@ -289,7 +296,7 @@ public class IasiOverlay implements SounderOverlay {
         return area.getBounds2D();
     }
 
-    
+
     // todo - to Efov shape factory
     private Shape createIisEfovShape(long mdrStartMillis, double[][] iisLocs) {
         double[] loc = iisLocs[0];

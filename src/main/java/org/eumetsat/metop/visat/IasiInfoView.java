@@ -163,12 +163,11 @@ public class IasiInfoView extends AbstractToolView {
     private void modelChanged(IasiLayer layer) {
         currentOverlay = layer.getOverlay();
         currentOverlay.addListener(overlayListener);
-        updateUI(currentOverlay.getSelectedIfov());
-//        TODO - make this work here & elsewhere
-//        final int channel = layer.getSelectedChannel();
-//        final double crosshairValue = 0.0; // todo - channelToCrosshairValue(channel);
-//        spectrumPlot.setDomainCrosshairValue(crosshairValue);
+        final int channel = layer.getSelectedChannel();
+        final double crosshairValue = currentOverlay.channelToCrosshairValue(channel);
+        spectrumPlot.setDomainCrosshairValue(crosshairValue);
         editor.setModel(createImageInfoEditorModel(layer));
+        updateUI(currentOverlay.getSelectedIfov());
     }
 
     @Override
@@ -289,20 +288,6 @@ public class IasiInfoView extends AbstractToolView {
         return panel;
     }
 
-    private JFreeChart createXYLineChart() {
-        NumberAxis xAxis = new NumberAxis("Wavenumber (cm-1)");
-        xAxis.setRange(645.0, 2760.0);
-        NumberAxis yAxis = new NumberAxis("Brightness Temperature (K)");
-        yAxis.setRange(new Range(180.0, 305.0));
-        XYItemRenderer renderer = new XYLineAndShapeRenderer(true, false);
-        XYPlot plot = new XYPlot(spectrumDataset, xAxis, yAxis, renderer);
-        plot.setOrientation(PlotOrientation.VERTICAL);
-        plot.setNoDataMessage(NO_DATA_MESSAGE);
-        renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
-        final boolean legend = false;
-        return new JFreeChart("IASI IFOV Spectrum", JFreeChart.DEFAULT_TITLE_FONT, plot, legend);
-    }
-
     private JComponent createSpectrumChartComponent() {
         spectrumDataset = new XYSeriesCollection();
 
@@ -340,22 +325,12 @@ public class IasiInfoView extends AbstractToolView {
             if (event.getType() != ChartProgressEvent.DRAWING_FINISHED) {
                 return;
             }
-            final double value = event.getChart().getXYPlot().getDomainCrosshairValue();
+            final XYPlot plot = event.getChart().getXYPlot();
+            final double value = plot.getDomainCrosshairValue();
             if (value > 0.0) {
                 final IasiLayer layer = getIasiLayer();
                 if (layer != null) {
-                    final IasiFile iasiFile = layer.getOverlay().getEpsFile();
-                    final double spect;
-                    final double first;
-
-                    try {
-                        spect = readIDefSpectDWn1b(iasiFile, 0);
-                        first = readIDefNsfirst1b(iasiFile, 0);
-                    } catch (IOException e) {
-                        return;
-                    }
-
-                    final int channel = (int) Math.round(value * 100.0 / spect - first + 1.0);
+                    final int channel = layer.getOverlay().crosshairValueToChannel(value);
 
                     if (channel != layer.getSelectedChannel()) {
                         final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
@@ -546,16 +521,6 @@ public class IasiInfoView extends AbstractToolView {
 
         return spectrum;
     }
-
-    public double readIDefSpectDWn1b(EpsFile iasiFile, int mdrIndex) throws IOException {
-        return EpsFile.readVInt4(
-                iasiFile.getMdrData().getCompound(mdrIndex).getCompound(1).getCompound("IDefSpectDWn1b"));
-    }
-
-    public double readIDefNsfirst1b(EpsFile iasiFile, int mdrIndex) throws IOException {
-        return iasiFile.getMdrData().getCompound(mdrIndex).getCompound(1).getInt("IDefNsfirst1b");
-    }
-
 
     private static class RadianceAnalysisTableModel extends DefaultTableModel {
 

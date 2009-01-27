@@ -99,14 +99,14 @@ abstract class SounderInfoView extends AbstractToolView {
                     final SounderLayer layer = getSounderLayer(view);
 
                     if (layer != null) {
-                        modelChanged(layer);
+                        layerChanged(layer);
                     } else {
                         final LayerListener layerListener = new AbstractLayerListener() {
                             @Override
                             public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
                                 final SounderLayer layer = getSounderLayer(view);
                                 if (layer != null) {
-                                    modelChanged(layer);
+                                    layerChanged(layer);
                                     view.getRootLayer().removeListener(this);
                                 }
                             }
@@ -150,18 +150,16 @@ abstract class SounderInfoView extends AbstractToolView {
 
         final SounderLayer layer = getSounderLayer();
         if (layer != null) {
-            modelChanged(layer);
+            layerChanged(layer);
         }
 
         return tabbedPane;
     }
 
-    private void modelChanged(SounderLayer layer) {
+    private void layerChanged(SounderLayer layer) {
         layer.getOverlay().addListener(overlayListener);
 
-        final int channel = layer.getSelectedChannel();
-        final double crosshairValue = channelToCrosshairValue(channel);
-        spectrumPlot.setDomainCrosshairValue(crosshairValue);
+        spectrumPlot.setDomainCrosshairValue(channelToCrosshairValue(layer.getSelectedChannel()));
         editor.setModel(createImageInfoEditorModel(layer));
         updateUI(layer.getOverlay());
     }
@@ -261,13 +259,21 @@ abstract class SounderInfoView extends AbstractToolView {
 
     private Component createInfoComponent() {
         latTextField = new JTextField();
+        latTextField.setEditable(false);
         lonTextField = new JTextField();
+        lonTextField.setEditable(false);
         mdrIndexTextField = new JTextField();
+        mdrIndexTextField.setEditable(false);
         ifovInMdrIndexTextField = new JTextField();
+        ifovInMdrIndexTextField.setEditable(false);
         szaTextField = new JTextField();
+        szaTextField.setEditable(false);
         saaTextField = new JTextField();
+        saaTextField.setEditable(false);
         vzaTextField = new JTextField();
+        vzaTextField.setEditable(false);
         vaaTextField = new JTextField();
+        vaaTextField.setEditable(false);
 
         final TableLayout layout = new TableLayout(3);
         layout.setTableAnchor(TableLayout.Anchor.NORTHWEST);
