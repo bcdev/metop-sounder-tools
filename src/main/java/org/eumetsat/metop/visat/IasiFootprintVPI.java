@@ -80,7 +80,9 @@ public class IasiFootprintVPI implements VisatPlugIn {
 
     // called via reflection
     public IasiFootprintVPI() {
-        instance = this;
+        if (instance == null) {
+            instance = this;
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -125,7 +127,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     // VisatPlugIn interface implementation
     /////////////////////////////////////////////////////////////////////////
 
-    public static synchronized IasiFootprintVPI getInstance() {
+    public static IasiFootprintVPI getInstance() {
         return instance;
     }
 
@@ -161,13 +163,29 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return true;
     }
 
-    public synchronized ProductSceneView getProductSceneView(InternalFrameEvent e) {
+    public static synchronized ProductSceneView getProductSceneView(InternalFrameEvent e) {
         final JInternalFrame internalFrame = e.getInternalFrame();
         final Container contentPane = internalFrame.getContentPane();
         if (contentPane instanceof ProductSceneView) {
             return (ProductSceneView) contentPane;
         }
         return null;
+    }
+
+    public static Layer getRootLayer(InternalFrameEvent e) {
+        final JInternalFrame internalFrame = e.getInternalFrame();
+        final Container contentPane = internalFrame.getContentPane();
+
+        if (!(contentPane instanceof ProductSceneView)) {
+            return null;
+        }
+
+        final ProductSceneView view = (ProductSceneView) contentPane;
+        return view.getRootLayer();
+    }
+
+    public static <T extends Layer> T getFootprintLayer(ProductSceneView view, Class<T> layerType) {
+        return getLayer(view.getRootLayer(), layerType);
     }
 
     public static <T extends Layer> T getActiveFootprintLayer(Class<T> layerType) {
@@ -178,7 +196,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
             return null;
         }
         Layer rootLayer = psv.getRootLayer();
-        return vpi.getLayer(rootLayer, layerType);
+        return getLayer(rootLayer, layerType);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -224,20 +242,20 @@ public class IasiFootprintVPI implements VisatPlugIn {
                         iasiFootprintLayerModelMap, "IASI");
     }
 
-    private <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
+    private static <T extends Layer> T getLayer(Layer rootLayer, Class<T> layerType) {
         if (layerType.isAssignableFrom(rootLayer.getClass())) {
             return (T) rootLayer;
         }
         for (Layer childLayer : rootLayer.getChildren()) {
-            Layer layer = getLayer(childLayer, layerType);
+            T layer = getLayer(childLayer, layerType);
             if (layer != null) {
-                return (T) layer;
+                return layer;
             }
         }
         return null;
     }
 
-    private <T extends Layer> boolean hasLayer(Layer layer, Class<T> layerType) {
+    private static <T extends Layer> boolean hasLayer(Layer layer, Class<T> layerType) {
         if (layerType.isAssignableFrom(layer.getClass())) {
             return true;
         }
@@ -249,7 +267,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return false;
     }
 
-    private <T extends Layer> void removeLayer(Layer layer, Class<T> layerType) {
+    private static <T extends Layer> void removeLayer(Layer layer, Class<T> layerType) {
         List<Layer> children = layer.getChildren();
         for (Layer childLayer : children) {
             if (childLayer.getClass().isAssignableFrom(layerType)) {
@@ -342,7 +360,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         return null;
     }
 
-    private <T extends Layer> void removeLayer(ProductSceneView psv, Class<T> layerType) {
+    private static <T extends Layer> void removeLayer(ProductSceneView psv, Class<T> layerType) {
         Layer rootLayer = psv.getRootLayer();
         boolean hasLayer = hasLayer(rootLayer, layerType);
         if (hasLayer) {
@@ -350,7 +368,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
         }
     }
 
-    private void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
+    private static void removeOverlay(Product avhrrProduct, Map<Product, AvhrrOverlay> overlayMap) {
         AvhrrOverlay overlay = overlayMap.get(avhrrProduct);
         if (overlay != null) {
             EpsFile epsFile = overlay.getEpsFile();

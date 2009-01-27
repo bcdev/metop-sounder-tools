@@ -18,8 +18,8 @@ import com.bc.ceres.binio.CompoundData;
 import com.bc.ceres.binio.CompoundMember;
 import com.bc.ceres.binio.CompoundType;
 import com.bc.ceres.binio.SequenceData;
-import com.bc.ceres.glayer.LayerListener;
 import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.glayer.LayerListener;
 import com.bc.ceres.glayer.support.AbstractLayerListener;
 import org.esa.beam.framework.datamodel.GeoPos;
 import org.esa.beam.framework.datamodel.ImageInfo;
@@ -34,7 +34,10 @@ import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.visat.VisatApp;
 import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.eps.EpsMetaData;
-import org.eumetsat.metop.sounder.*;
+import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderLayer;
+import org.eumetsat.metop.sounder.SounderOverlay;
+import org.eumetsat.metop.sounder.SounderOverlayListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -51,10 +54,7 @@ import org.jfree.ui.RectangleInsets;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -76,8 +76,6 @@ abstract class SounderInfoView extends AbstractToolView {
     private JTextField vaaTextField;
     private ImageInfoEditor editor;
     private XYPlot spectrumPlot;
-    
-    private SounderOverlay currentOverlay;
 
     @Override
     protected JComponent createControl() {
@@ -93,35 +91,54 @@ abstract class SounderInfoView extends AbstractToolView {
             }
         };
         internalFrameListener = new InternalFrameAdapter() {
-
             @Override
-            public void internalFrameActivated(InternalFrameEvent e) {
-                final SounderLayer layer = getSounderLayer();
-                if (layer != null) {
-                    modelChanged(layer);
-                } else {
-                    final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
-                    final LayerListener layerListener = new AbstractLayerListener() {
-                        @Override
-                        public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
-                            final SounderLayer layer = getSounderLayer();
-                            if (layer != null) {
-                                modelChanged(layer);
-                                view.getRootLayer().removeListener(this);
+            public void internalFrameActivated(final InternalFrameEvent e) {
+                final Container contentPane = e.getInternalFrame().getContentPane();
+                if (contentPane instanceof ProductSceneView) {
+                    final ProductSceneView view = (ProductSceneView) contentPane;
+                    final SounderLayer layer = getSounderLayer(view);
+
+                    if (layer != null) {
+                        modelChanged(layer);
+                    } else {
+                        final LayerListener layerListener = new AbstractLayerListener() {
+                            @Override
+                            public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                                final SounderLayer layer = getSounderLayer(view);
+                                if (layer != null) {
+                                    modelChanged(layer);
+                                    view.getRootLayer().removeListener(this);
+                                }
                             }
-                        }
-                    };
-                    view.getRootLayer().addListener(layerListener);
+                        };
+                        view.getRootLayer().addListener(layerListener);
+                    }
                 }
             }
 
             @Override
-            public void internalFrameDeactivated(InternalFrameEvent e) {
-                if (currentOverlay != null) {
-                    currentOverlay.removeListener(overlayListener);
+            public void internalFrameDeactivated(final InternalFrameEvent e) {
+                final Container contentPane = e.getInternalFrame().getContentPane();
+                if (contentPane instanceof ProductSceneView) {
+                    final ProductSceneView view = (ProductSceneView) contentPane;
+                    final SounderLayer layer = getSounderLayer(view);
+                    if (layer != null) {
+                        layer.getOverlay().removeListener(overlayListener);
+                    }
                 }
-                updateUI(null);
-                editor.setModel(null);
+            }
+
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e) {
+                final Container contentPane = e.getInternalFrame().getContentPane();
+                if (contentPane instanceof ProductSceneView) {
+                    final ProductSceneView view = (ProductSceneView) contentPane;
+                    final SounderLayer layer = getSounderLayer(view);
+                    if (layer != null) {
+                        clearUI();
+                        editor.setModel(null);
+                    }
+                }
             }
         };
         VisatApp.getApp().addInternalFrameListener(internalFrameListener);
@@ -131,34 +148,31 @@ abstract class SounderInfoView extends AbstractToolView {
         tabbedPane.add("Sounder Spectrum", createSpectrumChartComponent());
         tabbedPane.add("Sounder Layer", createSounderLayerComponent());
 
-        if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
-            final SounderLayer layer = getSounderLayer();
-            if (layer != null) {
-                modelChanged(layer);
-            }
+        final SounderLayer layer = getSounderLayer();
+        if (layer != null) {
+            modelChanged(layer);
         }
 
         return tabbedPane;
     }
-    
+
     private void modelChanged(SounderLayer layer) {
-        currentOverlay = layer.getOverlay();
-        currentOverlay.addListener(overlayListener);
+        layer.getOverlay().addListener(overlayListener);
 
         final int channel = layer.getSelectedChannel();
         final double crosshairValue = channelToCrosshairValue(channel);
         spectrumPlot.setDomainCrosshairValue(crosshairValue);
         editor.setModel(createImageInfoEditorModel(layer));
-        updateUI(currentOverlay);
+        updateUI(layer.getOverlay());
     }
-    
+
     @Override
     public void componentFocusGained() {
-        ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
-        if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
-            SounderLayer layer = getSounderLayer();
+        final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+        if (IasiFootprintVPI.isValidAvhrrProductSceneView(view)) {
+            final SounderLayer layer = getSounderLayer();
             if (layer != null) {
-                productSceneView.setSelectedLayer(layer);
+                view.setSelectedLayer(layer);
             }
         }
     }
@@ -187,7 +201,17 @@ abstract class SounderInfoView extends AbstractToolView {
         super.dispose();
     }
 
-    protected abstract SounderLayer getSounderLayer();
+    protected abstract SounderLayer getSounderLayer(ProductSceneView view);
+
+    private SounderLayer getSounderLayer() {
+        final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
+
+        if (view == null) {
+            return null;
+        }
+
+        return getSounderLayer(view);
+    }
 
     protected abstract XYSeries createSpectrumPlotXYSeries(double[] radiances);
 
@@ -395,18 +419,14 @@ abstract class SounderInfoView extends AbstractToolView {
     }
 
     protected void updateUI(final SounderOverlay overlay) {
-        if (overlay != null && overlay.getSelectedIfov() != null) {
+        if (overlay.getSelectedIfov() != null) {
             final Ifov selectedIfov = overlay.getSelectedIfov();
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
             updateIndexFields(selectedIfov);
             updateAngularRelationFields(selectedIfov, overlay.getEpsFile());
             updateSpectrumDataset(overlay.getSelectedIfov(), overlay.getEpsFile());
         } else {
-            clearInfoFields(NO_IFOV_SELECTED);
-            clearEarthLocationFields(NO_IFOV_SELECTED);
-            clearAngularRelationFields(NO_IFOV_SELECTED);
-            spectrumDataset.removeAllSeries();
-            spectrumPlot.setNoDataMessage(NO_IFOV_SELECTED);
+            clearUI();
         }
     }
 
@@ -478,6 +498,14 @@ abstract class SounderInfoView extends AbstractToolView {
         vaaTextField.setText(text);
         szaTextField.setText(text);
         vzaTextField.setText(text);
+    }
+
+    private void clearUI() {
+        clearEarthLocationFields(NO_IFOV_SELECTED);
+        clearInfoFields(NO_IFOV_SELECTED);
+        clearAngularRelationFields(NO_IFOV_SELECTED);
+        spectrumDataset.removeAllSeries();
+        spectrumPlot.setNoDataMessage(NO_IFOV_SELECTED);
     }
 
     private void updateSpectrumDataset(final Ifov selectedIfov, final EpsFile epsFile) {

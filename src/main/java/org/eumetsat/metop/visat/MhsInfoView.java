@@ -14,15 +14,17 @@
  */
 package org.eumetsat.metop.visat;
 
-import org.eumetsat.metop.mhs.MhsSounderLayer;
-import org.eumetsat.metop.sounder.SounderLayer;
-import org.eumetsat.metop.sounder.Ifov;
+import com.bc.ceres.glayer.Layer;
+import org.esa.beam.framework.datamodel.GeoPos;
+import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.eumetsat.metop.eps.EpsFile;
-import org.jfree.chart.axis.NumberAxis;
+import org.eumetsat.metop.mhs.MhsSounderLayer;
+import org.eumetsat.metop.sounder.Ifov;
+import org.eumetsat.metop.sounder.SounderLayer;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
-import org.esa.beam.framework.datamodel.GeoPos;
 
 import java.io.IOException;
 
@@ -44,8 +46,21 @@ public class MhsInfoView extends SounderInfoView {
     }
 
     @Override
-    protected SounderLayer getSounderLayer() {
-        return IasiFootprintVPI.getActiveFootprintLayer(MhsSounderLayer.class);
+    protected SounderLayer getSounderLayer(ProductSceneView view) {
+        return getLayer(view.getRootLayer(), MhsSounderLayer.class);
+    }
+
+    private static <T extends Layer> T getLayer(Layer parentLayer, Class<T> layerClass) {
+        if (layerClass.isAssignableFrom(parentLayer.getClass())) {
+            return (T) parentLayer;
+        }
+        for (final Layer childLayer : parentLayer.getChildren()) {
+            final T layer = getLayer(childLayer, layerClass);
+            if (layer != null) {
+                return layer;
+            }
+        }
+        return null;
     }
 
     @Override
