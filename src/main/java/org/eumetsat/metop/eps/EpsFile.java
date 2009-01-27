@@ -116,7 +116,12 @@ public class EpsFile {
         readData(reader, 0, 0, width, height, data, ProgressMonitor.NULL);
         return data;
     }
-    
+
+
+    public void readData(MdrReader reader, int x, int y, int width, int height, ProductData buffer) throws IOException {
+        readData(reader, x, y, width, height, buffer, ProgressMonitor.NULL);
+    }
+
     public void readData(MdrReader reader, int x, int y, int width, int height, ProductData buffer, ProgressMonitor pm) throws IOException {
         int bufferIndex = 0;
         SequenceData mdrData = getMdrData();

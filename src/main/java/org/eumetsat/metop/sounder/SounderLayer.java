@@ -25,31 +25,33 @@ import org.esa.beam.framework.datamodel.*;
 import org.esa.beam.framework.ui.AbstractLayerUI;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.math.MathUtils;
+import org.eumetsat.metop.eps.EpsFile;
+import org.eumetsat.metop.visat.BlackBody;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 
-// todo - clean-up
 public class SounderLayer extends Layer implements SounderInfo {
 
     private final AbstractSounderOverlay overlay;
     private final BandInfo[] bandInfos;
+    private final Map<Integer,LayerInfo> layerInfoMap = new HashMap<Integer,LayerInfo>();
+
+    private final BasicStroke borderStroke = new BasicStroke(0.0f);
+    private final Color ifovSelectedColor = Color.GREEN;
 
     private final int mdrCount;
     private final int ifovInMdrCount;
 
-    private final Map<Integer, LayerData> layerDataMap;
     private final SounderOverlayListener listener;
 
-    private final BasicStroke borderStroke;
-    private final Color ifovSelectedColor;
-
     private volatile int selectedChannel;
+    private volatile ProductData layerData;
 
     protected SounderLayer(AbstractSounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
         this.overlay = overlay;
@@ -58,7 +60,6 @@ public class SounderLayer extends Layer implements SounderInfo {
         this.ifovInMdrCount = ifovInMdrCount;
         this.mdrCount = overlay.getEpsFile().getMdrCount();
 
-        layerDataMap = new HashMap<Integer, LayerData>();
         listener = new SounderOverlayListener() {
             @Override
             public void dataChanged(SounderOverlay overlay) {
@@ -72,16 +73,16 @@ public class SounderLayer extends Layer implements SounderInfo {
         };
         overlay.addListener(listener);
 
-        borderStroke = new BasicStroke(0.0f);
-        ifovSelectedColor = Color.GREEN;
-
+        selectedChannel = -1;
         setSelectedChannel(0);
     }
 
     @Override
     protected void disposeLayer() {
-        overlay.removeListener(listener);
-        layerDataMap.clear();
+        synchronized (this) {
+            overlay.removeListener(listener);
+            layerData = null;
+        }
         super.disposeLayer();
     }
 
@@ -90,14 +91,17 @@ public class SounderLayer extends Layer implements SounderInfo {
         if (overlay.getAllIfovs().length == 0) {
             return;
         }
-        final LayerData layerData = layerDataMap.get(selectedChannel);
-        if (layerData == null) {
-            final String msg = "renderLayer(): no render info for channel " + selectedChannel;
-            System.out.println(msg);
-            throw new IllegalStateException(msg);
+        final ProductData layerData;
+        final LayerInfo layerInfo;
+
+        synchronized (this) {
+            layerData = getLayerData();
+            layerInfo = getLayerInfo();
         }
 
-        final Color[] colorPalette = layerData.imageInfo.getColorPaletteDef().createColorPalette(layerData.scaling);
+        final Scaling scaling = layerInfo.getScaling();
+        final ImageInfo imageInfo = layerInfo.getImageInfo();
+        final Color[] colorPalette = imageInfo.getColorPaletteDef().createColorPalette(scaling);
 
         final Graphics2D g2d = rendering.getGraphics();
         final Viewport vp = rendering.getViewport();
@@ -119,26 +123,24 @@ public class SounderLayer extends Layer implements SounderInfo {
 
             final Rectangle clip = g2d.getClipBounds();
 
-//            final double scale = Math.abs(vp.getModelToViewTransform().getDeterminant());
-//            final boolean ifovBigEnough = scale * 47 > 5; // TODO
-
             final Ifov[] ifovs = overlay.getAllIfovs();
             final Ifov selectedIfov = overlay.getSelectedIfov();
-//            if (ifovBigEnough) {
-            for (Ifov ifov : ifovs) {
+
+            for (final Ifov ifov : ifovs) {
                 final Shape ifovShape = ifov.getShape();
-                boolean isVisible = clip == null || ifovShape.intersects(clip);
-                if (isVisible) {
-                    Color fillColor = getColor(layerData, ifov, colorPalette);
+                final boolean visible = clip == null || ifovShape.intersects(clip);
+
+                if (visible) {
+                    final Color fillColor = getIfovColor(layerData, layerInfo, ifov, colorPalette);
                     g2d.setPaint(fillColor);
                     g2d.fill(ifovShape);
+
                     if (selectedIfov != null && selectedIfov == ifov) {
                         g2d.setColor(ifovSelectedColor);
                         g2d.draw(ifovShape);
                     }
                 }
             }
-//            }
 
             g2d.setColor(oldColor);
             g2d.setPaint(oldPaint);
@@ -148,6 +150,14 @@ public class SounderLayer extends Layer implements SounderInfo {
         } finally {
             g2d.setTransform(transformSave);
         }
+    }
+
+    private ProductData getLayerData() {
+        return layerData;
+    }
+
+    private LayerInfo getLayerInfo() {
+        return layerInfoMap.get(selectedChannel);
     }
 
     @Override
@@ -162,17 +172,17 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     @Override
     public ImageInfo getImageInfo() {
-        return layerDataMap.get(selectedChannel).imageInfo;
+        return getLayerInfo().getImageInfo();
     }
 
     @Override
     public Stx getStx() {
-        return layerDataMap.get(selectedChannel).stx;
+        return getLayerInfo().getStx();
     }
 
     @Override
     public Scaling getScaling() {
-        return layerDataMap.get(selectedChannel).scaling;
+        return getLayerInfo().getScaling();
     }
 
     @Override
@@ -182,21 +192,28 @@ public class SounderLayer extends Layer implements SounderInfo {
 
     @Override
     public synchronized void setSelectedChannel(final int channel) throws IOException {
-        if (selectedChannel != channel || layerDataMap.isEmpty()) {
-            final LayerData layerData = layerDataMap.get(channel);
-            if (layerData == null) {
-                final BandInfo bandInfo = bandInfos[channel];
-                final ProductData data = ProductData.createInstance(bandInfo.getType(),
-                                                                    ifovInMdrCount * mdrCount);
-                final MdrReader reader = bandInfo.getReader();
-                overlay.getEpsFile().readData(reader, 0, 0, ifovInMdrCount, mdrCount, data, ProgressMonitor.NULL);
+        if (selectedChannel != channel) {
+            final BandInfo bandInfo = bandInfos[channel];
+            final int dataType = bandInfo.getType();
+            final ProductData radianceData = ProductData.createInstance(dataType, ifovInMdrCount * mdrCount);
 
-                final Band band = new Band(bandInfo.getName(), bandInfo.getType(), ifovInMdrCount, mdrCount);
-                band.setRasterData(data);
+            final MdrReader reader = bandInfo.getReader();
+            overlay.getEpsFile().readData(reader, 0, 0, ifovInMdrCount, mdrCount, radianceData);
+
+            layerData = ProductData.createInstance(ProductData.TYPE_FLOAT64, ifovInMdrCount * mdrCount);
+            for (int i = 0; i < radianceData.getNumElems(); ++i) {
+                final double f = bandInfo.getFrequency();
+                final double r = radianceData.getElemDoubleAt(i) * bandInfo.getScaleFactor() * 0.1;
+                final double t = BlackBody.temperatureAtFrequency(f, r);
+                layerData.setElemDoubleAt(i, t);
+            }
+
+            if (layerInfoMap.get(channel) == null) {
+                final Band band = new Band("name", ProductData.TYPE_FLOAT64, ifovInMdrCount, mdrCount);
+                band.setRasterData(layerData);
                 band.setSynthetic(true);
-                final Stx stx = Stx.create(band, 0, ProgressMonitor.NULL);
 
-                layerDataMap.put(channel, new LayerData(data, stx, bandInfo));
+                layerInfoMap.put(channel, LayerInfo.createInstance(band));
             }
             selectedChannel = channel;
             fireLayerDataChanged(null);
@@ -213,51 +230,24 @@ public class SounderLayer extends Layer implements SounderInfo {
         return null;
     }
 
-    private Color getColor(LayerData layerData, Ifov ifov, Color[] colors) {
-        final ColorPaletteDef def = layerData.imageInfo.getColorPaletteDef();
+    private Color getIfovColor(ProductData layerData, LayerInfo layerInfo, Ifov ifov, Color[] colors) {
         final int x = ifov.getIfovInMdrIndex();
         final int y = ifov.getMdrIndex();
-        final double sample = layerData.scaling.scale(layerData.data.getElemDoubleAt(x + y * ifovInMdrCount));
-        final int numColors = colors.length;
 
-        final double min = def.getMinDisplaySample();
-        final double max = def.getMaxDisplaySample();
-        final int index = MathUtils.floorAndCrop((sample - min) * (numColors - 1.0) / (max - min), 0, numColors - 1);
+        final Scaling scaling = layerInfo.getScaling();
+        final double sample = scaling.scale(layerData.getElemDoubleAt(x + y * ifovInMdrCount));
+        final int colorCount = colors.length;
+
+        final ImageInfo imageInfo = layerInfo.getImageInfo();
+        final ColorPaletteDef paletteDef = imageInfo.getColorPaletteDef();
+        final double min = paletteDef.getMinDisplaySample();
+        final double max = paletteDef.getMaxDisplaySample();
+        final int index = MathUtils.floorAndCrop((sample - min) * (colorCount - 1.0) / (max - min), 0, colorCount - 1);
 
         return colors[index];
     }
 
-    private static class LayerData {
-
-        final ProductData data;
-        final Scaling scaling;
-        final Stx stx;
-        final ImageInfo imageInfo;
-
-        private LayerData(ProductData data, Stx stx, BandInfo info) {
-            final double scaleFactor = info.getScaleFactor();
-            assert scaleFactor != 0.0;
-
-            scaling = new Scaling() {
-                @Override
-                public double scale(double value) {
-                    return scaleFactor * value;
-                }
-
-                @Override
-                public double scaleInverse(double value) {
-                    return value / scaleFactor;
-                }
-            };
-
-            this.data = data;
-            this.stx = stx;
-            this.imageInfo = createImageInfo(scaling, stx);
-        }
-    }
-
     private static class LayerUI extends AbstractLayerUI {
-
         protected LayerUI(Layer layer) {
             super(layer);
         }
@@ -270,11 +260,9 @@ public class SounderLayer extends Layer implements SounderInfo {
             Ifov ifov = selectedSounderLayer.getIfovForLocation(Math.round(point.x), Math.round(point.y));
             selectedSounderLayer.getOverlay().setSelectedIfov(ifov);
         }
-
     }
 
     public static class LayerUIFactory implements ExtensionFactory<SounderLayer> {
-
         @Override
         public <E> E getExtension(SounderLayer sounderLayer, Class<E> extensionType) {
             return (E) new LayerUI(sounderLayer);
@@ -284,15 +272,5 @@ public class SounderLayer extends Layer implements SounderInfo {
         public Class<?>[] getExtensionTypes() {
             return new Class<?>[]{LayerUI.class};
         }
-
     }
-
-    private static ImageInfo createImageInfo(Scaling scaling, Stx stx) {
-        final double min = scaling.scale(stx.getMin());
-        final double max = scaling.scale(stx.getMax());
-        final double center = scaling.scale(stx.getMean());
-
-        return new ImageInfo(new ColorPaletteDef(min, center, max));
-    }
-
 }

@@ -22,7 +22,7 @@ import static java.lang.Math.log;
  * @author Ralf Quast
  * @version $Revision$ $Date$
  */
-class BlackBody {
+public class BlackBody {
 
     // usefull for deriving conversion constants
     @SuppressWarnings({"UnusedDeclaration"})
@@ -44,7 +44,7 @@ class BlackBody {
      *
      * @return the black-body temperature (K)
      */
-    static double temperatureAtWavenumber(double k, double i) {
+    public static double temperatureAtWavenumber(double k, double i) {
         final double c1 = 1.1910427584934558E-16;
         final double c2 = 1.4387751601679205E-02;
         final double a = c2 * k;

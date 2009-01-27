@@ -23,21 +23,21 @@ import static org.eumetsat.metop.sounder.SounderConstants.ANGULAR_RELATION_SCALI
 import static org.eumetsat.metop.sounder.SounderConstants.EARTH_LOCATION_SCALING_FACTOR;
 
 enum AmsuBandInfo implements BandInfo {
-    RADIANCE01("radiance_1", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 0)),
-    RADIANCE02("radiance_2", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 1)),
-    RADIANCE03("radiance_3", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 2)),
-    RADIANCE04("radiance_4", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 3)),
-    RADIANCE05("radiance_5", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 4)),
-    RADIANCE06("radiance_6", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 5)),
-    RADIANCE07("radiance_7", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 6)),
-    RADIANCE08("radiance_8", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 7)),
-    RADIANCE09("radiance_9", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 8)),
-    RADIANCE10("radiance_10", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 9)),
-    RADIANCE11("radiance_11", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 10)),
-    RADIANCE12("radiance_12", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 11)),
-    RADIANCE13("radiance_13", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 12)),
-    RADIANCE14("radiance_14", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 13)),
-    RADIANCE15("radiance_15", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, new RadianceReader("SCENE_RADIANCE", 14)),
+    RADIANCE01("radiance_1", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 23.80, new RadianceReader("SCENE_RADIANCE", 0)),
+    RADIANCE02("radiance_2", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 31.40, new RadianceReader("SCENE_RADIANCE", 1)),
+    RADIANCE03("radiance_3", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 50.30, new RadianceReader("SCENE_RADIANCE", 2)),
+    RADIANCE04("radiance_4", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 52.80, new RadianceReader("SCENE_RADIANCE", 3)),
+    RADIANCE05("radiance_5", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 53.59, new RadianceReader("SCENE_RADIANCE", 4)),
+    RADIANCE06("radiance_6", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 54.40, new RadianceReader("SCENE_RADIANCE", 5)),
+    RADIANCE07("radiance_7", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 54.94, new RadianceReader("SCENE_RADIANCE", 6)),
+    RADIANCE08("radiance_8", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 55.50, new RadianceReader("SCENE_RADIANCE", 7)),
+    RADIANCE09("radiance_9", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 8)),
+    RADIANCE10("radiance_10", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 9)),
+    RADIANCE11("radiance_11", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 10)),
+    RADIANCE12("radiance_12", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 11)),
+    RADIANCE13("radiance_13", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 12)),
+    RADIANCE14("radiance_14", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 57.290344, new RadianceReader("SCENE_RADIANCE", 13)),
+    RADIANCE15("radiance_15", ProductData.TYPE_INT32, SCENE_RADIANCE_SCALING_FACTOR, 89.0, new RadianceReader("SCENE_RADIANCE", 14)),
     
     SZA("solar_zenith_angle", ProductData.TYPE_INT16, ANGULAR_RELATION_SCALING_FACTOR, new GeometryReader(0)),
     VZA("view_zenith_angle", ProductData.TYPE_INT16, ANGULAR_RELATION_SCALING_FACTOR, new GeometryReader(1)),
@@ -51,40 +51,50 @@ enum AmsuBandInfo implements BandInfo {
     ELEVATION("elevation", ProductData.TYPE_INT16, 1.0, new FlagReader("TERRAIN_ELEVATION"));
     
     private AmsuBandInfo(String name, int type, double scaleFactor, MdrReader reader) {
+        this(name, type, scaleFactor, 0.0, reader);
+    }
+ 
+    private AmsuBandInfo(String name, int type, double scaleFactor, double frequency, MdrReader reader) {
         this.name = name;
         this.type = type;
         this.scaleFactor = scaleFactor;
+        this.frequency = frequency;
         this.reader = reader;
     }
-    
+
     private final String name;
     private final int type;
-//    final String unit;
 //
-//    final double scaleOffset;
     private final double scaleFactor;
-//    final Number noDataValue;
-//    final double min;
-//    final double max;
-//    final String description;
+    private final double frequency;
     private final MdrReader reader;
     
+    @Override
     public boolean isScaled() {
         return getScaleFactor() != 1.0;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public int getType() {
         return type;
     }
 
+    @Override
     public double getScaleFactor() {
         return scaleFactor;
     }
 
+    @Override
+    public double getFrequency() {
+        return frequency;
+    }
+
+    @Override
     public MdrReader getReader() {
         return reader;
     }

@@ -23,11 +23,12 @@ public interface BandInfo {
     String getName();
 
     int getType();
-    
+
     boolean isScaled();
 
     double getScaleFactor();
 
-    MdrReader getReader();
+    double getFrequency();
 
+    MdrReader getReader();
 }

@@ -314,7 +314,7 @@ abstract class SounderInfoView extends AbstractToolView {
         containerPanel.add(panel, BorderLayout.NORTH);
 
         clearEarthLocationFields(NO_IFOV_SELECTED);
-        clearInfoFields(NO_IFOV_SELECTED);
+        clearIndexFields(NO_IFOV_SELECTED);
         clearAngularRelationFields(NO_IFOV_SELECTED);
 
         return containerPanel;
@@ -418,7 +418,7 @@ abstract class SounderInfoView extends AbstractToolView {
         return editorModel;
     }
 
-    protected void updateUI(final SounderOverlay overlay) {
+    protected synchronized void updateUI(final SounderOverlay overlay) {
         if (overlay.getSelectedIfov() != null) {
             final Ifov selectedIfov = overlay.getSelectedIfov();
             updateEarthLocationFields(selectedIfov, overlay.getEpsFile());
@@ -483,7 +483,7 @@ abstract class SounderInfoView extends AbstractToolView {
         worker.execute();
     }
 
-    private void clearInfoFields(String text) {
+    private void clearIndexFields(String text) {
         mdrIndexTextField.setText(text);
         ifovInMdrIndexTextField.setText(text);
     }
@@ -502,7 +502,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
     private void clearUI() {
         clearEarthLocationFields(NO_IFOV_SELECTED);
-        clearInfoFields(NO_IFOV_SELECTED);
+        clearIndexFields(NO_IFOV_SELECTED);
         clearAngularRelationFields(NO_IFOV_SELECTED);
         spectrumDataset.removeAllSeries();
         spectrumPlot.setNoDataMessage(NO_IFOV_SELECTED);
