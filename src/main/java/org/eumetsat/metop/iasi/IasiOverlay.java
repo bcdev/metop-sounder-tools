@@ -52,7 +52,7 @@ public class IasiOverlay implements SounderOverlay {
     private final int avhrrTrimLeft;
     
     private final int mdrCount;
-    private Efov[] efovs;
+    private Efov[] overlayEfovs;
     private final Map<SounderOverlayListener, Object> listenerMap;
     private Ifov selectedIfov;
     
@@ -101,10 +101,10 @@ public class IasiOverlay implements SounderOverlay {
     }
 
     synchronized Efov[] getEfovs() {
-        if (efovs == null) {
-            efovs = createEfovs("fast");
+        if (overlayEfovs == null) {
+            overlayEfovs = createEfovs("fast");
         }
-        return efovs;
+        return overlayEfovs;
     }
 
     protected void fireSelectionChanged() {
@@ -157,32 +157,23 @@ public class IasiOverlay implements SounderOverlay {
     }
     
     private void readEfovMdr(int mdrIndex, String efovStyle, Efov[] efovs, int dest) throws IOException {
-        final double[][][] locs;
-        final double[][][] iisLocs;
-        final long[] millis;
-        final boolean[][] anomalousFlags;
-        final byte mode;
         CompoundData mdr = iasiFile.getMdr(mdrIndex);
-        locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdr);
-        millis = iasiFile.readGEPSDatIasiMdr(mdr);
-        anomalousFlags = iasiFile.readGQisFlagQualMdr(mdr);
-        mode = iasiFile.readMdrGEPSIasiMode(mdr);
-        // todo - to Efov shape factory
-        iisLocs = iasiFile.readMdrGEPSLocIasiAvhrrIIS(mdr);
-
-        final long mdrStartMillis = millis[0];
-
+        final byte mode = iasiFile.readMdrGEPSIasiMode(mdr);
         if (mode == 0) {
+            final long[] millis = iasiFile.readGEPSDatIasiMdr(mdr);
+            final long mdrStartMillis = millis[0];
+            final double[][][] locs = iasiFile.readMdrGEPSLocIasiAvhrrIASI(mdr);
+            final boolean[][] anomalousFlags = iasiFile.readGQisFlagQualMdr(mdr);
+            final double[][][] iisLocs = null;// = iasiFile.readMdrGEPSLocIasiAvhrrIIS(mdr);
+            
             for (int efovIndex = 0; efovIndex < SNOT; efovIndex++) {
                 final PixelPos[] ifovPos = new PixelPos[PN];
-
                 for (int ifovIndex = 0; ifovIndex < PN; ifovIndex++) {
                     final double[] loc = locs[efovIndex][ifovIndex];
                     ifovPos[ifovIndex] = calculateAvhrrPixelPos(mdrStartMillis, loc[1], loc[0]);
                 }
                 final Shape[] ifovShapes = createIfovShapes(ifovPos);
                 final IasiIfov[] ifovs = new IasiIfov[PN];
-
                 for (int ifovIndex = 0; ifovIndex < ifovs.length; ifovIndex++) {
                     final int ifovId = computeIfovId(mdrIndex, efovIndex, ifovIndex);
                     final PixelPos pos = ifovPos[ifovIndex];
@@ -191,13 +182,12 @@ public class IasiOverlay implements SounderOverlay {
 
                     ifovs[ifovIndex] = new IasiIfov(ifovId, pos.x, pos.y, shape, anomalous);
                 }
-
-                final Shape efovShape = createEfovShape(efovStyle, mdrStartMillis, iisLocs[efovIndex], ifovs);
+                //final Shape efovShape = createEfovShape(efovStyle, mdrStartMillis, iisLocs[efovIndex], ifovs);
+                final Shape efovShape = createFastShape(ifovs);
                 efovs[dest + efovIndex] = new Efov(efovIndex, ifovs, efovShape);
             }
         }
     }
-
 
     // todo - to Ifov shape factory
     private Shape[] createIfovShapes(PixelPos[] ifovPos) {
