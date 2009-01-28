@@ -103,6 +103,14 @@ public class IasiFile extends EpsFile {
         return mdrSequence.getCompound(mdrIndex).getCompound(1);
     }
 
+    public GeoPos readGeoPos(CompoundData mdr, int efovIndex, int ifovIndex) throws IOException {
+        SequenceData geoSondLoc = mdr.getSequence("GGeoSondLoc");
+        SequenceData lonLatSequence = geoSondLoc.getSequence(efovIndex).getSequence(ifovIndex);
+        final float lon = (float) (lonLatSequence.getInt(0) * G_GEO_SOND_LOC_SCALING_FACTOR);
+        final float lat = (float) (lonLatSequence.getInt(1) * G_GEO_SOND_LOC_SCALING_FACTOR);
+        return new GeoPos(lat, lon);
+    }
+    
     public GeoPos readGeoPos(int ifovId) throws IOException {
         final int mdrIndex = computeMdrIndex(ifovId);
         final int efovIndex = computeEfovIndex(ifovId);
@@ -134,43 +142,28 @@ public class IasiFile extends EpsFile {
         return data;
     }
 
-    public double[][][][] readGEPSLocIasiAvhrrIASI() throws IOException {
-        final double[][][][] data = new double[mdrCount][][][];
-
-        for (int i = 0; i < mdrCount; i++) {
-            CompoundData mdr = getMdr(i);
-            data[i] = readMdrGEPSLocIasiAvhrrIASI(mdr);
-        }
-        return data;
-    }
-
-    double[][][] readMdrGEPSLocIasiAvhrrIASI(CompoundData mdr) throws IOException {
-        final double[][][] data = new double[SNOT][PN][2];
+    double[][] readMdrGEPSLocIasiAvhrrIASI(CompoundData mdr, int efovIndex) throws IOException {
+        final double[][] data = new double[PN][2];
         SequenceData mdrData = mdr.getSequence("GEPSLocIasiAvhrr_IASI");
-
-        for (int j = 0; j < SNOT; j++) {
-            SequenceData efovData = mdrData.getSequence(j);
-            for (int k = 0; k < PN; k++) {
-                SequenceData ifovData = efovData.getSequence(k);
-                for (int l = 0; l < 2; l++) {
-                    data[j][k][l] = EpsFile.readVInt4(ifovData.getCompound(l));
-                }
+        SequenceData efovData = mdrData.getSequence(efovIndex);
+        for (int k = 0; k < PN; k++) {
+            SequenceData ifovData = efovData.getSequence(k);
+            for (int l = 0; l < 2; l++) {
+                data[k][l] = EpsFile.readVInt4(ifovData.getCompound(l));
             }
         }
         return data;
     }
 
-    double[][][] readMdrGEPSLocIasiAvhrrIIS(CompoundData mdr) throws IOException {
-        final double[][][] data = new double[SNOT][SGI][2];
+    double[][] readMdrGEPSLocIasiAvhrrIIS(CompoundData mdr, int efovIndex) throws IOException {
+        final double[][] data = new double[SGI][2];
         SequenceData mdrData = mdr.getSequence("GEPSLocIasiAvhrr_IIS");
         
-        for (int j = 0; j < SNOT; j++) {
-            SequenceData efovData = mdrData.getSequence(j);
-            for (int k = 0; k < SGI; k++) {
-                SequenceData ifovData = efovData.getSequence(k);
-                for (int l = 0; l < 2; l++) {
-                    data[j][k][l] = EpsFile.readVInt4(ifovData.getCompound(l));
-                }
+        SequenceData efovData = mdrData.getSequence(efovIndex);
+        for (int k = 0; k < SGI; k++) {
+            SequenceData ifovData = efovData.getSequence(k);
+            for (int l = 0; l < 2; l++) {
+                data[k][l] = EpsFile.readVInt4(ifovData.getCompound(l));
             }
         }
         return data;
