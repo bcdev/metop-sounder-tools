@@ -42,6 +42,28 @@
     contract initiated and coordinated by Peter Schl&uuml;ssel (EUMETSAT).
 </p>
 
+<p>
+The footprint overlays will be automatically added to the layer manager, 
+when an imageview for an AVHRR product is opened.
+For this the directory in which the AVHRR product is located is searched for IASI, AMSU-A and MHS products that
+follow the default naming convention. When no matching product is found the user will be asked to select
+a product manually.
+</p>
+<p>
+The overlay overlay displays the shape of the sounder filled with a color corresponding to the measured brightness temperature.
+The layer manager can be utilized to enable and disable single layer or change the transparency.
+</p>
+<p>
+The info views for the footprint overlay can opened using the corresponding button on the toolbar. For each
+type of sounder instrument exist a different info view which show dedicated information about the selected IFOV.
+<br/>
+To select an IFOV the corresponding layer has to be selected in the layer manager. Then the selection tool (the arrow) can be used
+to select an IFOV.
+<br/>
+
+
+</p> 
+
 <h4>User Interface</h4>
 
 <img src="images/iasi-overlay.png" alt="IASI overlay"/>
