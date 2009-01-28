@@ -7,7 +7,7 @@
     <name>METOP Sounder Tools</name>
     <groupId>org.eumetsat.metop</groupId>
     <artifactId>metop-sounder-tools</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>1.0</version>
 
     <packaging>jar</packaging>
 

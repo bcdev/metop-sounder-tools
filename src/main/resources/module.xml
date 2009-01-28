@@ -3,7 +3,7 @@
 <module>
     <manifestVersion>1.0.0</manifestVersion>
     <symbolicName>metop-sounder-tools</symbolicName>
-    <version>0.5-SNAPSHOT</version>
+    <version>1.0</version>
     <name>METOP Sounder Tools</name>
 
     <description>METOP Sounder Tools</description>
@@ -17,22 +17,22 @@
 
     <dependency>
         <module>ceres-binio</module>
-        <version>0.8.1-SNAPSHOT</version>
+        <version>0.8.1</version>
     </dependency>
     <dependency>
         <module>beam-core</module>
-        <version>4.5.1-SNAPSHOT</version>
+        <version>4.5.1</version>
     </dependency>
     <dependency>
         <module>beam-gpf</module>
     </dependency>
     <dependency>
         <module>beam-ui</module>
-        <version>4.5.1-SNAPSHOT</version>
+        <version>4.5.1</version>
     </dependency>
     <dependency>
         <module>beam-visat</module>
-        <version>4.5.1-SNAPSHOT</version>
+        <version>4.5.1</version>
     </dependency>
     <dependency>
         <module>beam-metop-avhrr-reader</module>
