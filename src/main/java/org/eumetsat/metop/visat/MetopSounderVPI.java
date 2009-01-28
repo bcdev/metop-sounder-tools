@@ -51,7 +51,7 @@ import com.bc.ceres.core.ExtensionManager;
 import com.bc.ceres.glayer.Layer;
 import com.jidesoft.action.DockableBar;
 
-public class IasiFootprintVPI implements VisatPlugIn {
+public class MetopSounderVPI implements VisatPlugIn {
 
     public static final String[] METOP_AVHRR_SIGNATURE = {
             "latitude",
@@ -71,7 +71,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private static final FileFilter AMSU_NAME_FILTER = new PatternFileFilter("AMSU");
     private static final FileFilter MHS_NAME_FILTER = new PatternFileFilter("MHSx");
 
-    private static IasiFootprintVPI instance;
+    private static MetopSounderVPI instance;
     private VisatApp visatApp;
     private static final String FOOTPRINT_CHOOSE_OPTION_NAME = "iasi.file.chooser";
     private Map<Product, AvhrrOverlay> iasiFootprintLayerModelMap;
@@ -79,7 +79,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     private Map<Product, AvhrrOverlay> mhsFootprintLayerModelMap;
 
     // called via reflection
-    public IasiFootprintVPI() {
+    public MetopSounderVPI() {
         if (instance == null) {
             instance = this;
         }
@@ -127,7 +127,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     // VisatPlugIn interface implementation
     /////////////////////////////////////////////////////////////////////////
 
-    public static IasiFootprintVPI getInstance() {
+    public static MetopSounderVPI getInstance() {
         return instance;
     }
 
@@ -189,7 +189,7 @@ public class IasiFootprintVPI implements VisatPlugIn {
     }
 
     public static <T extends Layer> T getActiveFootprintLayer(Class<T> layerType) {
-        final IasiFootprintVPI vpi = getInstance();
+        final MetopSounderVPI vpi = getInstance();
         final VisatApp app = vpi.getVisatApp();
         final ProductSceneView psv = app.getSelectedProductSceneView();
         if (psv == null) {

@@ -58,7 +58,7 @@ public class AddAvhrrOverlayAction extends ExecCommand {
     @Override
     public void actionPerformed(CommandEvent event) {
         ProductSceneView sceneView = VisatApp.getApp().getSelectedProductSceneView();
-        if (sceneView != null && IasiFootprintVPI.isValidAvhrrProductSceneView(sceneView)) {
+        if (sceneView != null && MetopSounderVPI.isValidAvhrrProductSceneView(sceneView)) {
             addFootprintLayer(sceneView);
             sceneView.repaint();
         }
@@ -68,7 +68,7 @@ public class AddAvhrrOverlayAction extends ExecCommand {
     public void updateState(CommandEvent event) {
         ProductSceneView sceneView = VisatApp.getApp().getSelectedProductSceneView();
         boolean enabled = false;
-        if (sceneView != null && IasiFootprintVPI.isValidAvhrrProductSceneView(sceneView)) {
+        if (sceneView != null && MetopSounderVPI.isValidAvhrrProductSceneView(sceneView)) {
             enabled = true;
         }
         setEnabled(enabled);

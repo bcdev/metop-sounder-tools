@@ -154,7 +154,7 @@ public class IasiInfoView extends AbstractToolView {
         };
         
         VisatApp.getApp().addInternalFrameListener(internalFrameListener);
-        if (IasiFootprintVPI.isValidAvhrrProductSceneViewSelected()) {
+        if (MetopSounderVPI.isValidAvhrrProductSceneViewSelected()) {
             final IasiLayer layer = getIasiLayer();
             if (layer != null) {
                 modelChanged(layer);
@@ -192,7 +192,7 @@ public class IasiInfoView extends AbstractToolView {
     @Override
     public void componentFocusGained() {
         ProductSceneView productSceneView = VisatApp.getApp().getSelectedProductSceneView();
-        if (IasiFootprintVPI.isValidAvhrrProductSceneView(productSceneView)) {
+        if (MetopSounderVPI.isValidAvhrrProductSceneView(productSceneView)) {
             IasiLayer layer = getIasiLayer();
             if (layer != null) {
                 productSceneView.setSelectedLayer(layer);
@@ -208,7 +208,7 @@ public class IasiInfoView extends AbstractToolView {
     }
 
     private IasiLayer getIasiLayer() {
-        return IasiFootprintVPI.getActiveFootprintLayer(IasiLayer.class);
+        return MetopSounderVPI.getActiveFootprintLayer(IasiLayer.class);
     }
 
     private ImageInfoEditorModel createImageInfoEditorModel(final IasiLayer layer) {

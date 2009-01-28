@@ -176,7 +176,7 @@ abstract class SounderInfoView extends AbstractToolView {
     @Override
     public void componentFocusGained() {
         final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
-        if (IasiFootprintVPI.isValidAvhrrProductSceneView(view)) {
+        if (MetopSounderVPI.isValidAvhrrProductSceneView(view)) {
             final SounderLayer layer = getSounderLayer();
             if (layer != null) {
                 view.setSelectedLayer(layer);

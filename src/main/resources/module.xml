@@ -49,8 +49,8 @@
             <mnemonic>I</mnemonic>
             <accelerator>ctrl alt I</accelerator>
             <description>Inspect selected IASI footprint.</description>
-            <smallIcon>/org/eumetsat/iavisa/ui/icons/iasi-icon16.png</smallIcon>
-            <largeIcon>/org/eumetsat/iavisa/ui/icons/iasi-icon.png</largeIcon>
+            <smallIcon>/org/eumetsat/metop/ui/icons/iasi-icon16.png</smallIcon>
+            <largeIcon>/org/eumetsat/metop/ui/icons/iasi-icon.png</largeIcon>
             <helpId>metopSounderTools</helpId>
             <initState>HIDDEN</initState>
             <initSide>SOUTH</initSide>
@@ -64,8 +64,8 @@
             <mnemonic/>
             <accelerator/>
             <description>Inspect selected AMSU IFOV.</description>
-            <smallIcon>/org/eumetsat/iavisa/ui/icons/amsu-icon16.png</smallIcon>
-            <largeIcon>/org/eumetsat/iavisa/ui/icons/amsu-icon.png</largeIcon>
+            <smallIcon>/org/eumetsat/metop/ui/icons/amsu-icon16.png</smallIcon>
+            <largeIcon>/org/eumetsat/metop/ui/icons/amsu-icon.png</largeIcon>
             <helpId>metopSounderTools</helpId>
             <initState>HIDDEN</initState>
             <initSide>SOUTH</initSide>
@@ -79,8 +79,8 @@
             <mnemonic/>
             <accelerator/>
             <description>Inspect selected MHS IFOV.</description>
-            <smallIcon>/org/eumetsat/iavisa/ui/icons/mhs-icon16.png</smallIcon>
-            <largeIcon>/org/eumetsat/iavisa/ui/icons/mhs-icon.png</largeIcon>
+            <smallIcon>/org/eumetsat/metop/ui/icons/mhs-icon16.png</smallIcon>
+            <largeIcon>/org/eumetsat/metop/ui/icons/mhs-icon.png</largeIcon>
             <helpId>metopSounderTools</helpId>
             <initState>HIDDEN</initState>
             <initSide>SOUTH</initSide>
