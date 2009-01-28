@@ -4,11 +4,5 @@
         "http://java.sun.com/products/javahelp/map_2_0.dtd">
 
 <map version="2.0">
-
     <mapID target="metopSounderTools" url="html/MetopSounderTools.html"/>
-    <mapID target="sounderToolView" url="html/SounderToolView.html"/>
-    <mapID target="iasiSounder" url="html/IasiSounder.html"/>
-    <mapID target="amsuSounder" url="html/AmsuSounder.html"/>
-    <mapID target="mhsSounder" url="html/MhsSounder.html"/>
-
 </map>
