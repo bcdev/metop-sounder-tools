@@ -42,91 +42,142 @@
     contract initiated and coordinated by Peter Schl&uuml;ssel (EUMETSAT).
 </p>
 
-<h4>Usage</h4>
-
-<p>
-The footprint overlays will be automatically added to the layer manager, 
-when an imageview for an AVHRR product is opened.
-For this the directory in which the AVHRR product is located is searched for IASI, AMSU-A and MHS products that
-follow the default naming convention. When no matching product is found the user will be asked to select
-a product manually.
-</p>
-<p>
-The overlay overlay displays the shape of the sounder filled with a color corresponding to the measured brightness temperature.
-The layer manager can be utilized to enable and disable single layer or change the transparency.
-</p>
-<p>
-The info views for the footprint overlay can opened using the corresponding button on the toolbar. For each
-type of sounder instrument exist a different info view which show dedicated information about the selected IFOV.
-</p>
-<p>
-To select an IFOV the corresponding layer has to be selected in the layer manager. Then the selection tool (the arrow) can be used
-to select an IFOV.
-</p>
-<p>
-The "Sounder Info" tab will show general information like the geolocation and the geometry.
-The "Sounder Spectrum2 tab shows the spectrum of the brightness temperature.
-The "Sounder Layer" tab allows to change the color distribution by moving the arrows 
-below the histogram or changing the color of an arrow by clicking on it.
-
-The IASI info view has an additional tab that shows information about the radiance analysis,
- that is included in the IASI L1C product.
-</p>
-<p>
-
-</p>
-<p>
-
-</p> 
-
 <h4>User Interface</h4>
 
-<h5>Display of footprint overlays</h5>
+<h5>Basic Usage</h5>
 
 <p>
-    <img src="images/iasi-overlay.png" alt="IASI overlay"/><br/>
+    The footprint overlays will be automatically added to the layer manager,
+    when an imageview for an AVHRR product is opened.
+    For this the directory in which the AVHRR product is located is searched for IASI, AMSU-A and MHS products that
+    follow the default naming convention. When no matching product is found the user will be asked to select
+    a product manually.
+</p>
+
+<p>
+    The overlay overlay displays the shape of the sounder filled with a color corresponding to the measured brightness
+    temperature.
+    The layer manager can be utilized to enable and disable single layer or change the transparency.
+</p>
+
+<p>
+    The info views for the footprint overlay can opened using the corresponding button on the toolbar. For each
+    type of sounder instrument exist a different info view which show dedicated information about the selected IFOV.
+</p>
+
+<p>
+    To select an IFOV the corresponding layer has to be selected in the layer manager. Then the selection tool (the
+    arrow) can be used
+    to select an IFOV.
+</p>
+
+<p>
+    The "Sounder Info" tab will show general information like the geolocation and the geometry.
+    The "Sounder Spectrum2 tab shows the spectrum of the brightness temperature.
+    The "Sounder Layer" tab allows to change the color distribution by moving the arrows
+    below the histogram or changing the color of an arrow by clicking on it.
+
+    The IASI info view has an additional tab that shows information about the radiance analysis,
+    that is included in the IASI L1C product.
+</p>
+
+<p>
+
+</p>
+
+<p>
+
+</p>
+
+<h5>Usage Examples</h5>
+
+<h6>IASI footprint overlay</h6>
+
+<p>
+    <img src="images/iasi-overlay.png" alt="IASI overlay"/>
+</p>
+
+<p>
     An IASI footprint overlay on-top of an AVHRR RGB. When the IASI overlay is selected
     (as indicated by the blue highlighted text) individual IFOVs can be selected with a
     single mouse-click. The selected IFOV is drawn with a green border. Not that the four
     IFOVs belonging to an EFOV are connected with straight lines.
 </p>
 
+<h6>AMSU footprint overlay</h6>
+
 <p>
-    <img src="images/amsu-overlay.png" alt="AMSU overlay"/><br/>
+    <img src="images/amsu-overlay.png" alt="AMSU overlay"/>
+</p>
+
+<p>
     An AMSU footprint overlay on-top of an AVHRR RGB. When the AMSU overlay is selected
     (as indicated by the blue highlighted text) individual IFOVs can be selected with a
     single mouse-click. The selected IFOV is drawn with a green border.
 </p>
 
+<h6>MHS footprint overlay</h6>
+
 <p>
-    <img src="images/mhs-overlay.png" alt="MHS overlay"/><br/>
+    <img src="images/mhs-overlay.png" alt="MHS overlay"/>
+</p>
+
+<p>
     An MHS footprint overlay on-top of an AVHRR RGB. When the MHS overlay is selected
     (as indicated by the blue highlighted text) individual IFOVs can be selected with a
     single mouse-click. The selected IFOV is drawn with a green border.
 </p>
 
-<h5>Display of IFOV information</h5>
+<h6>Display of IFOV information</h6>
 
 <p>
-    <img src="images/mhs-info.png" alt="MHS info"/><br/>
+    <img src="images/mhs-info.png" alt="MHS info"/>
+</p>
+
+<p>
     Display of meta data for a selected MHS IFOV. The display for IASI and MHS is
     similar.
 </p>
 
+<h6>Display of MHS and AMSU brightness temperature spectra</h6>
+
 <p>
-    <img src="images/mhs-spectrum.png" alt="MHS spectrum"/><br/>
+    <img src="images/mhs-spectrum.png" alt="MHS spectrum"/>
+</p>
+
+<p>
     Display of the brightness temperature spectrum for a selected MHS IFOV. The vertical
     blue line indicates the sounder channel which is used for colouring the corresponding
     MHS footprint overlay. The channel used for colouring can be changed with a single
     mouse-click near to a point in the spectrum. The display for AMSU is similar.
 </p>
 
+<h6>Display of IASI brightness temperature spectra</h6>
+
 <p>
-    <img src="images/iasi-spectrum.png" alt="MHS spectrum"/><br/>
+    <img src="images/iasi-spectrum.png" alt="IASI spectrum"/>
 </p>
 
 <p>
-    <img src="images/mhs-colour.png" alt="MHS layer colour manipulation"/><br/>
+    Display of the brightness temperature spectrum for a selected IASI IFOV. The vertical
+    blue line indicates the wavenumber which is used for colouring the corresponding
+    MHS footprint overlay. The wavenumber used for colouring can be changed with a single
+    mouse-click near to a point in the spectrum. You can zoom into the spectrum plot by
+    drawing a rectangle with the mouse while pressing the left mouse button. Note that further
+    commands and display options are shown when the right mouse button is pressed.
+</p>
+
+<h6>Colour manipulation of footprint overlays</h6>
+
+<p>
+    <img src="images/mhs-colour.png" alt="MHS layer colour manipulation"/>
+</p>
+
+<p>
+    Manipulation of the color distribution can be achieved by moving the wedges
+    below the histogram or changing the color of a wedge by a click with the
+    left mouse button. New wedges can be added by a click with the right mouse
+    button. Changes are applied immediately.
 </p>
 
 </body>
