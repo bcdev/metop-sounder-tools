@@ -121,22 +121,25 @@ public class IasiInfoView extends AbstractToolView {
 
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                final IasiLayer layer = getIasiLayer();
-                if (layer != null) {
-                    modelChanged(layer);
-                } else {
-                    final ProductSceneView view = VisatApp.getApp().getSelectedProductSceneView();
-                    final LayerListener layerListener = new AbstractLayerListener() {
-                        @Override
-                        public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
-                            final IasiLayer layer = getIasiLayer();
-                            if (layer != null) {
-                                modelChanged(layer);
-                                view.getRootLayer().removeListener(this);
+                final Container contentPane = e.getInternalFrame().getContentPane();
+                if (contentPane instanceof ProductSceneView) {
+                    final ProductSceneView view = (ProductSceneView) contentPane;
+                    final IasiLayer layer = getIasiLayer();
+                    if (layer != null) {
+                        modelChanged(layer);
+                    } else {
+                        final LayerListener layerListener = new AbstractLayerListener() {
+                            @Override
+                            public void handleLayersAdded(Layer parentLayer, Layer[] childLayers) {
+                                final IasiLayer layer = getIasiLayer();
+                                if (layer != null) {
+                                    modelChanged(layer);
+                                    view.getRootLayer().removeListener(this);
+                                }
                             }
-                        }
-                    };
-                    view.getRootLayer().addListener(layerListener);
+                        };
+                        view.getRootLayer().addListener(layerListener);
+                    }
                 }
             }
 
