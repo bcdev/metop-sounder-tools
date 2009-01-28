@@ -216,7 +216,6 @@ public class SounderLayer extends Layer implements SounderInfo {
                 layerInfoMap.put(channel, LayerInfo.createInstance(band));
             }
             selectedChannel = channel;
-            fireLayerDataChanged(null);
         }
     }
 

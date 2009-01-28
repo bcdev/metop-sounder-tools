@@ -378,6 +378,7 @@ abstract class SounderInfoView extends AbstractToolView {
 
                             @Override
                             protected void done() {
+                                layer.regenerate();
                                 editor.setModel(createImageInfoEditorModel(layer));
                             }
                         };
