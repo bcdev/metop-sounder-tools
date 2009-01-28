@@ -36,7 +36,7 @@ import java.util.HashMap;
 
 public class SounderLayer extends Layer implements SounderInfo {
 
-    private static final Stroke BORDER_STROKE = new BasicStroke(0.0f);
+    private static final Stroke BORDER_STROKE = new BasicStroke(0.4f);
     private static final Color IFOV_SELECTED_COLOR = Color.GREEN;
 
     private final AbstractSounderOverlay overlay;
@@ -119,7 +119,7 @@ public class SounderLayer extends Layer implements SounderInfo {
             final Object oldRendering = g2d.getRenderingHint(RenderingHints.KEY_RENDERING);
             g2d.setStroke(BORDER_STROKE);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             final Rectangle clip = g2d.getClipBounds();
 

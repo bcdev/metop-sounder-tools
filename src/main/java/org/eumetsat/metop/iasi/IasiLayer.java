@@ -146,7 +146,7 @@ public class IasiLayer extends Layer implements SounderInfo {
         try {
             g2d.setStroke(borderStroke);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             final Rectangle clip = g2d.getClipBounds();
             Color[] colorPalette = layerData.getColorPalette();
