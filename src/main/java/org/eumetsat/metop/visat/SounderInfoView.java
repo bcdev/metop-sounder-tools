@@ -62,7 +62,7 @@ import java.util.concurrent.ExecutionException;
 
 abstract class SounderInfoView extends AbstractToolView {
     private static final String NO_IFOV_SELECTED = "No IFOV selected";
-    private static final String ACCESS_ERROR = "Data access error";
+    private static final String IO_ERROR = "IO error";
 
     private SounderOverlayListener overlayListener;
     private InternalFrameListener internalFrameListener;
@@ -456,9 +456,9 @@ abstract class SounderInfoView extends AbstractToolView {
                     lonTextField.setText(geoPos.getLonString());
                     latTextField.setText(geoPos.getLatString());
                 } catch (InterruptedException e) {
-                    clearEarthLocationFields(ACCESS_ERROR);
+                    clearEarthLocationFields(IO_ERROR);
                 } catch (ExecutionException e) {
-                    clearEarthLocationFields(ACCESS_ERROR);
+                    clearEarthLocationFields(IO_ERROR);
                 }
             }
         };
@@ -481,9 +481,9 @@ abstract class SounderInfoView extends AbstractToolView {
                     szaTextField.setText(Double.toString(angularRelation.sza));
                     saaTextField.setText(Double.toString(angularRelation.saa));
                 } catch (InterruptedException e) {
-                    clearAngularRelationFields(ACCESS_ERROR);
+                    clearAngularRelationFields(IO_ERROR);
                 } catch (ExecutionException e) {
-                    clearAngularRelationFields(ACCESS_ERROR);
+                    clearAngularRelationFields(IO_ERROR);
                 }
             }
         };
@@ -529,9 +529,9 @@ abstract class SounderInfoView extends AbstractToolView {
                     final XYSeries series = get();
                     spectrumDataset.addSeries(series);
                 } catch (InterruptedException e) {
-                    spectrumPlot.setNoDataMessage(ACCESS_ERROR);
+                    spectrumPlot.setNoDataMessage(IO_ERROR);
                 } catch (ExecutionException e) {
-                    spectrumPlot.setNoDataMessage(ACCESS_ERROR);
+                    spectrumPlot.setNoDataMessage(IO_ERROR);
                 }
             }
         };

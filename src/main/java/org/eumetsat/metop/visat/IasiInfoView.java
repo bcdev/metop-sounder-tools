@@ -31,7 +31,6 @@ import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
 import org.esa.beam.visat.VisatApp;
-import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.iasi.IasiFile;
 import org.eumetsat.metop.iasi.IasiFile.Geometry;
 import org.eumetsat.metop.iasi.IasiFile.RadianceAnalysis;
@@ -49,7 +48,6 @@ import org.jfree.chart.event.ChartProgressListener;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
@@ -80,9 +78,8 @@ import java.text.NumberFormat;
 public class IasiInfoView extends AbstractToolView {
 
     private static final String NO_IFOV_SELECTED = "No IFOV selected";
-    private static final String ACCESS_ERROR = "Data access error";
+    private static final String IO_ERROR = "IO error";
 
-    private static final String NO_DATA_MESSAGE = "no data";
     private static final int[] CLASS_COLORS = {
             0, Color.YELLOW.getRGB(), Color.ORANGE.getRGB(), Color.RED.getRGB(),
             Color.GREEN.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.BLACK.getRGB()
@@ -280,6 +277,8 @@ public class IasiInfoView extends AbstractToolView {
         panel.add(vaaTextField);
         panel.add(new JLabel(""));
 
+        cleanLocationFields(NO_IFOV_SELECTED);
+        
         JPanel jPanel = new JPanel(new BorderLayout(4, 4));
         jPanel.add(panel, BorderLayout.NORTH);
 
@@ -306,7 +305,7 @@ public class IasiInfoView extends AbstractToolView {
         spectrumDataset = new XYSeriesCollection();
 
         final JFreeChart chart = ChartFactory.createXYLineChart(
-                "Sounder IFOV Spectrum",         // chart title
+                "IASI IFOV Spectrum",         // chart title
                 "Channel",                       // x axis label
                 "Brightness Temperature (K)",    // y axis label
                 spectrumDataset,
@@ -423,7 +422,7 @@ public class IasiInfoView extends AbstractToolView {
 
     private void updateLocation(int ifovId) {
         if (ifovId == -1) {
-            cleanLocationFields();
+            cleanLocationFields(NO_IFOV_SELECTED);
             return;
         }
         final GeoPos geoPos;
@@ -433,7 +432,7 @@ public class IasiInfoView extends AbstractToolView {
             geoPos = iasiFile.readGeoPos(ifovId);
             readGeometry = iasiFile.readGeometry(ifovId);
         } catch (IOException e) {
-            cleanLocationFields();
+            cleanLocationFields(IO_ERROR);
             return;
         }
         lonTextField.setText(geoPos.getLonString());
@@ -449,16 +448,16 @@ public class IasiInfoView extends AbstractToolView {
         ifovTextField.setText(Integer.toString(IasiFile.computeIfovIndex(ifovId)));
     }
 
-    private void cleanLocationFields() {
-        lonTextField.setText("");
-        latTextField.setText("");
-        saaTextField.setText("");
-        vaaTextField.setText("");
-        szaTextField.setText("");
-        vzaTextField.setText("");
-        mdrTextField.setText("");
-        efovTextField.setText("");
-        ifovTextField.setText("");
+    private void cleanLocationFields(String text) {
+        lonTextField.setText(text);
+        latTextField.setText(text);
+        saaTextField.setText(text);
+        vaaTextField.setText(text);
+        szaTextField.setText(text);
+        vzaTextField.setText(text);
+        mdrTextField.setText(text);
+        efovTextField.setText(text);
+        ifovTextField.setText(text);
     }
 
 
@@ -494,7 +493,6 @@ public class IasiInfoView extends AbstractToolView {
         imageLabel.setVisible(false);
     }
 
-    // todo - clean up
     private void updateSpectrum(int ifovId) {
         spectrumDataset.removeAllSeries();
         if (ifovId == -1) {

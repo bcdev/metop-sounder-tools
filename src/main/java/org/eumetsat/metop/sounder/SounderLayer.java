@@ -17,7 +17,6 @@
 package org.eumetsat.metop.sounder;
 
 import com.bc.ceres.core.ExtensionFactory;
-import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.glayer.Layer;
 import com.bc.ceres.grender.Rendering;
 import com.bc.ceres.grender.Viewport;
@@ -25,7 +24,6 @@ import org.esa.beam.framework.datamodel.*;
 import org.esa.beam.framework.ui.AbstractLayerUI;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.math.MathUtils;
-import org.eumetsat.metop.eps.EpsFile;
 import org.eumetsat.metop.visat.BlackBody;
 
 import java.awt.*;
@@ -38,27 +36,28 @@ import java.util.HashMap;
 
 public class SounderLayer extends Layer implements SounderInfo {
 
+    private static final Stroke BORDER_STROKE = new BasicStroke(0.0f);
+    private static final Color IFOV_SELECTED_COLOR = Color.GREEN;
+
     private final AbstractSounderOverlay overlay;
     private final BandInfo[] bandInfos;
-    private final Map<Integer,LayerInfo> layerInfoMap = new HashMap<Integer,LayerInfo>();
-
-    private final BasicStroke borderStroke = new BasicStroke(0.0f);
-    private final Color ifovSelectedColor = Color.GREEN;
 
     private final int mdrCount;
     private final int ifovInMdrCount;
+    private final ProductData layerData;
 
+    private final Map<Integer,LayerInfo> layerInfoMap;
     private final SounderOverlayListener listener;
 
-    private volatile int selectedChannel;
-    private volatile ProductData layerData;
+    private int selectedChannel;
 
     protected SounderLayer(AbstractSounderOverlay overlay, BandInfo[] bandInfos, int ifovInMdrCount) throws IOException {
         this.overlay = overlay;
         this.bandInfos = bandInfos;
 
         this.ifovInMdrCount = ifovInMdrCount;
-        this.mdrCount = overlay.getEpsFile().getMdrCount();
+        mdrCount = overlay.getEpsFile().getMdrCount();
+        layerData = ProductData.createInstance(ProductData.TYPE_FLOAT64, ifovInMdrCount * mdrCount);
 
         listener = new SounderOverlayListener() {
             @Override
@@ -72,6 +71,7 @@ public class SounderLayer extends Layer implements SounderInfo {
             }
         };
         overlay.addListener(listener);
+        layerInfoMap = new HashMap<Integer,LayerInfo>();
 
         selectedChannel = -1;
         setSelectedChannel(0);
@@ -81,7 +81,7 @@ public class SounderLayer extends Layer implements SounderInfo {
     protected void disposeLayer() {
         synchronized (this) {
             overlay.removeListener(listener);
-            layerData = null;
+            layerData.dispose();
         }
         super.disposeLayer();
     }
@@ -117,7 +117,7 @@ public class SounderLayer extends Layer implements SounderInfo {
             final Stroke oldStroke = g2d.getStroke();
             final Object oldAntialias = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
             final Object oldRendering = g2d.getRenderingHint(RenderingHints.KEY_RENDERING);
-            g2d.setStroke(borderStroke);
+            g2d.setStroke(BORDER_STROKE);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
@@ -136,7 +136,7 @@ public class SounderLayer extends Layer implements SounderInfo {
                     g2d.fill(ifovShape);
 
                     if (selectedIfov != null && selectedIfov == ifov) {
-                        g2d.setColor(ifovSelectedColor);
+                        g2d.setColor(IFOV_SELECTED_COLOR);
                         g2d.draw(ifovShape);
                     }
                 }
@@ -152,12 +152,16 @@ public class SounderLayer extends Layer implements SounderInfo {
         }
     }
 
-    private ProductData getLayerData() {
+    private synchronized ProductData getLayerData() {
         return layerData;
     }
 
-    private LayerInfo getLayerInfo() {
+    private synchronized LayerInfo getLayerInfo() {
         return layerInfoMap.get(selectedChannel);
+    }
+
+    private synchronized LayerInfo getLayerInfo(int channel) {
+        return layerInfoMap.get(channel);
     }
 
     @Override
@@ -186,7 +190,7 @@ public class SounderLayer extends Layer implements SounderInfo {
     }
 
     @Override
-    public int getSelectedChannel() {
+    public synchronized int getSelectedChannel() {
         return selectedChannel;
     }
 
@@ -200,7 +204,6 @@ public class SounderLayer extends Layer implements SounderInfo {
             final MdrReader reader = bandInfo.getReader();
             overlay.getEpsFile().readData(reader, 0, 0, ifovInMdrCount, mdrCount, radianceData);
 
-            layerData = ProductData.createInstance(ProductData.TYPE_FLOAT64, ifovInMdrCount * mdrCount);
             for (int i = 0; i < radianceData.getNumElems(); ++i) {
                 final double f = bandInfo.getFrequency();
                 final double r = radianceData.getElemDoubleAt(i) * bandInfo.getScaleFactor() * 0.1;
@@ -208,11 +211,11 @@ public class SounderLayer extends Layer implements SounderInfo {
                 layerData.setElemDoubleAt(i, t);
             }
 
-            if (layerInfoMap.get(channel) == null) {
+            if (getLayerInfo(channel) == null) {
                 final Band band = new Band("name", ProductData.TYPE_FLOAT64, ifovInMdrCount, mdrCount);
                 band.setRasterData(layerData);
                 band.setSynthetic(true);
-
+                
                 layerInfoMap.put(channel, LayerInfo.createInstance(band));
             }
             selectedChannel = channel;
