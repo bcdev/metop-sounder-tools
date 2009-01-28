@@ -23,10 +23,8 @@ import org.esa.beam.framework.datamodel.ImageInfo;
 import org.esa.beam.framework.datamodel.Scaling;
 import org.esa.beam.framework.datamodel.Stx;
 import org.esa.beam.framework.help.HelpSys;
-import org.esa.beam.framework.ui.DefaultImageInfoEditorModel;
-import org.esa.beam.framework.ui.ImageInfoEditor;
-import org.esa.beam.framework.ui.ImageInfoEditorModel;
-import org.esa.beam.framework.ui.TableLayout;
+import org.esa.beam.framework.ui.*;
+import org.esa.beam.framework.ui.tool.ToolButtonFactory;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductSceneView;
 import org.esa.beam.util.ImageUtils;
@@ -159,7 +157,23 @@ public class IasiInfoView extends AbstractToolView {
                 modelChanged(layer);
             }
         }
-        return tabbedPane;
+
+        final AbstractButton helpButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Help24.gif"), false);
+        helpButton.setToolTipText("Help."); /*I18N*/
+        helpButton.setName("helpButton");
+
+        if (getDescriptor().getHelpId() != null) {
+            HelpSys.enableHelpOnButton(helpButton, getDescriptor().getHelpId());
+            HelpSys.enableHelpKey(tabbedPane, getDescriptor().getHelpId());
+        }
+
+        final JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.add(tabbedPane, BorderLayout.CENTER);
+        final JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.add(helpButton, BorderLayout.EAST);
+        containerPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return containerPanel;
     }
     
     private void modelChanged(IasiLayer layer) {
