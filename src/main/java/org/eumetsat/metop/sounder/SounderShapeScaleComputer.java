@@ -35,21 +35,14 @@ public class SounderShapeScaleComputer {
     
     private final EpsFile epsFile;
     private final int width;
-    private final BandInfo latBandInfo;
-    private final BandInfo lonBandInfo;
-    private final BandInfo vzaBandInfo;
     private final Product avhrrProduct;
     private final GeoCoding geoCoding;
 
-    private final GeoPos nadirGP;
     private double[] shapeScales;
     
     public SounderShapeScaleComputer(EpsFile epsFile, int width, BandInfo lat, BandInfo lon, BandInfo vza, Product avhrrProduct) throws IOException {
         this.epsFile = epsFile;
         this.width = width;
-        this.latBandInfo = lat;
-        this.lonBandInfo = lon;
-        this.vzaBandInfo = vza;
         this.avhrrProduct = avhrrProduct;
         this.geoCoding = avhrrProduct.getGeoCoding();
         
@@ -58,8 +51,8 @@ public class SounderShapeScaleComputer {
         double[] latData;
         double[] lonData;
         do {
-            latData = readScaledLine(latBandInfo, mdrIndex);
-            lonData = readScaledLine(lonBandInfo, mdrIndex);
+            latData = readScaledLine(lat, mdrIndex);
+            lonData = readScaledLine(lon, mdrIndex);
             
             boolean ivof1InProduct = isIfovInProduct(latData[(width/2)], lonData[(width/2)]); 
             boolean ivof2InProduct = isIfovInProduct(latData[(width/2)-1], lonData[(width/2)-1]); 
@@ -69,9 +62,8 @@ public class SounderShapeScaleComputer {
                 mdrIndex++;
             }
         } while (!goodLine);
-        double[] vzaData = readScaledLine(vzaBandInfo, mdrIndex);
+        double[] vzaData = readScaledLine(vza, mdrIndex);
         
-        this.nadirGP = computeNadirGeoPos(latData, lonData);
         shapeScales = computeShapeScales(latData, lonData, vzaData);
     }
     
@@ -93,23 +85,14 @@ public class SounderShapeScaleComputer {
     private double[] computeShapeScales(double[] lat, double[] lon, double[] vza) {
         double[] scales = new double[lat.length];
         for (int i = 0; i < scales.length; i++) {
-            double distance = MathUtils.sphereDistanceDeg(Re, nadirGP.lon, nadirGP.lat, lon[i], lat[i]);
-            double theta = MathUtils.DTOR * vza[i];
+            final int j = scales.length - 1 - i;
+            double distance = MathUtils.sphereDistanceDeg(Re, lon[j], lat[j], lon[i], lat[i]) / 2.0;
+            double theta = MathUtils.DTOR * (vza[i] + vza[j]) / 2.0;
             double alpha = distance / Re;
             double hTheta = Math.sin(alpha) * (H + Re) / Math.sin(theta);
             scales[i] = hTheta/H;
         }
         return scales;
-    }
-
-    private GeoPos computeNadirGeoPos(double[] lat, double[] lon) {
-        final int length = lat.length;
-        GeoPos gp1 = new GeoPos((float)lat[(length/2)], (float)lon[(length/2)]);
-        GeoPos gp2 = new GeoPos((float)lat[(length/2)-1], (float)lon[(length/2)-1]);
-        PixelPos pp1 = geoCoding.getPixelPos(gp1, null);
-        PixelPos pp2 = geoCoding.getPixelPos(gp2, null);
-        PixelPos nadir = new PixelPos((pp1.x+pp2.x)/2, (pp1.y+pp2.y)/2);
-        return geoCoding.getGeoPos(nadir, null);
     }
 
     private boolean isIfovInProduct(double lat, double lon) {
