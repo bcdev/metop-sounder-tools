@@ -1,0 +1,75 @@
+<!-- Metop Sounder Tools binary distribution -->
+
+<assembly>
+    <id>bin</id>
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <formats>
+        <format>dir</format>
+        <format>zip</format>
+    </formats>
+
+    <files>
+        <file>
+            <source>README.txt</source>
+            <destName>README-IAVISA.txt</destName>
+            <lineEnding>unix</lineEnding>
+            <filtered>true</filtered>
+        </file>
+    </files>
+
+    <fileSets>
+
+        <fileSet>
+            <directory>src/main/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>src/main/bin/win</directory>
+            <outputDirectory>bin</outputDirectory>
+            <excludes>
+                <exclude>dbmanager.bat</exclude>
+                <exclude>hsqlserver.bat</exclude>
+                <exclude>hsqltool.bat</exclude>
+            </excludes>
+        </fileSet>
+
+        <fileSet>
+            <directory>src/main/bin/linux</directory>
+            <outputDirectory>bin</outputDirectory>
+            <lineEnding>unix</lineEnding>
+            <fileMode>0777</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>modules</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+            <excludes>
+                <exclude>*-sources.jar</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <outputFileNameMapping>${artifactId}-${version}.${extension}</outputFileNameMapping>
+            <includes>
+                <include>hsqldb:hsqldb</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>modules</outputDirectory>
+            <includes>
+                <include>com.bc.ceres:ceres-binio</include>
+                <include>org.esa.beam:beam-metop-avhrr-reader</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+
+</assembly>

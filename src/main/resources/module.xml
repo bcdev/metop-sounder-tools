@@ -36,6 +36,7 @@
     </dependency>
     <dependency>
         <module>beam-metop-avhrr-reader</module>
+        <version>1.4</version>
     </dependency>
 
     <categories>VISAT,IAVISA,IASI</categories>
