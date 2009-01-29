@@ -39,7 +39,7 @@
         <version>1.4</version>
     </dependency>
 
-    <categories>VISAT,IAVISA,IASI</categories>
+    <categories>VISAT,MetOp</categories>
 
     <extension point="beam-ui:toolViews">
         <toolView>
@@ -100,8 +100,8 @@
             <placeAfter>showPinOverlay</placeAfter>
             <shortDescr>Add METOP overlay</shortDescr>
             <description>Add METOP footprint overlay for the selected image</description>
-            <smallIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay16.gif</smallIcon>
-            <largeIcon>/org/eumetsat/iavisa/ui/icons/IasiOverlay24.gif</largeIcon>
+            <smallIcon>/org/eumetsat/metop/ui/icons/IasiOverlay16.gif</smallIcon>
+            <largeIcon>/org/eumetsat/metop/ui/icons/IasiOverlay24.gif</largeIcon>
             <context>image</context>
             <helpId>IasiFootprintOverlay</helpId>
         </action>
