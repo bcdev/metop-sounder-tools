@@ -1,5 +1,5 @@
 /*
- * $Id: IavisaVPI.java,v 1.38 2005/12/22 10:05:29 marcop Exp $
+ * $Id: MetopSounderVPI.java,v 1.38 2005/12/22 10:05:29 marcop Exp $
  *
  * Copyright (c) 2003 Brockmann Consult GmbH. All right reserved.
  * http://www.brockmann-consult.de
