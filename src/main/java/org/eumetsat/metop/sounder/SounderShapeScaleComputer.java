@@ -35,10 +35,8 @@ public class SounderShapeScaleComputer {
     public SounderShapeScaleComputer(EpsFile epsFile, int width, BandInfo lat, BandInfo lon, BandInfo vza) throws IOException {
         this.width = width;
 
-        double[] latData;
-        double[] lonData;
-        latData = readScaledLine(epsFile, lat, 0);
-        lonData = readScaledLine(epsFile, lon, 0);
+        double[] latData = readScaledLine(epsFile, lat, 0);
+        double[] lonData = readScaledLine(epsFile, lon, 0);
         double[] vzaData = readScaledLine(epsFile, vza, 0);
         
         shapeScales = computeShapeScales(latData, lonData, vzaData);
