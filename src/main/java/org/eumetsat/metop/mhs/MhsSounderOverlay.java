@@ -54,8 +54,8 @@ public class MhsSounderOverlay extends AbstractSounderOverlay {
                                                                                 width,
                                                                                 MhsBandInfo.LAT, 
                                                                                 MhsBandInfo.LON,
-                                                                                MhsBandInfo.VZA, 
-                                                                                getAvhrrProduct());
+                                                                                MhsBandInfo.VZA
+        );
         double[] shapeScale = scaleComputer.getIfovShapeScale();
         
         int index = 0;

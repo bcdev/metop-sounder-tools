@@ -50,8 +50,8 @@ public class AmsuSounderOverlay extends AbstractSounderOverlay {
                                                                                 width,
                                                                                 AmsuBandInfo.LAT,
                                                                                 AmsuBandInfo.LON,
-                                                                                AmsuBandInfo.VZA,
-                                                                                getAvhrrProduct());
+                                                                                AmsuBandInfo.VZA
+        );
         double[] shapeScale = scaleComputer.getIfovShapeScale();
         int index = 0;
         GeoPos amsuGeoPos = new GeoPos();
