@@ -41,7 +41,8 @@ zip-file is adapted to the structure of the BEAM installation directory.
 
 When there is a module 'beam-metop-avhrr-reader' of version 1.3 in the BEAM
 modules directory, please remove the module manually. The Metop Sounder Tools
-require at least Version 1.4 of the module.
+require at least Version 1.4 of the module. Version 1.4 is distributed with
+Version 1.0 of the Metop Sounder Tools.
 
 
 Usage
