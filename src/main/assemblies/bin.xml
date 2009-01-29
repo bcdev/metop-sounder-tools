@@ -21,7 +21,7 @@
 
     <fileSets>
 
-        <!--
+        <!-- not used - may be used in a future release
         <fileSet>
             <directory>src/main/config</directory>
             <outputDirectory>config</outputDirectory>
@@ -41,10 +41,15 @@
     </fileSets>
 
     <dependencySets>
+        <!-- not used - may be used in a future release
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <outputFileNameMapping>${artifactId}-${version}.${extension}</outputFileNameMapping>
+            <includes>
+                <include/>
+            </includes>
         </dependencySet>
+        -->
         <dependencySet>
             <outputDirectory>modules</outputDirectory>
             <includes>
