@@ -1,7 +1,7 @@
 
                                   README
 
-                      Metop Sounder Tools, Version 1.2.2
+                      Metop Sounder Tools, Version 1.0
                               29 January 2009
 
 
@@ -38,6 +38,10 @@ For installing the Metop Sounder Tools unpack the file
 
 directly into your BEAM installation directory. The directory structure of the
 zip-file is adapted to the structure of the BEAM installation directory.
+
+When there is a module 'beam-metop-avhrr-reader' of version 1.3 in the BEAM
+modules directory, please remove the module manually. The Metop Sounder Tools
+require at least Version 1.4 of the module.
 
 
 Usage
