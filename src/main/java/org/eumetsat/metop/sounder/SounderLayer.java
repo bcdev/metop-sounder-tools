@@ -119,8 +119,9 @@ public class SounderLayer extends Layer implements SounderInfo {
             final Object oldRendering = g2d.getRenderingHint(RenderingHints.KEY_RENDERING);
             g2d.setStroke(BORDER_STROKE);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+            Boolean antialias = (Boolean) getStyle().getProperty(ProductSceneView.PROPERTY_KEY_GRAPHICS_ANTIALIASING);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+                                 antialias.booleanValue() ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
             final Rectangle clip = g2d.getClipBounds();
 
             final Ifov[] ifovs = overlay.getAllIfovs();

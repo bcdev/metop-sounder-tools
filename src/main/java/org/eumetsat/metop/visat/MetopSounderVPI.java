@@ -49,6 +49,7 @@ import javax.swing.filechooser.FileFilter;
 
 import com.bc.ceres.core.ExtensionManager;
 import com.bc.ceres.glayer.Layer;
+import com.bc.ceres.glayer.support.DefaultStyle;
 import com.jidesoft.action.DockableBar;
 
 public class MetopSounderVPI implements VisatPlugIn {
@@ -302,6 +303,10 @@ public class MetopSounderVPI implements VisatPlugIn {
                         Layer layer = null;
                         try {
                             layer = get();
+                            DefaultStyle style = new DefaultStyle();
+                            Boolean antialiase = VisatApp.getApp().getPreferences().getPropertyBool(ProductSceneView.PROPERTY_KEY_GRAPHICS_ANTIALIASING, Boolean.FALSE);
+                            style.setProperty(ProductSceneView.PROPERTY_KEY_GRAPHICS_ANTIALIASING, antialiase);
+                            layer.setStyle(style);
                         } catch (Exception e) {
                             return;
                         }
